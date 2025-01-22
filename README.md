@@ -55,12 +55,12 @@ let pwd = master.bip85_pwd(Password::Emoji, 20, 0)?;
 `🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗`
   
   
-### Entropy evaluation
+### Entropy Evaluation  
 mnemonic 12 words entropy = (2048)¹² = (2¹¹)¹² = 2¹³²  
 mnemonic 24 words entropy = (2048)²⁴ = (2¹¹)²⁴ = 2²⁶⁴  
 _(In fact, because the tail of 4bits/8bits is a checksum, the real entropy is 2¹²⁸/2²⁵⁶.)_
 
-#### Only emoji  
+#### Only Emoji Characters  
 [emoji characters amount](https://en.wikipedia.org/wiki/List_of_emojis) 1,431 ≈ 2¹⁰  
 9 cells permutation in 7 * 7 grid = (A₄₉⁹) = 49! / 40! ≈ 2⁴⁹  
 9 emoji characters in simple diagram = (2¹⁰)⁹ * 2⁴⁹ = 2¹³⁹ > 2¹³²  
@@ -78,7 +78,7 @@ and **18 emoji characters provide the equivalent encryption strength of 24 mnemo
 | 21 | 16 | 2²⁴⁵ |
 | 24 | 18 | 2²⁷⁵ |
 
-#### All Unicode  
+#### Any Unicode Characters  
 [unicode characters amount](https://en.wikipedia.org/wiki/List_of_Unicode_characters) 155,063 ≈ 2¹⁷   
 6 cells permutation in 7 * 7 grid = (A₄₉⁶) = 49! / 43! ≈ 2³³  
 6 unicode characters in simple diagram = (2¹⁷)⁶ * 2³³ = 2¹³⁵ > 2¹³²  
