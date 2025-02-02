@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
-use crate::bits::{BitAggregation, BitOperation};
+use crate::bits::BitAggregation;
 use bitcoin::{bip32::Xpriv, NetworkKind};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use thiserror::Error;
 
 /// Generic Diagram
@@ -12,23 +12,22 @@ use thiserror::Error;
 ///   H: matrix height
 ///   W: matrix weight
 ///   T: matrix item
-///   (items, indices)
 ///
 /// # Examples
 /// ```
 /// ```
-#[derive(Serialize, Deserialize)]
-pub struct GenericDiagram<const H: usize, const W: usize, T: Serialize>(Vec<T>, Vec<u8>);
+pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
+    /// serialize diagram
+    fn to_secret(&self) -> GenericResult<Vec<u8>>;
 
-impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> {
     /// generate warp entropy
     ///
     /// see:
     /// [warp wallet](https://keybase.io/warp),
     /// [go impl](https://github.com/ellisonch/warpwallet)
     ///
-    pub fn to_entropy(&self, salt: &[u8]) -> GenericResult<[u8; 32]> {
-        let secret = rmp_serde::to_vec(&self)?;
+    fn to_entropy(&self, salt: &[u8]) -> GenericResult<[u8; 32]> {
+        let secret = self.to_secret()?;
         let mut s1 = {
             let secret = [&secret[..], &[1u8]].concat();
             let salt = [salt, &[1u8]].concat();
@@ -57,73 +56,40 @@ impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> {
 
 type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
 
-impl<const H: usize, const W: usize, T: Serialize> From<Matrix<H, W, T>>
-    for GenericDiagram<H, W, T>
-{
-    fn from(matrix: Matrix<H, W, T>) -> Self {
-        let indices = matrix
+impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {
+    fn to_secret(&self) -> GenericResult<Vec<u8>> {
+        let indices = self
             .iter()
             .flat_map(|r| r.iter())
             .map(|v| v.is_some())
             .to_bits();
-        let items: Vec<_> = matrix
+        let items: Vec<_> = self
             .into_iter()
             .flat_map(|r| r.into_iter())
             .flatten()
             .collect();
-        Self(items, indices)
+        let vs = rmp_serde::to_vec(&(indices, items))?;
+        Ok(vs)
     }
 }
 
-impl<const H: usize, const W: usize, T: Serialize> From<GenericDiagram<H, W, T>>
-    for Matrix<H, W, T>
-{
-    fn from(value: GenericDiagram<H, W, T>) -> Self {
-        let mut indices = value.1.bit_iter().take(H * W);
-        let mut items = value.0;
-        items.reverse();
-        core::array::from_fn(|_| {
-            core::array::from_fn(|_| match indices.next() {
-                Some(true) => items.pop(),
-                _ => None,
-            })
-        })
-    }
+/// transform vector to generic diagram
+pub trait VecDiagram<const H: usize, const W: usize, T: Serialize> {
+    /// transform vector to generic diagram
+    fn to_diagram(self) -> Matrix<H, W, T>;
 }
 
-/// Vec<Option<T>> to GenericDiagram by size of H * W
-impl<const H: usize, const W: usize, T: Serialize> From<Vec<Option<T>>>
-    for GenericDiagram<H, W, T>
-{
-    fn from(mut value: Vec<Option<T>>) -> Self {
-        // if not enough, append None values
-        if value.len() < H * W {
-            let mut tail = Vec::with_capacity(H * W - value.len());
-            tail.fill_with(|| None);
-            value.append(&mut tail);
-        }
-        let indices = value.iter().take(H * W).map(|v| v.is_some()).to_bits();
-        let items = value.into_iter().take(H * W).flatten().collect();
-        Self(items, indices)
-    }
-}
-
-/// GenericDiagram to Vec<Option<T>> by size of H * W
-impl<const H: usize, const W: usize, T: Serialize> From<GenericDiagram<H, W, T>>
-    for Vec<Option<T>>
-{
-    fn from(value: GenericDiagram<H, W, T>) -> Self {
-        let mut items = value.0;
-        items.reverse();
-        value
-            .1
-            .bit_iter()
-            .take(H * W)
-            .map(|b| match b {
-                true => items.pop(),
-                false => None,
-            })
-            .collect()
+impl<const H: usize, const W: usize, T: Serialize + Copy> VecDiagram<H, W, T> for Vec<Option<T>> {
+    fn to_diagram(mut self) -> Matrix<H, W, T> {
+        // if not enough items, padding None values
+        {
+            let len = match self.len() < H * W {
+                true => H * W - self.len(),
+                false => 0,
+            };
+            self.append(&mut vec![None; len]);
+        };
+        core::array::from_fn(|row| core::array::from_fn(|col| self[row * W + col]))
     }
 }
 
@@ -164,46 +130,21 @@ mod generic_test {
             None,
             Some(0),
         ];
-        const ENTROPY: &str = "4f782731ac9a96a4f76360a7f95c55d76c684015b1e6dfa2b07fbe4635e95f80";
-        const XPRIV: &str = "xprv9s21ZrQH143K3UyPCjUsk2BqTEJpVpNQNHUXmf3sgQvM5rgzs4LPzNf1AN7R6yzo88gjz4eaEnkwt2M9rj32MX1tqw4mvtvgHUBeHgdeD4i";
+        const ENTROPY: &str = "5cb583949c32a6bcfc8252e7b0a0ca5663ded466cb1ead68f539ba784f8f6da3";
+        const XPRIV: &str = "xprv9s21ZrQH143K2HQAyrRqc9HvvxEBsehBm2V2XdxFLqrATdboEjatXbSmYtPSBxKRtrTAqQQ4NZ93rnjBoDvw5poWpH2Tfxm27M6imD8doLn";
         {
-            let diagram: GenericDiagram<3, 5, u128> = MATRIX.into();
-            let entropy = diagram.to_entropy("test".as_bytes())?;
-            let master = diagram.to_master("test".as_bytes())?;
+            let entropy = MATRIX.to_entropy("test".as_bytes())?;
+            let master = MATRIX.to_master("test".as_bytes())?;
             assert_eq!(entropy.to_lower_hex_string(), ENTROPY);
             assert_eq!(master.to_string(), XPRIV);
-            let matrix: [[Option<u128>; 5]; 3] = diagram.into();
-            assert_eq!(matrix, MATRIX);
         }
         {
-            let diagram: GenericDiagram<3, 5, u128> = VECTOR.to_vec().into();
-            let entropy = diagram.to_entropy("test".as_bytes())?;
-            let master = diagram.to_master("test".as_bytes())?;
+            let matrix: Matrix<3, 5, u128> = VECTOR.to_vec().to_diagram();
+            let entropy = matrix.to_entropy("test".as_bytes())?;
+            let master = matrix.to_master("test".as_bytes())?;
             assert_eq!(entropy.to_lower_hex_string(), ENTROPY);
             assert_eq!(master.to_string(), XPRIV);
-            let matrix: [[_; 5]; 3] = diagram.into();
-            assert_eq!(matrix, MATRIX);
         }
-        Ok(())
-    }
-
-    #[test]
-    fn test_restore() -> GenericResult {
-        const VECTOR: [u8; 18] = [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6];
-        let diagram: GenericDiagram<3, 6, u8> =
-            VECTOR.into_iter().map(Some).collect::<Vec<_>>().into();
-
-        let entropy = diagram.to_entropy("test".as_bytes())?;
-        let ser = rmp_serde::to_vec(&diagram)?;
-        println!("{:?}", ser.to_lower_hex_string());
-        let restore: GenericDiagram<3, 6, u8> = rmp_serde::from_slice(&ser).expect("restore");
-        assert_eq!(restore.to_entropy("test".as_bytes())?, entropy);
-
-        let matrix: [[Option<u8>; 6]; 3] = diagram.into();
-        assert_eq!(
-            matrix.into_iter().flatten().flatten().collect::<Vec<u8>>(),
-            VECTOR
-        );
         Ok(())
     }
 }

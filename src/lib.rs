@@ -53,7 +53,7 @@ pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use bitcoin::{self, bip32::Xpriv};
 pub use complex::ComplexDiagram;
 pub use diagram::Diagram;
-pub use generic::GenericDiagram;
+pub use generic::{GenericDiagram, VecDiagram};
 pub use simple::SimpleDiagram;
 
 ///

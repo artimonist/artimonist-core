@@ -25,6 +25,7 @@ impl BitInner for [u8] {
     }
 }
 
+#[allow(unused)]
 pub trait BitOperation {
     /// compound bits to u8 vector
     fn bit_from(iter: &mut impl Iterator<Item = bool>) -> Vec<u8>;
