@@ -1,11 +1,10 @@
-use std::fmt::Debug;
-
 use super::bits::BitAggregation;
 use bitcoin::{bip32::Xpriv, NetworkKind};
 use serde::Serialize;
+use std::fmt::Debug;
 use thiserror::Error;
 
-type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
+pub type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
 
 pub trait GenericSerialization {
     /// serialize diagram to binary data
@@ -20,9 +19,6 @@ pub trait GenericSerialization {
 ///   W: matrix weight
 ///   T: matrix item
 ///
-/// # Examples
-/// ```
-/// ```
 pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize>:
     GenericSerialization
 {
@@ -167,6 +163,19 @@ mod generic_test {
             let matrix = vector.to_matrix::<3, 3>();
             assert_eq!(matrix, MATRIX);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_serialize() -> GenericResult {
+        const MATRIX: [[Option<u8>; 5]; 3] = [
+            [Some(123), None, None, None, Some(99)],
+            [Some(222), None, None, None, Some(0)],
+            [None, None, Some(1), None, None],
+        ];
+        let buf = rmp_serde::to_vec(&MATRIX)?;
+        let mx: Matrix<3, 5, u8> = rmp_serde::from_slice(&buf)?;
+        assert_eq!(mx, MATRIX);
         Ok(())
     }
 }

@@ -61,7 +61,6 @@ pub mod error {
     pub use super::bip85::Bip85Error;
     pub use super::bitcoin::bip32::Error as Bip32Error;
     pub use super::generic::GenericError;
-
     use thiserror::Error;
 
     /// Artimonist Error

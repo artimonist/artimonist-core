@@ -14,9 +14,9 @@
 
 ### Example
 ```
-let items = vec![Some('🍔'), Some('🍟'), Some('🌭'), Some('🍦'), Some('🍩')];
+let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
 let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
-SimpleDiagram::from_items(items, &indices); 
+let diagram = SimpleDiagram::from_values(&values, &indices);
 ```
 The simple diagram looks like this:
 
@@ -31,7 +31,7 @@ The simple diagram looks like this:
 
 Generate **mnemonic**:
 ```
-let master = diagram.to_master("🚲🍀🌈".as_bytes())?;
+let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
 let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 ```
 `lady announce wife please settle connect april hour caution split festival genuine logic digital dignity`
