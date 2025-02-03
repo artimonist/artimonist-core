@@ -22,9 +22,8 @@
  *      0b0xxx_xxxx
  *      x bits indices string position in diagram.
 **/
-use super::diagram::*;
 use super::generic::{GenericDiagram, GenericResult, GenericSerialization};
-use crate::diagram::{DiagramError, INDICES_MASK, VERSION_MASK};
+use super::macros::ImpDeref;
 use bitcoin::hashes::{sha256, Hash};
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +36,7 @@ use serde::{Deserialize, Serialize};
 /// ```
 /// # use artimonist::{Diagram, SimpleDiagram, GenericDiagram};
 /// # use bitcoin::hex::DisplayHex;
-/// let mut diagram = SimpleDiagram([[None; 7]; 7]);
+/// let mut diagram = SimpleDiagram::new();
 /// diagram[2][1] = Some('🐶');
 /// diagram[3][6] = Some('☕');
 ///
@@ -48,25 +47,12 @@ use serde::{Deserialize, Serialize};
 ///
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimpleDiagram(pub [[Option<char>; 7]; 7]);
-
-impl std::ops::Deref for SimpleDiagram {
-    type Target = [[Option<char>; 7]; 7];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for SimpleDiagram {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+ImpDeref!(SimpleDiagram, [[Option<char>; 7]; 7]);
 
 impl GenericDiagram<7, 7, char> for SimpleDiagram {}
 impl GenericSerialization for SimpleDiagram {
     /// Compatible with previous versions
-    fn binary(&self) -> GenericResult<Vec<u8>> {
+    fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut chars = Vec::with_capacity(7 * 7);
         let mut indices = [0; 7];
         (0..7).rev().for_each(|col| {
@@ -87,105 +73,94 @@ impl GenericSerialization for SimpleDiagram {
     }
 }
 
+const INDICES_MASK: [u8; 7] = [
+    0b0100_0000,
+    0b0010_0000,
+    0b0001_0000,
+    0b0000_1000,
+    0b0000_0100,
+    0b0000_0010,
+    0b0000_0001,
+];
+
 impl SimpleDiagram {
     /// create simple diagram
     pub fn new() -> Self {
         Self([[None; 7]; 7])
     }
 
-    /// restore SimpleDiagram from binary data
-    pub fn deserialize(mut secret: Vec<u8>) -> DiagramResult<SimpleDiagram> {
-        // must have content
-        if secret.len() <= 8 {
-            return Err(DiagramError::InvalidParameter("secret too short."));
-        }
-        // tail byte is checksum
-        if let Some(check) = secret.pop() {
-            if check != sha256::Hash::hash(&secret).as_byte_array()[0] {
-                return Err(DiagramError::InvalidParameter("checksum fail."));
-            }
-        }
-        // 7 bytes indices
-        let indices: Vec<u8> = secret.split_off(secret.len() - 7);
-        // check version
-        if indices.iter().any(|v| v & VERSION_MASK != 0) {
-            return Err(DiagramError::InvalidVersion);
-        }
-        // residue must be a valid UTF-8 string
-        let s = String::from_utf8(secret)
-            .or(Err(DiagramError::InvalidParameter("invalid utf8 chars.")))?;
-        let mut items: Vec<Option<char>> = s.chars().map(Some).collect();
-
-        // fill diagram
-        let mut data = [[None; 7]; 7];
-        for (col, mask) in INDICES_MASK.iter().enumerate() {
-            for (row, ind) in indices.iter().enumerate().take(7) {
-                if ind & mask > 0 {
-                    match items.pop() {
-                        Some(Some(ch)) => data[row][col] = Some(ch),
-                        _ => return Err(DiagramError::InvalidParameter("items len invalid.")),
-                    }
-                }
-            }
-        }
-        if !items.is_empty() {
-            return Err(DiagramError::InvalidParameter("items len invalid."));
-        }
-        Ok(SimpleDiagram(data))
-    }
-
     /// create SimpleDiagram from items
-    pub fn from_values(items: &[char], indices: &[(usize, usize)]) -> DiagramResult<Self> {
+    pub fn from_values(items: &[char], indices: &[(usize, usize)]) -> Self {
         let mut data = [[None; 7]; 7];
-        items
+        indices
             .iter()
-            .zip(indices)
-            .for_each(|(&v, &(r, c))| data[r][c] = Some(v));
-        Ok(SimpleDiagram(data))
+            .zip(items)
+            .for_each(|(&(r, c), &v)| data[r][c] = Some(v));
+        SimpleDiagram(data)
     }
 }
 
 #[cfg(test)]
 mod simple_diagram_test {
     use super::*;
-    use bitcoin::hex::{DisplayHex, FromHex};
+    use bitcoin::hex::DisplayHex;
 
     #[test]
-    fn test_simple_secret() -> GenericResult<()> {
+    fn test_simple_diagram() -> GenericResult {
         const CHARS_STR: &str = "A&*王😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
         const SECRET_HEX: &str = "f09f988a412ae78e8b26012800001000012d";
+        const WARP_ENTROPY: &str =
+            "cff2b0d401d54f32d9035a2eed41f48f57960ac76fb472267ffd6597b3684d82";
+        const MASTER_WIF: &str = "xprv9s21ZrQH143K2r6v9GGWezApYmVuaGiZYoCpsQFVe9Vwh47yZ2CCgqXJY6g2Kk8Ajrz2PbVNnY5HLw4dPkshmcqX8YBEhcwj4wWQ8UgY5m7";
+        const SALT_STR: &str = "123abc";
+        const SALT_ENTROPY: &str =
+            "7981de9ab25fb45394130deca46b1ad9e18a84717be708cb39343e0700beba67";
+        const SALT_MASTER: &str = "xprv9s21ZrQH143K3m9k6SE8k9kYgPUS2YiuWyV2LZN43xMPSWe8w1vriyFgPh4BnFGevHto27pmDCcnpJRAWLybqaaZeucx9fmJHFd2CWFMwkw";
 
-        let mut art = SimpleDiagram([[None; 7]; 7]);
+        let mut sdm = SimpleDiagram::new();
         CHARS_INDICES
             .iter()
             .zip(CHARS_STR.chars())
-            .for_each(|(&(row, col), ch)| art[row][col] = Some(ch));
-        assert_eq!(art.binary()?.to_lower_hex_string(), SECRET_HEX);
+            .for_each(|(&(row, col), ch)| sdm[row][col] = Some(ch));
+        assert_eq!(sdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
+        assert_eq!(sdm[6][6], Some('😊'));
 
-        // from_raw
-        let art = SimpleDiagram::deserialize(Vec::from_hex(SECRET_HEX).expect("TEST_SECRET_HEX"))?;
-        assert_eq!(art[6][6], Some('😊'));
-        assert_eq!(art.binary()?.to_lower_hex_string(), SECRET_HEX);
+        let entropy = sdm.warp_entropy(Default::default())?;
+        assert_eq!(entropy.to_lower_hex_string(), WARP_ENTROPY);
+        assert_eq!(sdm.bip32_master(&vec![])?.to_string(), MASTER_WIF);
+
+        let entropy = sdm.warp_entropy(SALT_STR.as_bytes())?;
+        assert_eq!(entropy.to_lower_hex_string(), SALT_ENTROPY);
+        let master = sdm.bip32_master(SALT_STR.as_bytes())?;
+        assert_eq!(master.to_string(), SALT_MASTER);
+
         Ok(())
     }
 
     #[test]
-    fn test_simple_entropy() -> GenericResult<()> {
-        const RAW_SECRET_HEX: &str = "41262ae78e8bf09f988a012800001000406d";
+    fn test_simple_diagram2() -> GenericResult<()> {
+        const CHARS_STR: &str = "A王&*😊";
+        const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];
+        const SECRET_HEX: &str = "41262ae78e8bf09f988a012800001000406d";
         const WARP_ENTROPY: &str =
             "0948fd6d7b1dc397d26080804870913abc086636d3ed11d4fcb0f16f7c31a91a";
         const SALT_STR: &str = "123abc";
         const SALT_ENTROPY: &str =
             "e06ffd848c7901ca5757d848e5e81d69f9853273bee6772dcd25f56c506a1635";
 
-        let secret = Vec::from_hex(RAW_SECRET_HEX).expect("RAW_SECRET_HEX");
-        let art = SimpleDiagram::deserialize(secret)?;
-        let entropy = art.warp_entropy(Default::default())?;
-        assert_eq!(entropy.to_lower_hex_string(), WARP_ENTROPY);
+        let mut sdm = SimpleDiagram::new();
+        CHARS_INDICES
+            .iter()
+            .zip(CHARS_STR.chars())
+            .for_each(|(&(row, col), ch)| sdm[row][col] = Some(ch));
+        assert_eq!(sdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
+        assert_eq!(sdm[6][0], Some('😊'));
 
-        let salt_entropy = art.warp_entropy(SALT_STR.as_bytes())?;
-        assert_eq!(salt_entropy.to_lower_hex_string(), SALT_ENTROPY);
+        let entropy = sdm.warp_entropy(Default::default())?;
+        assert_eq!(entropy.to_lower_hex_string(), WARP_ENTROPY);
+        let entropy = sdm.warp_entropy(SALT_STR.as_bytes())?;
+        assert_eq!(entropy.to_lower_hex_string(), SALT_ENTROPY);
 
         Ok(())
     }

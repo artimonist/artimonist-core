@@ -11,7 +11,7 @@
 //!
 //! let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
 //! let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
-//! let diagram = SimpleDiagram::from_values(&values, &indices)?;
+//! let diagram = SimpleDiagram::from_values(&values, &indices);
 //! let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
 //!
 //! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;

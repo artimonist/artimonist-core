@@ -25,6 +25,7 @@
  *      others x bits indices string position in diagram.
 **/
 
+use super::diagram::DiagramResult;
 use super::diagram::*;
 use super::generic::{GenericDiagram, GenericResult, GenericSerialization};
 use bitcoin::hashes::{sha256, Hash};
@@ -66,7 +67,7 @@ impl std::ops::DerefMut for ComplexDiagram {
 impl GenericDiagram<7, 7, char> for ComplexDiagram {}
 impl GenericSerialization for ComplexDiagram {
     /// Compatible with previous versions
-    fn binary(&self) -> GenericResult<Vec<u8>> {
+    fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut str_list: Vec<&str> = vec![];
         let mut str_lens: Vec<u8> = vec![];
         let mut indices: [u8; 7] = [0; 7];
@@ -90,8 +91,6 @@ impl GenericSerialization for ComplexDiagram {
         Ok(secret)
     }
 }
-
-use super::diagram::DiagramResult;
 
 impl ComplexDiagram {
     /// cell chars count limit
@@ -182,12 +181,12 @@ mod complex_diagram_test {
             .iter()
             .zip(STR_LIST)
             .for_each(|(&(row, col), &s)| diagram[row][col] = Some(s.to_owned()));
-        let secret = diagram.binary().unwrap_or_default();
+        let secret = diagram.to_bytes().unwrap_or_default();
         assert_eq!(secret.to_lower_hex_string(), SECRET_HEX);
 
         if let Ok(diagram) = ComplexDiagram::from_secret(secret) {
             assert_eq!(diagram[6][6], Some(STR_LIST[4].to_owned()));
-            let secret = diagram.binary().unwrap_or_default();
+            let secret = diagram.to_bytes().unwrap_or_default();
             assert_eq!(secret.to_lower_hex_string(), SECRET_HEX);
         } else {
             assert!(false, "from_secret() fail");

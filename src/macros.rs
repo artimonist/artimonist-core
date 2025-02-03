@@ -3,9 +3,13 @@ macro_rules! ImpDeref {
     ($t: ty, $o: ty) => {
         impl std::ops::Deref for $t {
             type Target = $o;
-            #[inline]
             fn deref(&self) -> &Self::Target {
                 &self.0
+            }
+        }
+        impl std::ops::DerefMut for $t {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
             }
         }
     };
@@ -15,13 +19,11 @@ macro_rules! ImpDeref {
 macro_rules! ImpFrom {
     ($t: ty, $o: ty) => {
         impl From<$o> for $t {
-            #[inline]
             fn from(s: $o) -> Self {
                 Self(s)
             }
         }
         impl From<$t> for $o {
-            #[inline]
             fn from(t: $t) -> Self {
                 t.0
             }
