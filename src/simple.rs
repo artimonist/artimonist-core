@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// # Examples
 /// ```
-/// # use artimonist::{Diagram, SimpleDiagram, GenericDiagram};
+/// # use artimonist::{GenericDiagram, SimpleDiagram};
 /// # use bitcoin::hex::DisplayHex;
 /// let mut diagram = SimpleDiagram::new();
 /// diagram[2][1] = Some('🐶');

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{bits::BitAggregation, diagram::DiagramError};
+use super::bits::BitAggregation;
 use bitcoin::{bip32::Xpriv, NetworkKind};
 use serde::Serialize;
 use thiserror::Error;
@@ -112,9 +112,6 @@ pub enum GenericError {
     /// bip32 error
     #[error("bip32 error")]
     Bip32Error(#[from] bitcoin::bip32::Error),
-    /// diagram error
-    #[error("diagram error")]
-    DiagramError(#[from] DiagramError),
 }
 /// GenericResult
 pub type GenericResult<T = ()> = Result<T, GenericError>;
