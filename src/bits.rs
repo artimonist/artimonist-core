@@ -41,11 +41,11 @@ impl BitOperation for [u8] {
         iter.chain([false; 7])
             .enumerate()
             .filter_map(|(i, b)| {
-                let m = (i + 1) % 8;
+                let n = 7 - (i % 8);
                 if b {
-                    v |= 1 << (8 - m);
+                    v |= 1 << n;
                 }
-                if m != 0 {
+                if n != 0 {
                     return None;
                 }
                 let result = Some(v);
