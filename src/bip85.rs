@@ -1,4 +1,4 @@
-pub use super::{bit_operation::BitOperation, password::Password, words::Language};
+pub use super::{bits::BitOperation, password::Password, words::Language};
 use bitcoin::{
     bip32::{ChainCode, ChildNumber, Xpriv},
     hashes::{hmac, sha256, sha512, Hash, HashEngine},

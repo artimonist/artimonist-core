@@ -5,7 +5,8 @@
  * [u8] chunks to base64 indices by 6 bits.
  */
 
-pub(crate) trait BitInner {
+trait BitInner {
+    /// [u8] with less than 32 bits are trailed with zeros
     fn window_value(&self, i: usize) -> u32;
 }
 
@@ -24,11 +25,36 @@ impl BitInner for [u8] {
     }
 }
 
-pub trait BitOperation: BitInner {
+#[allow(unused)]
+pub trait BitOperation {
+    /// compound bits to u8 vector
+    fn bit_from(iter: &mut impl Iterator<Item = bool>) -> Vec<u8>;
+    /// split [u8] as bits array
     fn bit_chunks(&self, n: usize) -> impl Iterator<Item = u16>;
+    /// iterator of bit values
+    fn bit_iter(&self) -> impl Iterator<Item = bool>;
 }
 
 impl BitOperation for [u8] {
+    fn bit_from(iter: &mut impl Iterator<Item = bool>) -> Vec<u8> {
+        let mut v = 0_u8;
+        iter.chain([false; 7])
+            .enumerate()
+            .filter_map(|(i, b)| {
+                let m = (i + 1) % 8;
+                if b {
+                    v |= 1 << (8 - m);
+                }
+                if m != 0 {
+                    return None;
+                }
+                let result = Some(v);
+                v = 0;
+                result
+            })
+            .collect()
+    }
+
     fn bit_chunks(&self, n: usize) -> impl Iterator<Item = u16> {
         assert!(n <= 16);
         let bit_mask = (0..n).fold(0_u32, |acc, v| acc | (1 << v));
@@ -45,10 +71,37 @@ impl BitOperation for [u8] {
             vs
         })
     }
+
+    fn bit_iter(&self) -> impl Iterator<Item = bool> {
+        const MASK: [u8; 8] = [
+            0b1000_0000,
+            0b0100_0000,
+            0b0010_0000,
+            0b0001_0000,
+            0b0000_1000,
+            0b0000_0100,
+            0b0000_0010,
+            0b0000_0001,
+        ];
+        self.iter()
+            .flat_map(|&v| MASK.iter().map(move |&m| (v & m) > 0))
+    }
+}
+
+pub trait BitAggregation {
+    fn to_bits(self) -> Vec<u8>;
+}
+
+impl<T: Iterator<Item = bool>> BitAggregation for T {
+    fn to_bits(mut self) -> Vec<u8> {
+        <[u8] as BitOperation>::bit_from(&mut self)
+    }
 }
 
 #[cfg(test)]
 mod bit_operation_test {
+    use std::vec;
+
     use super::*;
 
     #[test]
@@ -80,5 +133,27 @@ mod bit_operation_test {
             let indices = entropy.bit_chunks(11).collect::<Vec<_>>();
             assert_eq!(&indices, INDICES_24);
         }
+    }
+
+    #[test]
+    fn test_to_bits() {
+        const MATRIX: &[[u8; 8]] = &[
+            [1, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1],
+            [1, 1, 0, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0],
+        ];
+        const INDICES: &[u8] = &[0b1111_0000, 0b0000_1111, 0b1100_0011, 0b0011_1100];
+        let vs = (0..MATRIX.len())
+            .flat_map(|row| (0..8).map(move |col| MATRIX[row][col] == 1))
+            .to_bits();
+        assert_eq!(vs, INDICES);
+
+        let bits = [true, true, true, false, false, true].into_iter().to_bits();
+        assert_eq!(bits, [0b1110_0100]);
+        let bits = [true, true, true, false, false, true, true, true, true]
+            .into_iter()
+            .to_bits();
+        assert_eq!(bits, [0b1110_0111, 0b1000_0000]);
     }
 }

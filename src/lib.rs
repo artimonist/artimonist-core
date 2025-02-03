@@ -7,12 +7,12 @@
 //!
 //! # Examples
 //! ```
-//! use artimonist::{Diagram, SimpleDiagram, BIP85, Language, Password, Wif};
+//! use artimonist::{SimpleDiagram, GenericDiagram, BIP85, Language, Password, Wif};
 //!
-//! let items = vec![Some('🍔'), Some('🍟'), Some('🌭'), Some('🍦'), Some('🍩')];
+//! let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
 //! let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
-//! let diagram = SimpleDiagram::from_items(items, &indices)?;
-//! let master = diagram.to_master("🚲🍀🌈".as_bytes())?;
+//! let diagram = SimpleDiagram::from_values(&values, &indices);
+//! let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
 //!
 //! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
@@ -37,9 +37,9 @@
 pub(crate) mod bip39;
 pub(crate) mod bip49;
 pub(crate) mod bip85;
-pub(crate) mod bit_operation;
+pub(crate) mod bits;
 pub(crate) mod complex;
-pub(crate) mod diagram;
+pub(crate) mod generic;
 pub(crate) mod macros;
 pub(crate) mod password;
 pub(crate) mod simple;
@@ -51,7 +51,7 @@ pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv};
 pub use complex::ComplexDiagram;
-pub use diagram::Diagram;
+pub use generic::{Diagram, GenericDiagram, Vector};
 pub use simple::SimpleDiagram;
 
 ///
@@ -60,22 +60,21 @@ pub use simple::SimpleDiagram;
 pub mod error {
     pub use super::bip85::Bip85Error;
     pub use super::bitcoin::bip32::Error as Bip32Error;
-    pub use super::diagram::DiagramError;
-
+    pub use super::generic::GenericError;
     use thiserror::Error;
 
     /// Artimonist Error
-    #[derive(Error, Debug, PartialEq)]
+    #[derive(Error, Debug)]
     pub enum Error {
-        /// Diagram Error
-        #[error("diagram error")]
-        DiagramError(#[from] DiagramError),
         /// Bip85 Error
         #[error("bip85 error")]
         Bip85Error(#[from] Bip85Error),
         /// Bip32 Error
         #[error("bip32 error")]
         Bip32Error(#[from] Bip32Error),
+        /// Generic Error
+        #[error("generic error")]
+        GenericError(#[from] GenericError),
     }
 
     /// Artimonist Result

@@ -1,29 +1,29 @@
 /// impl Deref for wrapper type struct T(U)
-#[macro_export]
 macro_rules! ImpDeref {
     ($t: ty, $o: ty) => {
         impl std::ops::Deref for $t {
             type Target = $o;
-            #[inline]
             fn deref(&self) -> &Self::Target {
                 &self.0
+            }
+        }
+        impl std::ops::DerefMut for $t {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
             }
         }
     };
 }
 
 /// impl From for wrapper type struct T(U)
-#[macro_export]
 macro_rules! ImpFrom {
     ($t: ty, $o: ty) => {
         impl From<$o> for $t {
-            #[inline]
             fn from(s: $o) -> Self {
                 Self(s)
             }
         }
         impl From<$t> for $o {
-            #[inline]
             fn from(t: $t) -> Self {
                 t.0
             }
@@ -32,7 +32,6 @@ macro_rules! ImpFrom {
 }
 
 /// impl Display for wrapper type struct T(U)
-#[macro_export]
 macro_rules! ImpDisplay {
     ($t: ty) => {
         impl std::fmt::Display for $t {
@@ -45,10 +44,9 @@ macro_rules! ImpDisplay {
 }
 
 /// impl PartialEq for wrapper type struct T(U)
-#[macro_export]
 macro_rules! ImpPartialEq {
     ($t: ty, $o: ty) => {
-        impl PartialEq<&$o> for Wif {
+        impl PartialEq<&$o> for $t {
             #[inline]
             fn eq(&self, other: &&$o) -> bool {
                 self.0 == *other
