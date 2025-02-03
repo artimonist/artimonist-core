@@ -7,12 +7,12 @@
 //!
 //! # Examples
 //! ```
-//! use artimonist::{Diagram, SimpleDiagram, BIP85, Language, Password, Wif};
+//! use artimonist::{Diagram, SimpleDiagram, GenericDiagram, BIP85, Language, Password, Wif};
 //!
-//! let items = vec![Some('🍔'), Some('🍟'), Some('🌭'), Some('🍦'), Some('🍩')];
+//! let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
 //! let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
-//! let diagram = SimpleDiagram::from_items(items, &indices)?;
-//! let master = diagram.to_master("🚲🍀🌈".as_bytes())?;
+//! let diagram = SimpleDiagram::from_values(&values, &indices)?;
+//! let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
 //!
 //! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
@@ -53,7 +53,7 @@ pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use bitcoin::{self, bip32::Xpriv};
 pub use complex::ComplexDiagram;
 pub use diagram::Diagram;
-pub use generic::{GenericComplex, GenericDiagram, GenericSimple, VecDiagram};
+pub use generic::{GenericDiagram, VecDiagram};
 pub use simple::SimpleDiagram;
 
 ///
@@ -68,7 +68,7 @@ pub mod error {
     use thiserror::Error;
 
     /// Artimonist Error
-    #[derive(Error, Debug, PartialEq)]
+    #[derive(Error, Debug)]
     pub enum Error {
         /// Diagram Error
         #[error("diagram error")]
@@ -79,6 +79,9 @@ pub mod error {
         /// Bip32 Error
         #[error("bip32 error")]
         Bip32Error(#[from] Bip32Error),
+        /// Generic Error
+        #[error("generic error")]
+        GenericError(#[from] GenericError),
     }
 
     /// Artimonist Result

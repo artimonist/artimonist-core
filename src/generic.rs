@@ -1,9 +1,16 @@
 use std::fmt::Debug;
 
-use crate::bits::BitAggregation;
+use crate::{bits::BitAggregation, diagram::DiagramError};
 use bitcoin::{bip32::Xpriv, NetworkKind};
 use serde::Serialize;
 use thiserror::Error;
+
+type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
+
+pub trait GenericSerialization {
+    /// serialize diagram
+    fn serialize(&self) -> GenericResult<Vec<u8>>;
+}
 
 /// Generic Diagram
 ///   diagram implementation for any matrix
@@ -16,9 +23,11 @@ use thiserror::Error;
 /// # Examples
 /// ```
 /// ```
-pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
-    /// serialize diagram
-    fn to_secret(&self) -> GenericResult<Vec<u8>>;
+pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize>:
+    GenericSerialization
+{
+    // /// serialize diagram
+    // fn serialize(&self) -> GenericResult<Vec<u8>>;
 
     /// generate warp entropy
     ///
@@ -26,8 +35,8 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     /// [warp wallet](https://keybase.io/warp),
     /// [go impl](https://github.com/ellisonch/warpwallet)
     ///
-    fn to_entropy(&self, salt: &[u8]) -> GenericResult<[u8; 32]> {
-        let secret = self.to_secret()?;
+    fn warp_entropy(&self, salt: &[u8]) -> GenericResult<[u8; 32]> {
+        let secret = self.serialize()?;
         let mut s1 = {
             let secret = [&secret[..], &[1u8]].concat();
             let salt = [salt, &[1u8]].concat();
@@ -48,16 +57,15 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     }
 
     /// generate extended private key
-    fn to_master(&self, salt: &[u8]) -> GenericResult<Xpriv> {
-        let seed = self.to_entropy(salt)?;
+    fn bip32_master(&self, salt: &[u8]) -> GenericResult<Xpriv> {
+        let seed = self.warp_entropy(salt)?;
         Ok(Xpriv::new_master(NetworkKind::Main, &seed)?)
     }
 }
 
-type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
-
-impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {
-    fn to_secret(&self) -> GenericResult<Vec<u8>> {
+impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {}
+impl<const H: usize, const W: usize, T: Serialize> GenericSerialization for Matrix<H, W, T> {
+    fn serialize(&self) -> GenericResult<Vec<u8>> {
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
 
@@ -98,12 +106,18 @@ pub enum GenericError {
     /// serialize error
     #[error("serialize error")]
     SerializeError(#[from] rmp_serde::encode::Error),
+    /// deserialize eror
+    #[error("deserialize error")]
+    DeserializeError(#[from] rmp_serde::decode::Error),
     /// bip32 error
     #[error("bip32 error")]
     Bip32Error(#[from] bitcoin::bip32::Error),
+    /// diagram error
+    #[error("diagram error")]
+    DiagramError(#[from] DiagramError),
 }
 /// GenericResult
-type GenericResult<T = ()> = Result<T, GenericError>;
+pub type GenericResult<T = ()> = Result<T, GenericError>;
 
 #[cfg(test)]
 mod generic_test {
@@ -133,15 +147,15 @@ mod generic_test {
         const XPRIV: &str = "xprv9s21ZrQH143K26wqw5cyn4qGD2CsyVH2Lpma622cgETpFvNfnPAGpmkFisKjr3G3SUKoCXXkctNssYpAXuVeZBw2HmihXxnwYUxicZM2Spt";
         {
             // MATRIX easy to use
-            let entropy = MATRIX.to_entropy("test".as_bytes())?;
-            let master = MATRIX.to_master("test".as_bytes())?;
+            let entropy = MATRIX.warp_entropy("test".as_bytes())?;
+            let master = MATRIX.bip32_master("test".as_bytes())?;
             assert_eq!(entropy.to_lower_hex_string(), ENTROPY);
             assert_eq!(master.to_string(), XPRIV);
         }
         {
             // VECTOR equal to MATRIX
             let vector = VECTOR.to_vec();
-            let master = vector.to_matrix::<3, 5>().to_master("test".as_bytes())?;
+            let master = vector.to_matrix::<3, 5>().bip32_master("test".as_bytes())?;
             assert_eq!(master.to_string(), XPRIV);
         }
         {
@@ -159,9 +173,3 @@ mod generic_test {
         Ok(())
     }
 }
-
-/// Simple Diagram
-pub type GenericSimple = Matrix<7, 7, char>;
-
-/// Complex Diagram
-pub type GenericComplex = Matrix<7, 7, String>;
