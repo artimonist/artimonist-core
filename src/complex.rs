@@ -87,6 +87,18 @@ impl ComplexDiagram {
     pub fn new() -> Self {
         Self(core::array::from_fn(|_| core::array::from_fn(|_| None)))
     }
+
+    /// create ComplexDiagram from items
+    pub fn from_values(items: &[&str], indices: &[(usize, usize)]) -> Self {
+        let mut diagram = ComplexDiagram::new();
+        indices.iter().zip(items).for_each(|(&(r, c), &s)| {
+            diagram[r][c] = match s.is_empty() {
+                false => Some(s.to_owned()),
+                true => None,
+            }
+        });
+        diagram
+    }
 }
 
 #[cfg(test)]
@@ -101,13 +113,9 @@ mod complex_diagram_test {
         const SECRET_HEX: &str =
             "41262ae78e8bf09f988a414243e6b58be8af95e6b7b741313132330a0306050381280000100001c8";
 
-        let mut diagram = crate::ComplexDiagram::new();
-        INDICES
-            .iter()
-            .zip(STR_LIST)
-            .for_each(|(&(row, col), &s)| diagram[row][col] = Some(s.to_owned()));
-        assert_eq!(diagram.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
-        assert_eq!(diagram[6][6], Some(STR_LIST[4].to_owned()));
+        let cdm = ComplexDiagram::from_values(STR_LIST, INDICES);
+        assert_eq!(cdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
+        assert_eq!(cdm[6][6], Some(STR_LIST[4].to_owned()));
 
         Ok(())
     }
@@ -124,11 +132,7 @@ mod complex_diagram_test {
         const SALT_ENTROPY: &str =
             "3ff854b9f188d428068e3a9b7655d37795f1aaf1e6461b757f12935dee796bbf";
 
-        let mut cdm = crate::ComplexDiagram::new();
-        INDICES
-            .iter()
-            .zip(STR_LIST)
-            .for_each(|(&(row, col), &s)| cdm[row][col] = Some(s.to_owned()));
+        let cdm = ComplexDiagram::from_values(STR_LIST, INDICES);
         assert_eq!(cdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
 
         let entropy = cdm.warp_entropy(Default::default())?;

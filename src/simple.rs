@@ -118,11 +118,8 @@ mod simple_diagram_test {
             "7981de9ab25fb45394130deca46b1ad9e18a84717be708cb39343e0700beba67";
         const SALT_MASTER: &str = "xprv9s21ZrQH143K3m9k6SE8k9kYgPUS2YiuWyV2LZN43xMPSWe8w1vriyFgPh4BnFGevHto27pmDCcnpJRAWLybqaaZeucx9fmJHFd2CWFMwkw";
 
-        let mut sdm = SimpleDiagram::new();
-        CHARS_INDICES
-            .iter()
-            .zip(CHARS_STR.chars())
-            .for_each(|(&(row, col), ch)| sdm[row][col] = Some(ch));
+        let items: Vec<char> = CHARS_STR.chars().collect();
+        let sdm = SimpleDiagram::from_values(&items, CHARS_INDICES);
         assert_eq!(sdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
         assert_eq!(sdm[6][6], Some('😊'));
 
@@ -149,11 +146,8 @@ mod simple_diagram_test {
         const SALT_ENTROPY: &str =
             "e06ffd848c7901ca5757d848e5e81d69f9853273bee6772dcd25f56c506a1635";
 
-        let mut sdm = SimpleDiagram::new();
-        CHARS_INDICES
-            .iter()
-            .zip(CHARS_STR.chars())
-            .for_each(|(&(row, col), ch)| sdm[row][col] = Some(ch));
+        let items: Vec<char> = CHARS_STR.chars().collect();
+        let sdm = SimpleDiagram::from_values(&items, CHARS_INDICES);
         assert_eq!(sdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
         assert_eq!(sdm[6][0], Some('😊'));
 
