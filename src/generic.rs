@@ -8,8 +8,8 @@ use thiserror::Error;
 type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
 
 pub trait GenericSerialization {
-    /// serialize diagram
-    fn serialize(&self) -> GenericResult<Vec<u8>>;
+    /// serialize diagram to binary data
+    fn binary(&self) -> GenericResult<Vec<u8>>;
 }
 
 /// Generic Diagram
@@ -36,7 +36,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize>:
     /// [go impl](https://github.com/ellisonch/warpwallet)
     ///
     fn warp_entropy(&self, salt: &[u8]) -> GenericResult<[u8; 32]> {
-        let secret = self.serialize()?;
+        let secret = self.binary()?;
         let mut s1 = {
             let secret = [&secret[..], &[1u8]].concat();
             let salt = [salt, &[1u8]].concat();
@@ -65,7 +65,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize>:
 
 impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {}
 impl<const H: usize, const W: usize, T: Serialize> GenericSerialization for Matrix<H, W, T> {
-    fn serialize(&self) -> GenericResult<Vec<u8>> {
+    fn binary(&self) -> GenericResult<Vec<u8>> {
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
 

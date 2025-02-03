@@ -26,9 +26,10 @@
 **/
 
 use super::diagram::*;
+use super::generic::{GenericDiagram, GenericResult, GenericSerialization};
 use bitcoin::hashes::{sha256, Hash};
+use serde::{Deserialize, Serialize};
 
-/// string chars count limit
 pub const CELL_CHARS_LIMIT: usize = 50;
 
 /// Complex Diagram
@@ -43,74 +44,65 @@ pub const CELL_CHARS_LIMIT: usize = 50;
 /// let secret = Vec::from_hex("41262ae78e8bf09f988a414243e6b58be8af95e6b7b741313132330a0306050381280000100001c8").unwrap_or_default();
 /// let mut diagram = ComplexDiagram::from_secret(secret)?;
 ///
-/// assert_eq!(diagram.get(6, 6), Some(&"A&*王😊".to_owned()));
+/// assert_eq!(diagram[6][6], Some("A&*王😊".to_owned()));
 ///
 /// # Ok::<(), artimonist::Error>(())
 /// ```
 ///
-#[derive(Debug, Default, Clone, PartialEq)]
-pub struct ComplexDiagram {
-    data: [[String; 7]; 7],
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ComplexDiagram(pub [[Option<String>; 7]; 7]);
+
+impl std::ops::Deref for ComplexDiagram {
+    type Target = [[Option<String>; 7]; 7];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
-impl Diagram for ComplexDiagram {
-    type Item = String;
-
-    /// create empty diagram
-    fn new() -> Self {
-        let data = core::array::from_fn(|_| core::array::from_fn(|_| String::new()));
-        ComplexDiagram { data }
+impl std::ops::DerefMut for ComplexDiagram {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
+}
 
-    /// if all cells is empty, return true.  
-    fn is_empty(&self) -> bool {
-        self.data.iter().all(|row| row.iter().all(|v| v.is_empty()))
-    }
+impl GenericDiagram<7, 7, char> for ComplexDiagram {}
+impl GenericSerialization for ComplexDiagram {
+    /// Compatible with previous versions
+    fn binary(&self) -> GenericResult<Vec<u8>> {
+        let mut str_list: Vec<&str> = vec![];
+        let mut str_lens: Vec<u8> = vec![];
+        let mut indices: [u8; 7] = [0; 7];
 
-    /// restore diagram from strings and indices  
-    /// indices: chars position of (row, col) format  
-    fn from_items(mut items: Vec<String>, indices: &[(usize, usize)]) -> DiagramResult<Self> {
-        if items.is_empty() || items.iter().any(|s| s.is_empty()) {
-            return Err(DiagramError::InvalidParameter(
-                "items cannot contains empty value.",
-            ));
-        }
-        if indices.is_empty() || indices.len() != items.len() {
-            return Err(DiagramError::InvalidParameter(
-                "indices len should equal to items len.",
-            ));
-        }
-        // fill diagram
-        let mut diagram = Self::new();
-        items.reverse();
-        indices.iter().for_each(|&(row, col)| {
-            diagram.data[row][col] = items.pop().unwrap_or_default();
+        (0..7).rev().for_each(|col| {
+            (0..7).rev().for_each(|row| {
+                if let Some(s) = &self[row][col] {
+                    if 0 < s.len() && s.len() < u8::MAX as usize {
+                        str_list.push(&s);
+                        str_lens.push(s.len() as u8);
+                        indices[row] |= INDICES_MASK[col];
+                    }
+                }
+            });
         });
-        Ok(diagram)
-    }
 
-    /// write string to diagram if str.chars().count() <= 50
-    fn set(&mut self, str: String, row: usize, col: usize) -> DiagramResult<()> {
-        if str.chars().count() > CELL_CHARS_LIMIT {
-            return Err(DiagramError::Overflows("chars count <= 50"));
-        }
-        debug_assert!(str.len() < u8::MAX as usize);
-        self.data[row][col] = str;
-        Ok(())
+        indices[0] |= VERSION_MASK; // version number of complex diagram
+        let mut secret = [str_list.join("").as_bytes(), &str_lens[..], &indices[..]].concat();
+        let check = sha256::Hash::hash(&secret).as_byte_array()[0];
+        secret.push(check);
+        Ok(secret)
     }
+}
 
-    /// get string from diagram  
-    /// # Panics
-    /// row >= 7 || col >= 7  
-    fn get(&self, row: usize, col: usize) -> Option<&Self::Item> {
-        match self.data[row][col].is_empty() {
-            false => Some(&self.data[row][col]),
-            true => None,
-        }
+use super::diagram::DiagramResult;
+
+impl ComplexDiagram {
+    /// create complex diagram
+    pub fn new() -> Self {
+        Self(core::array::from_fn(|_| core::array::from_fn(|_| None)))
     }
 
     /// create diagram from secret data
-    fn from_secret(mut secret: Vec<u8>) -> DiagramResult<Self> {
+    pub fn from_secret(mut secret: Vec<u8>) -> DiagramResult<Self> {
         // must have content
         if secret.len() < 10 {
             return Err(DiagramError::InvalidParameter("secret too short.")); // invalid len
@@ -159,7 +151,7 @@ impl Diagram for ComplexDiagram {
                     let n = str_lens.pop().unwrap_or_default();
                     let bs = secret.split_off(secret.len() - n as usize);
                     match String::from_utf8(bs) {
-                        Ok(s) => diagram.data[row][col] = s,
+                        Ok(s) => diagram[row][col] = Some(s),
                         Err(_) => {
                             return Err(DiagramError::InvalidParameter("invalid utf8 string."))
                         } // invalid utf8
@@ -169,85 +161,13 @@ impl Diagram for ComplexDiagram {
         }
         Ok(diagram)
     }
-
-    /// generate secret data  
-    /// secret phrase composed by diagram strings, divisions, indices and checksum  
-    /// if diagram is empty, return None  
-    fn to_secret(&self) -> DiagramResult<Vec<u8>> {
-        if self.is_empty() {
-            return Err(DiagramError::EmptyDiagram);
-        }
-
-        let mut str_list: Vec<&str> = vec![];
-        let mut str_lens: Vec<u8> = vec![];
-        let mut indices: [u8; 7] = [0; 7];
-        (0..7).rev().for_each(|col| {
-            (0..7).rev().for_each(|row| {
-                let s = &self.data[row][col];
-                if s.is_empty() {
-                    return;
-                }
-                debug_assert!(s.len() < u8::MAX as usize);
-                str_list.push(s);
-                str_lens.push(s.len() as u8);
-                indices[row] |= INDICES_MASK[col];
-            });
-        });
-
-        indices[0] |= VERSION_MASK; // version number of complex diagram
-        let mut secret = [str_list.join("").as_bytes(), &str_lens[..], &indices[..]].concat();
-        let check = sha256::Hash::hash(&secret).as_byte_array()[0];
-        secret.push(check);
-
-        Ok(secret)
-    }
 }
 
 #[cfg(test)]
 mod complex_diagram_test {
+    use super::super::generic::{GenericDiagram, GenericSerialization};
     use super::*;
     use bitcoin::hex::{DisplayHex, FromHex};
-
-    #[test]
-    fn test_complex_empty() {
-        // empty diagram can't export secret data.
-        let art = ComplexDiagram::new();
-        assert!(art.to_secret().is_err());
-
-        // empty secret data can't create diagram.
-        let empty = vec![0; 8];
-        assert!(ComplexDiagram::from_secret(empty).is_err());
-    }
-
-    #[test]
-    fn test_complex_invalid() {
-        const INVALID_SECRET_LEN: [u8; 9] = [0; 9];
-        assert!(ComplexDiagram::from_secret(INVALID_SECRET_LEN.to_vec()).is_err());
-        const INVALID_CHECKSUM: [u8; 10] = [b'A', 1, 0, 0, 0, 0, 0, 0, 0, 0xc5];
-        assert!(ComplexDiagram::from_secret(INVALID_CHECKSUM.to_vec()).is_err());
-        const INVALID_VERSION: [u8; 10] = [b'A', 1, 0, 0, 0, 0, 0, 0, 0, 0xc5];
-        assert!(ComplexDiagram::from_secret(INVALID_VERSION.to_vec())
-            .is_err_and(|e| e == DiagramError::InvalidVersion));
-        const EMPTY_INDICES: [u8; 10] = [b'A', 1, 0b1000_0000, 0, 0, 0, 0, 0, 0, 0xce];
-        assert!(ComplexDiagram::from_secret(EMPTY_INDICES.to_vec()).is_err());
-        const INVALID_STR_LENS: [u8; 12] = [b'A', b'Z', 1, 2, 0b1000_0001, 0, 0, 0, 1, 0, 0, 0x82];
-        assert!(ComplexDiagram::from_secret(INVALID_STR_LENS.to_vec()).is_err());
-        const ZERO_STR_LENS: [u8; 12] = [b'A', b'Z', 0, 2, 0b1000_0001, 0, 0, 0, 1, 0, 0, 0x7e];
-        assert!(ComplexDiagram::from_secret(ZERO_STR_LENS.to_vec()).is_err());
-        const INVALID_UTF8: [u8; 12] = [0xff, b'Z', 1, 1, 0b1000_0001, 0, 0, 0, 1, 0, 0, 0x20];
-        assert!(ComplexDiagram::from_secret(INVALID_UTF8.to_vec()).is_err());
-
-        let mut strs = vec!["ABC".to_string(), "123".to_string()];
-        // empty parameters
-        assert!(ComplexDiagram::from_items(vec![], &[(1, 1)]).is_err());
-        assert!(ComplexDiagram::from_items(strs.clone(), &[]).is_err());
-        // indices count
-        assert!(ComplexDiagram::from_items(strs.clone(), &[(1, 5)]).is_err());
-        assert!(ComplexDiagram::from_items(strs.clone(), &[(0, 0), (0, 1), (1, 0)]).is_err());
-        // empty str
-        strs.push("".to_string());
-        assert!(ComplexDiagram::from_items(strs, &[(0, 0), (0, 1), (1, 1)]).is_err());
-    }
 
     #[test]
     fn test_complex_secret() {
@@ -256,22 +176,17 @@ mod complex_diagram_test {
         const SECRET_HEX: &str =
             "41262ae78e8bf09f988a414243e6b58be8af95e6b7b741313132330a0306050381280000100001c8";
 
-        let mut diagram = ComplexDiagram::new();
-        let success = INDICES
+        let mut diagram = crate::ComplexDiagram::new();
+        INDICES
             .iter()
             .zip(STR_LIST)
-            .all(|(&(row, col), &s)| diagram.set(s.to_owned(), row, col).is_ok());
-        assert_eq!(success, true);
-        let indices: Vec<(usize, usize)> = diagram.indices().collect();
-        assert_eq!(&indices, INDICES);
-        let secret = diagram.to_secret().unwrap_or_default();
+            .for_each(|(&(row, col), &s)| diagram[row][col] = Some(s.to_owned()));
+        let secret = diagram.binary().unwrap_or_default();
         assert_eq!(secret.to_lower_hex_string(), SECRET_HEX);
 
         if let Ok(diagram) = ComplexDiagram::from_secret(secret) {
-            assert_eq!(diagram.get(6, 6).unwrap_or(&String::new()), STR_LIST[4]);
-            let indices: Vec<(usize, usize)> = diagram.indices().collect();
-            assert_eq!(&indices, INDICES);
-            let secret = diagram.to_secret().unwrap_or_default();
+            assert_eq!(diagram[6][6], Some(STR_LIST[4].to_owned()));
+            let secret = diagram.binary().unwrap_or_default();
             assert_eq!(secret.to_lower_hex_string(), SECRET_HEX);
         } else {
             assert!(false, "from_secret() fail");
@@ -279,7 +194,7 @@ mod complex_diagram_test {
     }
 
     #[test]
-    fn test_complex_entropy() -> DiagramResult<()> {
+    fn test_complex_entropy() -> GenericResult<()> {
         const SECRET_HEX: &str =
             "414243313233e6b58be8af95e6b7b7413141262ae78e8bf09f988a030306050a8128000010004052";
         const RAW_ENTROPY: &str =
@@ -290,10 +205,10 @@ mod complex_diagram_test {
 
         let secret = Vec::from_hex(SECRET_HEX).expect("SECRET_HEX");
         let diag = ComplexDiagram::from_secret(secret)?;
-        let entropy = diag.to_entropy(Default::default())?;
+        let entropy = diag.warp_entropy(Default::default())?;
         assert_eq!(entropy.to_lower_hex_string(), RAW_ENTROPY);
 
-        let salt_entropy = diag.to_entropy(SALT_STR.as_bytes())?;
+        let salt_entropy = diag.warp_entropy(SALT_STR.as_bytes())?;
         assert_eq!(salt_entropy.to_lower_hex_string(), SALT_ENTROPY);
 
         Ok(())

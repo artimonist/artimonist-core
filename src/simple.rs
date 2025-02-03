@@ -24,7 +24,9 @@
 **/
 use super::diagram::*;
 use super::generic::{GenericDiagram, GenericResult, GenericSerialization};
+use crate::diagram::{DiagramError, INDICES_MASK, VERSION_MASK};
 use bitcoin::hashes::{sha256, Hash};
+use serde::{Deserialize, Serialize};
 
 /// Simple Diagram
 ///
@@ -44,7 +46,7 @@ use bitcoin::hashes::{sha256, Hash};
 /// # Ok::<(), artimonist::Error>(())
 /// ```
 ///
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimpleDiagram(pub [[Option<char>; 7]; 7]);
 
 impl std::ops::Deref for SimpleDiagram {
@@ -63,7 +65,8 @@ impl std::ops::DerefMut for SimpleDiagram {
 
 impl GenericDiagram<7, 7, char> for SimpleDiagram {}
 impl GenericSerialization for SimpleDiagram {
-    fn serialize(&self) -> GenericResult<Vec<u8>> {
+    /// Compatible with previous versions
+    fn binary(&self) -> GenericResult<Vec<u8>> {
         let mut chars = Vec::with_capacity(7 * 7);
         let mut indices = [0; 7];
         (0..7).rev().for_each(|col| {
@@ -83,8 +86,6 @@ impl GenericSerialization for SimpleDiagram {
         Ok(secret)
     }
 }
-
-use crate::diagram::{DiagramError, INDICES_MASK, VERSION_MASK};
 
 impl SimpleDiagram {
     /// restore SimpleDiagram from binary data
@@ -155,12 +156,12 @@ mod simple_diagram_test {
             .iter()
             .zip(CHARS_STR.chars())
             .for_each(|(&(row, col), ch)| art[row][col] = Some(ch));
-        assert_eq!(art.serialize()?.to_lower_hex_string(), SECRET_HEX);
+        assert_eq!(art.binary()?.to_lower_hex_string(), SECRET_HEX);
 
         // from_raw
         let art = SimpleDiagram::deserialize(Vec::from_hex(SECRET_HEX).expect("TEST_SECRET_HEX"))?;
         assert_eq!(art[6][6], Some('😊'));
-        assert_eq!(art.serialize()?.to_lower_hex_string(), SECRET_HEX);
+        assert_eq!(art.binary()?.to_lower_hex_string(), SECRET_HEX);
         Ok(())
     }
 
