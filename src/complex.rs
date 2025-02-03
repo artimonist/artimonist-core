@@ -30,8 +30,6 @@ use super::generic::{GenericDiagram, GenericResult, GenericSerialization};
 use bitcoin::hashes::{sha256, Hash};
 use serde::{Deserialize, Serialize};
 
-pub const CELL_CHARS_LIMIT: usize = 50;
-
 /// Complex Diagram
 ///
 /// Complex diagram contains strings in 7 * 7 grid cells.
@@ -76,8 +74,8 @@ impl GenericSerialization for ComplexDiagram {
         (0..7).rev().for_each(|col| {
             (0..7).rev().for_each(|row| {
                 if let Some(s) = &self[row][col] {
-                    if 0 < s.len() && s.len() < u8::MAX as usize {
-                        str_list.push(&s);
+                    if !s.is_empty() && s.len() < u8::MAX as usize {
+                        str_list.push(s);
                         str_lens.push(s.len() as u8);
                         indices[row] |= INDICES_MASK[col];
                     }
@@ -96,6 +94,9 @@ impl GenericSerialization for ComplexDiagram {
 use super::diagram::DiagramResult;
 
 impl ComplexDiagram {
+    /// cell chars count limit
+    pub const CELL_CHARS_LIMIT: usize = 50;
+
     /// create complex diagram
     pub fn new() -> Self {
         Self(core::array::from_fn(|_| core::array::from_fn(|_| None)))

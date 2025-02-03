@@ -88,6 +88,11 @@ impl GenericSerialization for SimpleDiagram {
 }
 
 impl SimpleDiagram {
+    /// create simple diagram
+    pub fn new() -> Self {
+        Self([[None; 7]; 7])
+    }
+
     /// restore SimpleDiagram from binary data
     pub fn deserialize(mut secret: Vec<u8>) -> DiagramResult<SimpleDiagram> {
         // must have content
