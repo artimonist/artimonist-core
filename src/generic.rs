@@ -4,14 +4,10 @@ use serde::Serialize;
 use std::fmt::Debug;
 use thiserror::Error;
 
-pub type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
+/// type alias for any diagram
+pub type Diagram<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
 
-pub trait GenericSerialization {
-    /// serialize diagram to binary data
-    fn to_bytes(&self) -> GenericResult<Vec<u8>>;
-}
-
-/// Generic Diagram
+/// Generic Diagram  
 ///   diagram implementation for any matrix
 ///
 /// # Parameters
@@ -19,11 +15,9 @@ pub trait GenericSerialization {
 ///   W: matrix weight
 ///   T: matrix item
 ///
-pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize>:
-    GenericSerialization
-{
-    // /// serialize diagram
-    // fn serialize(&self) -> GenericResult<Vec<u8>>;
+pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
+    /// serialize diagram to binary data
+    fn to_bytes(&self) -> GenericResult<Vec<u8>>;
 
     /// generate warp entropy
     ///
@@ -59,8 +53,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize>:
     }
 }
 
-impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {}
-impl<const H: usize, const W: usize, T: Serialize> GenericSerialization for Matrix<H, W, T> {
+impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Diagram<H, W, T> {
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
@@ -83,13 +76,13 @@ impl<const H: usize, const W: usize, T: Serialize> GenericSerialization for Matr
 }
 
 /// transform vector to generic diagram
-pub trait VecDiagram<T: Serialize> {
+pub trait Vector<T: Serialize> {
     /// transform vector to matrix
-    fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<H, W, T>;
+    fn to_diagram<const H: usize, const W: usize>(self) -> Diagram<H, W, T>;
 }
 
-impl<T: Serialize> VecDiagram<T> for Vec<Option<T>> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+impl<T: Serialize> Vector<T> for Vec<Option<T>> {
+    fn to_diagram<const H: usize, const W: usize>(mut self) -> Diagram<H, W, T> {
         self.resize_with(H * W, || None);
         self.reverse();
         core::array::from_fn(|_| core::array::from_fn(|_| self.pop().unwrap()))
@@ -148,7 +141,9 @@ mod generic_test {
         {
             // VECTOR equal to MATRIX
             let vector = VECTOR.to_vec();
-            let master = vector.to_matrix::<3, 5>().bip32_master("test".as_bytes())?;
+            let master = vector
+                .to_diagram::<3, 5>()
+                .bip32_master("test".as_bytes())?;
             assert_eq!(master.to_string(), XPRIV);
         }
         {
@@ -160,7 +155,7 @@ mod generic_test {
             ];
             let vector: Vec<Option<u8>> =
                 [1, 2, 3, 4, 5, 6, 7, 8, 9].into_iter().map(Some).collect();
-            let matrix = vector.to_matrix::<3, 3>();
+            let matrix = vector.to_diagram::<3, 3>();
             assert_eq!(matrix, MATRIX);
         }
         Ok(())
@@ -174,7 +169,7 @@ mod generic_test {
             [None, None, Some(1), None, None],
         ];
         let buf = rmp_serde::to_vec(&MATRIX)?;
-        let mx: Matrix<3, 5, u8> = rmp_serde::from_slice(&buf)?;
+        let mx: Diagram<3, 5, u8> = rmp_serde::from_slice(&buf)?;
         assert_eq!(mx, MATRIX);
         Ok(())
     }

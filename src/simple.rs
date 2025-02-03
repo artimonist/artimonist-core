@@ -22,7 +22,7 @@
  *      0b0xxx_xxxx
  *      x bits indices string position in diagram.
 **/
-use super::generic::{GenericDiagram, GenericResult, GenericSerialization};
+use super::generic::{GenericDiagram, GenericResult};
 use super::macros::ImpDeref;
 use bitcoin::hashes::{sha256, Hash};
 use serde::{Deserialize, Serialize};
@@ -49,8 +49,7 @@ use serde::{Deserialize, Serialize};
 pub struct SimpleDiagram(pub [[Option<char>; 7]; 7]);
 ImpDeref!(SimpleDiagram, [[Option<char>; 7]; 7]);
 
-impl GenericDiagram<7, 7, char> for SimpleDiagram {}
-impl GenericSerialization for SimpleDiagram {
+impl GenericDiagram<7, 7, char> for SimpleDiagram {
     /// Compatible with previous versions
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut chars = Vec::with_capacity(7 * 7);
