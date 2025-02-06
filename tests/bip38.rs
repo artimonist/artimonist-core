@@ -42,32 +42,28 @@ const PRE_NON_EC: [u8; 2] = [0x01, 0x42];
 const PRE_EC: [u8; 2] = [0x01, 0x43];
 
 impl Encryptor {
-    /// The ecb model is not safe, removed
-    fn aes_encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-        use crypto::buffer::{RefReadBuffer, RefWriteBuffer};
-        use crypto::{aes::KeySize::KeySize256, blockmodes::NoPadding};
+    fn aes_encrypt(key: &[u8; 32], data: &[u8; 16]) -> Vec<u8> {
+        use aes::cipher::{generic_array::GenericArray, BlockEncrypt, KeyInit};
 
-        let mut cipher = crypto::aes::ecb_encryptor(KeySize256, key, NoPadding);
-        let mut out = vec![0; data.len()];
-        let _ = cipher.encrypt(
-            &mut RefReadBuffer::new(data),
-            &mut RefWriteBuffer::new(&mut out),
-            true,
-        ); // ignore error of: InvalidLength, InvalidPadding.
-        out
+        let key = GenericArray::from(*key);
+        let mut block = GenericArray::from(*data);
+
+        let cipher = aes::Aes256::new(&key);
+        cipher.encrypt_block(&mut block);
+
+        block.to_vec()
     }
 
-    fn aes_decrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-        use crypto::buffer::{RefReadBuffer, RefWriteBuffer};
-        use crypto::{aes::KeySize::KeySize256, blockmodes::NoPadding};
-        let mut cipher = crypto::aes::ecb_decryptor(KeySize256, key, NoPadding);
-        let mut out = vec![0; data.len()];
-        let _ = cipher.decrypt(
-            &mut RefReadBuffer::new(data),
-            &mut RefWriteBuffer::new(&mut out),
-            true,
-        );
-        out
+    fn aes_decrypt(key: &[u8; 32], data: &[u8; 16]) -> Vec<u8> {
+        use aes::cipher::{generic_array::GenericArray, BlockDecrypt, KeyInit};
+
+        let key = GenericArray::from(*key);
+        let mut block = GenericArray::from(*data);
+
+        let cipher = aes::Aes256::new(&key);
+        cipher.decrypt_block(&mut block);
+
+        block.to_vec()
     }
 
     /// encrypt private key
@@ -89,8 +85,8 @@ impl Encryptor {
             let half: Vec<u8> = (0..32)
                 .map(|i| scryptor[i] ^ private_key.inner.secret_bytes()[i])
                 .collect();
-            let o1 = Self::aes_encrypt(&scryptor[32..], &half[..16]);
-            let o2 = Self::aes_encrypt(&scryptor[32..], &half[16..]);
+            let o1 = Self::aes_encrypt(&scryptor[32..].try_into()?, &half[..16].try_into()?);
+            let o2 = Self::aes_encrypt(&scryptor[32..].try_into()?, &half[16..].try_into()?);
             [o1, o2].concat()
         };
         let buffer = [
@@ -126,8 +122,10 @@ impl Encryptor {
         }
         let private_key = {
             let data = {
-                let mut o1 = Self::aes_decrypt(&scrypt_key[32..], &secret[7..23]);
-                let mut o2 = Self::aes_decrypt(&scrypt_key[32..], &secret[23..39]);
+                let mut o1 =
+                    Self::aes_decrypt(&scrypt_key[32..].try_into()?, &secret[7..23].try_into()?);
+                let mut o2 =
+                    Self::aes_decrypt(&scrypt_key[32..].try_into()?, &secret[23..39].try_into()?);
                 (0..16).for_each(|i| {
                     o1[i] ^= scrypt_key[i];
                     o2[i] ^= scrypt_key[i + 16];
@@ -155,7 +153,7 @@ impl Encryptor {
 }
 
 /// Encrypt error
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum EncryptError {
     /// Invalid encrypted wif
     #[error("invalid secret key")]
@@ -172,6 +170,9 @@ pub enum EncryptError {
     /// Secp error
     #[error("secp error")]
     SecpError(#[from] secp256k1::Error),
+    /// TryFromError
+    #[error("try from error")]
+    TryFromError(#[from] core::array::TryFromSliceError),
 }
 
 pub(crate) type EncryptResult<T = ()> = Result<T, EncryptError>;

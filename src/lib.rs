@@ -34,6 +34,7 @@
 //! |  |🍦|  |  |  |🌭|  |
 //! |  |  |  |  |  |  |  |
 //!
+pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;
 pub(crate) mod bip85;
@@ -54,6 +55,8 @@ pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use complex::ComplexDiagram;
 pub use generic::{GenericDiagram, Matrix, ToMatrix};
 pub use simple::SimpleDiagram;
+
+pub use bip38::Encryptor;
 
 ///
 /// Global error definition
