@@ -17,14 +17,12 @@ use unicode_normalization::{self, UnicodeNormalization};
 /// ### Examples
 /// ```
 /// # use artimonist::Encryptor;
-/// assert_eq!(Encryptor::encrypt_wif("L3zftSdXx3wcHktnZ295fTmhd6mCgFRykQruWXdRj39BgbLPTzUz", "🍔🍟🌭🍦"),
-///     Ok("6PYK94C6t87WJp87F6njuTinyHJAWRvApjXybsy6CyBxor1PRacypM4EXy".to_owned()));
+/// assert_eq!(Encryptor::encrypt_wif("L3zftSdXx3wcHktnZ295fTmhd6mCgFRykQruWXdRj39BgbLPTzUz", "🍔🍟🌭🍦").unwrap(),
+///     "6PYK94C6t87WJp87F6njuTinyHJAWRvApjXybsy6CyBxor1PRacypM4EXy".to_owned());
 ///
-/// assert_eq!(Encryptor::decrypt_wif("6PYK94C6t87WJp87F6njuTinyHJAWRvApjXybsy6CyBxor1PRacypM4EXy", "🍔🍟🌭🍦"),
-///     Ok("L3zftSdXx3wcHktnZ295fTmhd6mCgFRykQruWXdRj39BgbLPTzUz".to_owned()));
+/// assert_eq!(Encryptor::decrypt_wif("6PYK94C6t87WJp87F6njuTinyHJAWRvApjXybsy6CyBxor1PRacypM4EXy", "🍔🍟🌭🍦").unwrap(),
+///     "L3zftSdXx3wcHktnZ295fTmhd6mCgFRykQruWXdRj39BgbLPTzUz".to_owned());
 /// ```
-///
-
 // # Reference
 // [1] - [BIP38 spec](https://bips.dev/38/)
 // [2] - [Ref crate](https://crates.io/crates/bip38)
@@ -44,33 +42,28 @@ const PRE_NON_EC: [u8; 2] = [0x01, 0x42];
 const PRE_EC: [u8; 2] = [0x01, 0x43];
 
 impl Encryptor {
-    fn aes_encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-        use crypto::buffer::{RefReadBuffer, RefWriteBuffer};
-        use crypto::{aes::KeySize::KeySize256, blockmodes::NoPadding};
+    fn aes_encrypt(key: &[u8; 32], data: &[u8; 16]) -> Vec<u8> {
+        use aes::cipher::{generic_array::GenericArray, BlockEncrypt, KeyInit};
 
-        let mut cipher = crypto::aes::ecb_encryptor(KeySize256, key, NoPadding);
-        let mut out = Vec::with_capacity(data.len());
-        out.resize(data.len(), 0);
-        let _ = cipher.encrypt(
-            &mut RefReadBuffer::new(&data[..]),
-            &mut RefWriteBuffer::new(&mut out),
-            true,
-        ); // ignore error of: InvalidLength, InvalidPadding.
-        out
+        let key = GenericArray::from(*key);
+        let mut block = GenericArray::from(*data);
+
+        let cipher = aes::Aes256::new(&key);
+        cipher.encrypt_block(&mut block);
+
+        block.to_vec()
     }
 
-    fn aes_decrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-        use crypto::buffer::{RefReadBuffer, RefWriteBuffer};
-        use crypto::{aes::KeySize::KeySize256, blockmodes::NoPadding};
-        let mut cipher = crypto::aes::ecb_decryptor(KeySize256, key, NoPadding);
-        let mut out = Vec::with_capacity(data.len());
-        out.resize(data.len(), 0);
-        let _ = cipher.decrypt(
-            &mut RefReadBuffer::new(&data[..]),
-            &mut RefWriteBuffer::new(&mut out),
-            true,
-        );
-        out
+    fn aes_decrypt(key: &[u8; 32], data: &[u8; 16]) -> Vec<u8> {
+        use aes::cipher::{generic_array::GenericArray, BlockDecrypt, KeyInit};
+
+        let key = GenericArray::from(*key);
+        let mut block = GenericArray::from(*data);
+
+        let cipher = aes::Aes256::new(&key);
+        cipher.decrypt_block(&mut block);
+
+        block.to_vec()
     }
 
     /// encrypt private key
@@ -79,21 +72,21 @@ impl Encryptor {
         let salt = {
             // checksum
             let pub_key = private_key.public_key(&Secp256k1::default());
-            let address = Address::p2pkh(&pub_key, NetworkKind::Main).to_string();
+            let address = Address::p2pkh(pub_key, NetworkKind::Main).to_string();
             sha256::Hash::hash(address.as_bytes()).hash_again()[..4].to_vec()
         };
         let mut scryptor = [0; 64];
         {
-            let param = crypto::scrypt::ScryptParams::new(14, 8, 8);
             let nfc = pwd.nfc().collect::<String>();
-            crypto::scrypt::scrypt(nfc.as_bytes(), &salt, &param, &mut scryptor);
+            let param = scrypt::Params::new(14, 8, 8, 64).unwrap();
+            scrypt::scrypt(nfc.as_bytes(), &salt, &param, &mut scryptor).unwrap();
         }
         let data = {
             let half: Vec<u8> = (0..32)
                 .map(|i| scryptor[i] ^ private_key.inner.secret_bytes()[i])
                 .collect();
-            let o1 = Self::aes_encrypt(&scryptor[32..], &half[..16]);
-            let o2 = Self::aes_encrypt(&scryptor[32..], &half[16..]);
+            let o1 = Self::aes_encrypt(&scryptor[32..].try_into()?, &half[..16].try_into()?);
+            let o2 = Self::aes_encrypt(&scryptor[32..].try_into()?, &half[16..].try_into()?);
             [o1, o2].concat()
         };
         let buffer = [
@@ -112,8 +105,8 @@ impl Encryptor {
             return Err(EncryptError::InvalidSecret);
         }
         match base58::decode_check(secret)? {
-            mut vs if vs[..2] == PRE_NON_EC => Self::decrypt_non_ec(&mut vs, pwd),
-            vs if vs[..2] == PRE_EC => Err(EncryptError::UnSupportedType),
+            vs if vs[..2] == PRE_NON_EC => Self::decrypt_non_ec(&vs, pwd),
+            vs if vs[..2] == PRE_EC => Err(EncryptError::UnSupportedError),
             _ => Err(EncryptError::InvalidSecret),
         }
     }
@@ -123,14 +116,16 @@ impl Encryptor {
 
         let mut scrypt_key = [0; 64];
         {
-            let param = crypto::scrypt::ScryptParams::new(14, 8, 8);
             let nfc = pwd.nfc().collect::<String>();
-            crypto::scrypt::scrypt(nfc.as_bytes(), &secret[3..7], &param, &mut scrypt_key);
+            let param = scrypt::Params::new(14, 8, 8, 64).unwrap();
+            scrypt::scrypt(nfc.as_bytes(), &secret[3..7], &param, &mut scrypt_key).unwrap();
         }
         let private_key = {
             let data = {
-                let mut o1 = Self::aes_decrypt(&scrypt_key[32..], &secret[7..23]);
-                let mut o2 = Self::aes_decrypt(&scrypt_key[32..], &secret[23..39]);
+                let mut o1 =
+                    Self::aes_decrypt(&scrypt_key[32..].try_into()?, &secret[7..23].try_into()?);
+                let mut o2 =
+                    Self::aes_decrypt(&scrypt_key[32..].try_into()?, &secret[23..39].try_into()?);
                 (0..16).for_each(|i| {
                     o1[i] ^= scrypt_key[i];
                     o2[i] ^= scrypt_key[i + 16];
@@ -146,7 +141,7 @@ impl Encryptor {
         {
             let checksum = {
                 let pub_key = private_key.public_key(&Secp256k1::default());
-                let address = Address::p2pkh(&pub_key, NetworkKind::Main).to_string();
+                let address = Address::p2pkh(pub_key, NetworkKind::Main).to_string();
                 &sha256::Hash::hash(address.as_bytes()).hash_again()[..4]
             };
             if checksum != &secret[3..7] {
@@ -158,14 +153,14 @@ impl Encryptor {
 }
 
 /// Encrypt error
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum EncryptError {
     /// Invalid encrypted wif
     #[error("invalid secret key")]
     InvalidSecret,
     /// EC mode not supported
     #[error("unsupported secret key")]
-    UnSupportedType,
+    UnSupportedError,
     /// Invalid wif
     #[error("invalid wif")]
     InvalidWif(#[from] FromWifError),
@@ -175,9 +170,11 @@ pub enum EncryptError {
     /// Secp error
     #[error("secp error")]
     SecpError(#[from] secp256k1::Error),
+    /// TryFromError
+    #[error("try from error")]
+    TryFromError(#[from] core::array::TryFromSliceError),
 }
-
-pub(crate) type EncryptResult<T = ()> = Result<T, EncryptError>;
+pub type EncryptResult<T = ()> = Result<T, EncryptError>;
 
 #[cfg(test)]
 mod bip38_test {

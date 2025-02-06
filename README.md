@@ -6,13 +6,14 @@
   <p>
     <a href="https://crates.io/crates/artimonist"><img alt="Crate Info" src="https://img.shields.io/crates/v/artimonist.svg"/></a>
     <a href="https://docs.rs/artimonist"><img alt="API Docs" src="https://img.shields.io/badge/docs.rs-artimonist-green"/></a>
-    <a href="https://github.com/artimonist/artimonist-cli"><img alt="cli" src="https://img.shields.io/badge/artimonist--cli-0.2.0-blue.svg?logo=github"></a>
+    <a href="https://github.com/artimonist/artimonist-cli"><img alt="cli" src="https://img.shields.io/badge/artimonist--cli-gray.svg?logo=github"></a>
+    <a href="https://www.artimonist.org/simple.htm"><img alt="web" src="https://img.shields.io/badge/www.artimonist.org-gray?logo=html5"></a>
   </p>
 </div>
 
 [Documentation](https://docs.rs/artimonist/)
 
-### Example
+## Example
 ```
 let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
 let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
@@ -55,7 +56,7 @@ let pwd = master.bip85_pwd(Password::Emoji, 20, 0)?;
 `🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗`
   
   
-### Entropy Evaluation  
+## Entropy Evaluation  
 mnemonic 12 words entropy = (2048)¹² = (2¹¹)¹² = 2¹³²  
 mnemonic 24 words entropy = (2048)²⁴ = (2¹¹)²⁴ = 2²⁶⁴  
 _(In fact, because the tail of 4bits/8bits is a checksum, the real entropy is 2¹²⁸/2²⁵⁶.)_
@@ -96,4 +97,5 @@ and **12 unicode characters provide the equivalent encryption strength of 24 mne
 | 21 | 11 | 2²⁴⁷ |
 | 24 | 12 | 2²⁶⁹ |
 
-**ComplexDiagram can be filled with 50 unicode characters in a cell, providing better encryption strength.**
+**ComplexDiagram can be filled with 50 unicode characters in a cell, providing better encryption strength.**  
+_(In fact, higher entropy values are meaningless because the length of the private key is 256 bits.)_ 

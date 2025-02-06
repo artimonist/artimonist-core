@@ -17,7 +17,7 @@
 //! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
 //!
-//! assert_eq!(master.bip85_wif(0)?, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! assert_eq!(master.bip85_wif(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
 //! assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
 //! assert_eq!(master.bip85_pwd(Password::Emoji, 20, 0)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
 //!
@@ -34,6 +34,7 @@
 //! |  |🍦|  |  |  |🌭|  |
 //! |  |  |  |  |  |  |  |
 //!
+pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;
 pub(crate) mod bip85;
@@ -45,19 +46,22 @@ pub(crate) mod password;
 pub(crate) mod simple;
 pub(crate) mod words;
 
+#[doc(no_inline)]
+pub use bitcoin::{self, bip32::Xpriv};
+
+pub use bip38::Encryptor;
 pub use bip39::Derivation as BIP39;
 pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
-#[doc(no_inline)]
-pub use bitcoin::{self, bip32::Xpriv};
 pub use complex::ComplexDiagram;
-pub use generic::{Diagram, GenericDiagram, Vector};
+pub use generic::{GenericDiagram, Matrix, ToMatrix};
 pub use simple::SimpleDiagram;
 
 ///
 /// Global error definition
 ///
 pub mod error {
+    pub use super::bip38::EncryptError as Bip38Error;
     pub use super::bip85::Bip85Error;
     pub use super::bitcoin::bip32::Error as Bip32Error;
     pub use super::generic::GenericError;
@@ -69,6 +73,9 @@ pub mod error {
         /// Bip85 Error
         #[error("bip85 error")]
         Bip85Error(#[from] Bip85Error),
+        /// Bip38 Error
+        #[error("bip38 error")]
+        Bip38Error(#[from] Bip38Error),
         /// Bip32 Error
         #[error("bip32 error")]
         Bip32Error(#[from] Bip32Error),
@@ -80,5 +87,4 @@ pub mod error {
     /// Artimonist Result
     pub type ArtResult<T = ()> = Result<T, Error>;
 }
-
 pub use error::Error;
