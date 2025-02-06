@@ -1,4 +1,5 @@
 /// impl Deref for wrapper type struct T(U)
+#[allow(unused)]
 macro_rules! ImpDeref {
     ($t: ty, $o: ty) => {
         impl std::ops::Deref for $t {
@@ -16,6 +17,7 @@ macro_rules! ImpDeref {
 }
 
 /// impl From for wrapper type struct T(U)
+#[allow(unused)]
 macro_rules! ImpFrom {
     ($t: ty, $o: ty) => {
         impl From<$o> for $t {
@@ -32,6 +34,7 @@ macro_rules! ImpFrom {
 }
 
 /// impl Display for wrapper type struct T(U)
+#[allow(unused)]
 macro_rules! ImpDisplay {
     ($t: ty) => {
         impl std::fmt::Display for $t {
@@ -44,6 +47,7 @@ macro_rules! ImpDisplay {
 }
 
 /// impl PartialEq for wrapper type struct T(U)
+#[allow(unused)]
 macro_rules! ImpPartialEq {
     ($t: ty, $o: ty) => {
         impl PartialEq<&$o> for $t {
@@ -55,7 +59,11 @@ macro_rules! ImpPartialEq {
     };
 }
 
+#[allow(unused)]
 pub(crate) use ImpDeref;
+#[allow(unused)]
 pub(crate) use ImpDisplay;
+#[allow(unused)]
 pub(crate) use ImpFrom;
+#[allow(unused)]
 pub(crate) use ImpPartialEq;

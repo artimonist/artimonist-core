@@ -3,8 +3,9 @@ use bitcoin::{
     bip32::{ChainCode, ChildNumber, Xpriv},
     hashes::{hmac, sha256, sha512, Hash, HashEngine},
     hex::DisplayHex,
+    key::{Secp256k1, UncompressedPublicKeyError},
     secp256k1::SecretKey,
-    NetworkKind,
+    Address, CompressedPublicKey, NetworkKind,
 };
 use std::str::FromStr;
 use thiserror::Error;
@@ -22,7 +23,7 @@ use thiserror::Error;
 ///
 /// let master = Xpriv::from_str("xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K")?;
 ///
-/// assert_eq!(master.bip85_wif(3)?, "L43Bwws5GvHAtct3RqBg5A3JbJmoLrLGohLWDyizaXwh7ucSH6xd");
+/// assert_eq!(master.bip85_wif(3)?.pk, "L43Bwws5GvHAtct3RqBg5A3JbJmoLrLGohLWDyizaXwh7ucSH6xd");
 /// assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K4AAZnirHuLg8Bq1Q8ozezrJjhyYhF2ZJqDC5qbs1XMCggai5xFrgabXtyyERCAS4k6tiKbe42PRYPP32BN9xgxPP1rv7tSv".to_owned());
 /// assert_eq!(master.bip85_pwd(Password::Distinct, 28, 50)?, "1bJc8dXiPh#&q$qHR$SBNiPxKBfU");
 /// assert_eq!(master.bip85_pwd(Password::Emoji, 20, 100)?, "⏰🍟☕👍🎁🍉🔑👍💪🚗🎈🎄🎄🏆🍦👽🐵🍕🔒🍦");
@@ -121,7 +122,12 @@ impl Derivation for Xpriv {
         let path = format!("m/83696968'/2'/{index}'");
         let entropy = bip85_derive(self, &path)?;
         let priv_key = bitcoin::PrivateKey::from_slice(&entropy[..32], NetworkKind::Main)?;
-        Ok(priv_key.to_wif().into())
+        let pub_key = CompressedPublicKey::from_private_key(&Secp256k1::default(), &priv_key)?;
+        let addr = Address::p2shwpkh(&pub_key, NetworkKind::Main);
+        Ok(Wif {
+            pk: priv_key.to_wif(),
+            addr: addr.to_string(),
+        })
     }
 
     fn bip85_xpriv(&self, index: u32) -> Bip85Result {
@@ -166,12 +172,14 @@ pub enum Bip85Error {
     /// Secp error
     #[error("runtime error")]
     RuntimeError(#[from] bitcoin::secp256k1::Error),
-    /// hex parse error
+    /// Hex parse error
     #[error("hex error")]
     HexError(#[from] bitcoin::hex::HexToArrayError),
+    /// Address error
+    #[error("address error")]
+    AddressError(#[from] UncompressedPublicKeyError),
 }
-
-pub(crate) type Bip85Result<T = String> = Result<T, Bip85Error>;
+pub type Bip85Result<T = String> = Result<T, Bip85Error>;
 
 #[cfg(test)]
 mod bip85_test {
@@ -206,7 +214,7 @@ mod bip85_test {
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         const DERIVED_WIF: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
         let master = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-        let priv_key: String = master.bip85_wif(0)?.into();
+        let priv_key: String = master.bip85_wif(0)?.pk;
         assert_eq!(priv_key, DERIVED_WIF);
         Ok(())
     }
@@ -277,32 +285,13 @@ mod bip85_test {
     }
 }
 
-use super::macros::{ImpDeref, ImpDisplay, ImpFrom, ImpPartialEq};
+// use super::macros::{ImpDeref, ImpDisplay, ImpFrom, ImpPartialEq};
 
 /// String wrapper for extra functions
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Wif(pub String);
-
-ImpDeref!(Wif, str);
-ImpPartialEq!(Wif, str);
-ImpFrom!(Wif, String);
-ImpDisplay!(Wif);
-
-impl Wif {
-    /// Extra P2SH-P2WPKH address from WIF
-    /// return (address, wif) format
-    pub fn extra_address(self) -> (String, String) {
-        use bitcoin::{
-            secp256k1::Secp256k1, Address, CompressedPublicKey, NetworkKind, PrivateKey,
-        };
-        let addr = Address::p2shwpkh(
-            &CompressedPublicKey::from_private_key(
-                &Secp256k1::default(),
-                &PrivateKey::from_wif(&self.0).unwrap(),
-            )
-            .unwrap(),
-            NetworkKind::Main,
-        );
-        (addr.to_string(), self.0)
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Wif {
+    /// Private key
+    pub pk: String,
+    /// Address
+    pub addr: String,
 }
