@@ -80,7 +80,7 @@ mod pre_test_encrypt {
         println!("source: {:?}", source.to_lower_hex_string());
         println!("source: {:?}", String::from_utf8(source).expect("utf8"));
 
-        assert!(false);
+        // assert!(false);
     }
 
     #[test]
@@ -102,8 +102,6 @@ mod pre_test_encrypt {
         // And decrypt it back
         cipher.decrypt_block(&mut block);
         assert_eq!(block, block_copy);
-
-        assert!(false);
     }
 
     #[test]
