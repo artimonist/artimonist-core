@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use thiserror::Error;
 
 /// type alias for any diagram
-pub type Diagram<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
+pub type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
 
 /// Generic Diagram  
 ///   diagram implementation for any matrix
@@ -53,7 +53,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     }
 }
 
-impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Diagram<H, W, T> {
+impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
@@ -75,20 +75,6 @@ impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for D
     }
 }
 
-/// transform vector to generic diagram
-pub trait Vector<T: Serialize> {
-    /// transform vector to matrix
-    fn to_diagram<const H: usize, const W: usize>(self) -> Diagram<H, W, T>;
-}
-
-impl<T: Serialize> Vector<T> for Vec<Option<T>> {
-    fn to_diagram<const H: usize, const W: usize>(mut self) -> Diagram<H, W, T> {
-        self.resize_with(H * W, || None);
-        self.reverse();
-        core::array::from_fn(|_| core::array::from_fn(|_| self.pop().unwrap()))
-    }
-}
-
 /// GenericError
 #[derive(Error, Debug)]
 pub enum GenericError {
@@ -104,6 +90,35 @@ pub enum GenericError {
 }
 /// GenericResult
 pub type GenericResult<T = ()> = Result<T, GenericError>;
+
+/// transform to generic diagram
+pub trait ToMatrix<T> {
+    /// transform to matrix
+    fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<H, W, T>;
+}
+
+impl<T> ToMatrix<T> for Vec<Option<T>> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+        self.resize_with(H * W, || None);
+        self.reverse();
+        core::array::from_fn(|_| core::array::from_fn(|_| self.pop().unwrap()))
+    }
+}
+
+impl<T: std::fmt::Debug> ToMatrix<T> for Vec<Vec<Option<T>>> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+        self.resize_with(H, || [const { None }; W].into_iter().collect());
+        self.into_iter()
+            .map(|mut r| {
+                r.resize_with(W, || None);
+                r.try_into().unwrap()
+            })
+            .take(H)
+            .collect::<Vec<[Option<T>; W]>>()
+            .try_into()
+            .unwrap()
+    }
+}
 
 #[cfg(test)]
 mod generic_test {
@@ -141,9 +156,7 @@ mod generic_test {
         {
             // VECTOR equal to MATRIX
             let vector = VECTOR.to_vec();
-            let master = vector
-                .to_diagram::<3, 5>()
-                .bip32_master("test".as_bytes())?;
+            let master = vector.to_matrix::<3, 5>().bip32_master("test".as_bytes())?;
             assert_eq!(master.to_string(), XPRIV);
         }
         {
@@ -155,7 +168,7 @@ mod generic_test {
             ];
             let vector: Vec<Option<u8>> =
                 [1, 2, 3, 4, 5, 6, 7, 8, 9].into_iter().map(Some).collect();
-            let matrix = vector.to_diagram::<3, 3>();
+            let matrix = vector.to_matrix::<3, 3>();
             assert_eq!(matrix, MATRIX);
         }
         Ok(())
@@ -169,7 +182,7 @@ mod generic_test {
             [None, None, Some(1), None, None],
         ];
         let buf = rmp_serde::to_vec(&MATRIX)?;
-        let mx: Diagram<3, 5, u8> = rmp_serde::from_slice(&buf)?;
+        let mx: Matrix<3, 5, u8> = rmp_serde::from_slice(&buf)?;
         assert_eq!(mx, MATRIX);
         Ok(())
     }

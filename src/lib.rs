@@ -45,13 +45,14 @@ pub(crate) mod password;
 pub(crate) mod simple;
 pub(crate) mod words;
 
+#[doc(no_inline)]
+pub use bitcoin::{self, bip32::Xpriv};
+
 pub use bip39::Derivation as BIP39;
 pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
-#[doc(no_inline)]
-pub use bitcoin::{self, bip32::Xpriv};
 pub use complex::ComplexDiagram;
-pub use generic::{Diagram, GenericDiagram, Vector};
+pub use generic::{GenericDiagram, Matrix, ToMatrix};
 pub use simple::SimpleDiagram;
 
 ///
@@ -80,5 +81,4 @@ pub mod error {
     /// Artimonist Result
     pub type ArtResult<T = ()> = Result<T, Error>;
 }
-
 pub use error::Error;
