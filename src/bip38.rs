@@ -3,7 +3,7 @@ use bitcoin::{
     hashes::{sha256, Hash},
     key::{FromWifError, Secp256k1},
     secp256k1::{self, SecretKey},
-    Address, NetworkKind, PrivateKey,
+    Address, PrivateKey,
 };
 use thiserror::Error;
 use unicode_normalization::{self, UnicodeNormalization};
@@ -72,7 +72,7 @@ impl Encryptor {
         let salt = {
             // checksum
             let pub_key = private_key.public_key(&Secp256k1::default());
-            let address = Address::p2pkh(pub_key, NetworkKind::Main).to_string();
+            let address = Address::p2pkh(pub_key, crate::NETWORK).to_string();
             sha256::Hash::hash(address.as_bytes()).hash_again()[..4].to_vec()
         };
         let mut scryptor = [0; 64];
@@ -134,14 +134,14 @@ impl Encryptor {
             };
             PrivateKey {
                 compressed: (secret[2] & 0x20) == 0x20,
-                network: NetworkKind::Main,
+                network: crate::NETWORK,
                 inner: SecretKey::from_slice(&data)?,
             }
         };
         {
             let checksum = {
                 let pub_key = private_key.public_key(&Secp256k1::default());
-                let address = Address::p2pkh(pub_key, NetworkKind::Main).to_string();
+                let address = Address::p2pkh(pub_key, crate::NETWORK).to_string();
                 &sha256::Hash::hash(address.as_bytes()).hash_again()[..4]
             };
             if checksum != &secret[3..7] {

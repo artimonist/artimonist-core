@@ -34,6 +34,13 @@
 //! |  |🍦|  |  |  |🌭|  |
 //! |  |  |  |  |  |  |  |
 //!
+
+/// Network Kind
+#[cfg(not(feature = "test"))]
+pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Main;
+#[cfg(feature = "test")]
+pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Test;
+
 pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;

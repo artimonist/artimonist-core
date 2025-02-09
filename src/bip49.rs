@@ -1,7 +1,7 @@
 use bitcoin::{
     bip32::{self, DerivationPath, Xpriv, Xpub},
     key::Secp256k1,
-    Address, CompressedPublicKey, NetworkKind,
+    Address, CompressedPublicKey,
 };
 use std::str::FromStr;
 
@@ -54,7 +54,7 @@ impl Derivation for Xpriv {
         let xpriv = self.derive_priv(&secp, &DerivationPath::from_str(&path)?)?;
         let private_key = xpriv.to_priv();
         let pub_key = CompressedPublicKey::from_private_key(&secp, &private_key).expect("pub_key");
-        let address = Address::p2shwpkh(&pub_key, NetworkKind::Main);
+        let address = Address::p2shwpkh(&pub_key, crate::NETWORK);
         Ok((address.to_string(), private_key.to_wif()))
     }
 }
@@ -90,7 +90,7 @@ mod bip49_test {
           "ypub6XS98vw18cwD1naXGcdexGjtqVznZP2UbgkeCBNAkGpd7j7MEZLGbuwuyfCAstNRCLEA8P2FBG9XpLstG4ubGn3hQAKsnV7j2CnEBsCWuAW"],
         ];
         for x in TEST_DATA {
-            let master = Xpriv::new_master(NetworkKind::Main, &Vec::from_hex(x[0]).expect("seed"))?;
+            let master = Xpriv::new_master(crate::NETWORK, &Vec::from_hex(x[0]).expect("seed"))?;
             assert_eq!(Ypriv(master).to_string(), x[1]);
             let (_, xpriv) = master.bip49_account(0)?;
             let ypriv = Ypriv(Xpriv::from_str(&xpriv)?);

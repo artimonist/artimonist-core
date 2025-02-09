@@ -11,7 +11,7 @@ use bitcoin::{
     hashes::{sha256, Hash},
     hex::{DisplayHex, FromHex},
     key::Secp256k1,
-    Address, NetworkKind,
+    Address,
 };
 use std::str::FromStr;
 
@@ -67,7 +67,7 @@ mod pre_test_mnemonic {
     #[test]
     fn pre_test_master() -> Result<(), bip32::Error> {
         let seed = Vec::from_hex(&SEED_HEX).expect("seed invalid");
-        let master_key = Xpriv::new_master(NetworkKind::Main, &seed)?;
+        let master_key = Xpriv::new_master(artimonist::NETWORK, &seed)?;
         assert_eq!(MASTER_KEY, master_key.to_string());
 
         let secp = Secp256k1::default();
@@ -91,7 +91,7 @@ mod pre_test_mnemonic {
             let path = DerivationPath::from_str(r[0])?;
             let priv_key = master_key.derive_priv(&secp, &path)?.to_priv();
             let pub_key = priv_key.public_key(&secp);
-            let addr = Address::p2pkh(&pub_key, NetworkKind::Main);
+            let addr = Address::p2pkh(&pub_key, artimonist::NETWORK);
             assert_eq!(r[1], addr.to_string());
             assert_eq!(r[2], priv_key.to_wif());
         }

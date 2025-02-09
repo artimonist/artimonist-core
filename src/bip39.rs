@@ -1,7 +1,4 @@
-use bitcoin::{
-    bip32::{Error, Xpriv},
-    NetworkKind,
-};
+use bitcoin::bip32::{Error, Xpriv};
 
 /// BIP39 Derivation for Xpriv
 ///
@@ -38,7 +35,7 @@ impl Derivation for Xpriv {
             pbkdf2_hmac::<sha2::Sha512>(mnemonic.as_bytes(), &salt, u32::pow(2, 11), &mut output);
             output
         };
-        Xpriv::new_master(NetworkKind::Main, &seed)
+        Xpriv::new_master(crate::NETWORK, &seed)
     }
 }
 

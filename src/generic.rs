@@ -1,6 +1,6 @@
 use super::bits::BitAggregation;
 use super::matrix::Matrix;
-use bitcoin::{bip32::Xpriv, NetworkKind};
+use bitcoin::bip32::Xpriv;
 use serde::Serialize;
 use std::fmt::Debug;
 use thiserror::Error;
@@ -47,7 +47,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     /// generate extended private key
     fn bip32_master(&self, salt: &[u8]) -> GenericResult<Xpriv> {
         let seed = self.warp_entropy(salt)?;
-        Ok(Xpriv::new_master(NetworkKind::Main, &seed)?)
+        Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
     }
 }
 
