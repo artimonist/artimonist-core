@@ -125,8 +125,8 @@ mod generic_test {
         }
         {
             // VECTOR equal to MATRIX
-            let vector = VECTOR.to_vec();
-            let master = vector.to_matrix::<3, 5>().bip32_master("test".as_bytes())?;
+            let matrix: Matrix<3, 5, u128> = VECTOR.to_vec().to_matrix::<3, 5>();
+            let master = matrix.bip32_master("test".as_bytes())?;
             assert_eq!(master.to_string(), XPRIV);
         }
         {
