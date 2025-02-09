@@ -42,6 +42,7 @@ pub(crate) mod bits;
 pub(crate) mod complex;
 pub(crate) mod generic;
 pub(crate) mod macros;
+pub(crate) mod matrix;
 pub(crate) mod password;
 pub(crate) mod simple;
 pub(crate) mod words;
@@ -54,7 +55,8 @@ pub use bip39::Derivation as BIP39;
 pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use complex::ComplexDiagram;
-pub use generic::{GenericDiagram, Matrix, ToMatrix};
+pub use generic::GenericDiagram;
+pub use matrix::{Matrix, ToMatrix};
 pub use simple::SimpleDiagram;
 
 ///
