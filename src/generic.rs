@@ -1,11 +1,9 @@
 use super::bits::BitAggregation;
-use bitcoin::{bip32::Xpriv, NetworkKind};
+use super::matrix::Matrix;
+use bitcoin::bip32::Xpriv;
 use serde::Serialize;
 use std::fmt::Debug;
 use thiserror::Error;
-
-/// type alias for any diagram
-pub type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
 
 /// Generic Diagram  
 ///   diagram implementation for any matrix
@@ -49,7 +47,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     /// generate extended private key
     fn bip32_master(&self, salt: &[u8]) -> GenericResult<Xpriv> {
         let seed = self.warp_entropy(salt)?;
-        Ok(Xpriv::new_master(NetworkKind::Main, &seed)?)
+        Ok(Xpriv::new_master(crate::network(), &seed)?)
     }
 }
 
@@ -91,38 +89,10 @@ pub enum GenericError {
 /// GenericResult
 pub type GenericResult<T = ()> = Result<T, GenericError>;
 
-/// transform to generic diagram
-pub trait ToMatrix<T> {
-    /// transform to matrix
-    fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<H, W, T>;
-}
-
-impl<T> ToMatrix<T> for Vec<Option<T>> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
-        self.resize_with(H * W, || None);
-        self.reverse();
-        core::array::from_fn(|_| core::array::from_fn(|_| self.pop().unwrap()))
-    }
-}
-
-impl<T: std::fmt::Debug> ToMatrix<T> for Vec<Vec<Option<T>>> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
-        self.resize_with(H, || [const { None }; W].into_iter().collect());
-        self.into_iter()
-            .map(|mut r| {
-                r.resize_with(W, || None);
-                r.try_into().unwrap()
-            })
-            .take(H)
-            .collect::<Vec<[Option<T>; W]>>()
-            .try_into()
-            .unwrap()
-    }
-}
-
 #[cfg(test)]
 mod generic_test {
     use super::*;
+    use crate::ToMatrix;
     use bitcoin::hex::DisplayHex;
 
     #[test]
@@ -155,8 +125,8 @@ mod generic_test {
         }
         {
             // VECTOR equal to MATRIX
-            let vector = VECTOR.to_vec();
-            let master = vector.to_matrix::<3, 5>().bip32_master("test".as_bytes())?;
+            let matrix: Matrix<3, 5, u128> = VECTOR.to_vec().to_matrix::<3, 5>();
+            let master = matrix.bip32_master("test".as_bytes())?;
             assert_eq!(master.to_string(), XPRIV);
         }
         {

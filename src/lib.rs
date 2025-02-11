@@ -34,6 +34,7 @@
 //! |  |🍦|  |  |  |🌭|  |
 //! |  |  |  |  |  |  |  |
 //!
+
 pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;
@@ -42,6 +43,7 @@ pub(crate) mod bits;
 pub(crate) mod complex;
 pub(crate) mod generic;
 pub(crate) mod macros;
+pub(crate) mod matrix;
 pub(crate) mod password;
 pub(crate) mod simple;
 pub(crate) mod words;
@@ -54,7 +56,8 @@ pub use bip39::Derivation as BIP39;
 pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use complex::ComplexDiagram;
-pub use generic::{GenericDiagram, Matrix, ToMatrix};
+pub use generic::GenericDiagram;
+pub use matrix::{Matrix, ToMatrix};
 pub use simple::SimpleDiagram;
 
 ///
@@ -88,3 +91,12 @@ pub mod error {
     pub type ArtResult<T = ()> = Result<T, Error>;
 }
 pub use error::Error;
+
+use std::sync::OnceLock;
+/// Bitcoin network that the lib uses, caller can set once at init time.
+pub static NETWORK: OnceLock<bitcoin::NetworkKind> = OnceLock::new();
+/// Bitcoin network
+#[inline]
+pub fn network() -> bitcoin::NetworkKind {
+    *NETWORK.get_or_init(|| bitcoin::NetworkKind::Main)
+}
