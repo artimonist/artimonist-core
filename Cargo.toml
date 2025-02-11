@@ -16,7 +16,6 @@ crate-type = ["lib"]
 [features]
 default = []
 multilingual = []
-test = []
 
 [dependencies]
 bitcoin = "0.32.5"
