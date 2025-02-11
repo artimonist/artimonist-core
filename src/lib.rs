@@ -35,12 +35,6 @@
 //! |  |  |  |  |  |  |  |
 //!
 
-/// Network Kind
-#[cfg(not(feature = "test"))]
-pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Main;
-#[cfg(feature = "test")]
-pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Test;
-
 pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;
@@ -97,3 +91,11 @@ pub mod error {
     pub type ArtResult<T = ()> = Result<T, Error>;
 }
 pub use error::Error;
+
+use std::sync::OnceLock;
+static NETWORK: OnceLock<bitcoin::NetworkKind> = OnceLock::new();
+/// Bitcoin network
+#[inline]
+pub fn network() -> bitcoin::NetworkKind {
+    *NETWORK.get_or_init(|| bitcoin::NetworkKind::Main)
+}

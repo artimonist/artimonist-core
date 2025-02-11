@@ -121,9 +121,9 @@ impl Derivation for Xpriv {
     fn bip85_wif(&self, index: u32) -> Bip85Result<Wif> {
         let path = format!("m/83696968'/2'/{index}'");
         let entropy = bip85_derive(self, &path)?;
-        let priv_key = bitcoin::PrivateKey::from_slice(&entropy[..32], crate::NETWORK)?;
+        let priv_key = bitcoin::PrivateKey::from_slice(&entropy[..32], crate::network())?;
         let pub_key = CompressedPublicKey::from_private_key(&Secp256k1::default(), &priv_key)?;
-        let addr = Address::p2shwpkh(&pub_key, crate::NETWORK);
+        let addr = Address::p2shwpkh(&pub_key, crate::network());
         Ok(Wif {
             pk: priv_key.to_wif(),
             addr: addr.to_string(),
@@ -135,7 +135,7 @@ impl Derivation for Xpriv {
         let entropy = bip85_derive(self, &path)?;
         let chain_code = ChainCode::from_hex(&entropy[..32].to_lower_hex_string())?;
         let xpriv = Xpriv {
-            network: crate::NETWORK,
+            network: crate::network(),
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::Normal { index: 0 },

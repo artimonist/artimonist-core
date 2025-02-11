@@ -35,7 +35,7 @@ impl Derivation for Xpriv {
             pbkdf2_hmac::<sha2::Sha512>(mnemonic.as_bytes(), &salt, u32::pow(2, 11), &mut output);
             output
         };
-        Xpriv::new_master(crate::NETWORK, &seed)
+        Xpriv::new_master(crate::network(), &seed)
     }
 }
 
