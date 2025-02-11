@@ -35,23 +35,14 @@ impl<T: std::fmt::Debug + Default + PartialEq> ToMatrix<T> for Vec<T> {
         self.resize_with(H * W, T::default);
         self.reverse();
         core::array::from_fn(|_| {
-            core::array::from_fn(|_| match self.pop() {
-                Some(v) => {
-                    if v == T::default() {
-                        None
-                    } else {
-                        Some(v)
-                    }
-                }
-                _ => None,
-            })
+            core::array::from_fn(|_| self.pop().filter(|v| *v != T::default()))
         })
     }
 }
 
 impl<T: std::fmt::Debug + Default + PartialEq> ToMatrix<T> for Vec<Vec<T>> {
     fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
-        self.resize_with(H, || (0..W).into_iter().map(|_| T::default()).collect());
+        self.resize_with(H, || (0..W).map(|_| T::default()).collect());
         self.into_iter()
             .map(|mut r| {
                 r.resize_with(W, T::default);
