@@ -34,7 +34,7 @@ impl Derivation for Xpriv {
     fn from_mnemonic(mnemonic: &str, salt: &str) -> Bip39Result<Xpriv> {
         let words: Vec<&str> = mnemonic.split_whitespace().collect();
         if !words_validate(&words)? {
-            return Err(Bip39Error::InvalidMnemonicChecksum);
+            return Err(Bip39Error::InvalidChecksum);
         }
         let seed = {
             use pbkdf2::pbkdf2_hmac;
@@ -55,7 +55,7 @@ impl Derivation for Xpriv {
 
 fn words_validate(words: &Vec<&str>) -> Bip39Result<bool> {
     if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
-        return Err(Bip39Error::InvalidMnemonicLength);
+        return Err(Bip39Error::InvalidLength);
     }
     for indices in words_indices(words) {
         let mut entropy = indices
@@ -88,8 +88,8 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
     };
 
     use crate::Language::*;
-    const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, Franch];
-    const TONE_LANGS: [Language; 2] = [Spanish, Franch];
+    const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, French];
+    const TONE_LANGS: [Language; 2] = [Spanish, French];
     const CJK_LANGS: [Language; 4] = [TraditionalChinese, SimplifiedChinese, Japanese, Korean];
 
     if words.iter().any(|&w| w.is_ascii()) {
@@ -108,11 +108,11 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum Bip39Error {
     /// Invalid mnemonic length
-    #[error("invalid mnemonic length")]
-    InvalidMnemonicLength,
+    #[error("Mnemonic invalid length")]
+    InvalidLength,
     /// Invalid mnemonic checksum
-    #[error("invalid mnemonic checksum")]
-    InvalidMnemonicChecksum,
+    #[error("Mnemonic invalid checksum")]
+    InvalidChecksum,
     /// Bip32 error
     #[error("bip32 error")]
     Bip32Error(#[from] bitcoin::bip32::Error),
@@ -140,6 +140,25 @@ mod bip39_test {
         for x in TEST_DATA {
             let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
             assert_eq!(xpriv.to_string(), x[2]);
+        }
+
+        const INVALID_CHECKSUM: &[&str] = &[
+          "solda osso frasco encontro donzela oficina colono vidraria fruteira sinal visto sacola mirtilo flamingo final",
+          "theme rain hollow sinal expire proud detect wife hotel taxi witness strategy park head forest",
+          "岗 跨 困 倒 考 邦 调 晒 慢 孟 畅 句 埋 黎 皮"
+        ];
+        for x in INVALID_CHECKSUM {
+            let r = Xpriv::from_mnemonic(*x, Default::default());
+            assert!(matches!(r, Err(Bip39Error::InvalidChecksum)));
+        }
+
+        const INVALID_LENGTH: &[&str] = &[
+            " 跨 困 倒 考 邦 调 晒 慢 孟 畅 句 埋 黎 皮",
+            "theme rain hollow sinal expire proud detect wife hotel taxi witness",
+        ];
+        for x in INVALID_LENGTH {
+            let r = Xpriv::from_mnemonic(*x, Default::default());
+            assert!(matches!(r, Err(Bip39Error::InvalidLength)));
         }
         Ok(())
     }

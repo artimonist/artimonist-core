@@ -36,7 +36,7 @@ pub enum Language {
     /// TraditionalChinese
     TraditionalChinese = 5,
     /// Franch
-    Franch = 6,
+    French = 6,
     /// Italian
     Italian = 7,
     /// Czech
@@ -53,7 +53,7 @@ const WORD_LIST: [&[&str; 2048]; 10] = [
     &SPANISH,
     &CHINESE_SIMPLIFIED,
     &CHINESE_TRADITIONAL,
-    &FRANCH,
+    &FRENCH,
     &ITALIAN,
     &CZECH,
     &PORTUGUESE,
@@ -77,6 +77,7 @@ impl Language {
             let iter = words.into_iter().enumerate().map(|(i, &s)| (s, i));
             HashMap::from_iter(iter)
         });
+        debug_assert!(dic.len() == 2048);
         dic.get(word).copied()
     }
 }

@@ -11223,3 +11223,105 @@ pub(super) static PORTUGUESE: [&str; 2048] = [
     "xeque", "xeretar", "xerife", "xingar", "zangado", "zarpar", "zebu", "zelador", "zombar",
     "zoologia", "zumbido",
 ];
+
+#[cfg(test)]
+mod words_test {
+    use super::*;
+    use std::collections::HashSet;
+
+    /// Detect words that are repeated across languages
+    #[ignore = "research verified"]
+    #[test]
+    fn pre_test_lang_repeat() {
+        let mut set = HashSet::from(ENGLISH);
+        for (i, words) in [FRENCH, ITALIAN, CZECH, PORTUGUESE, SPANISH]
+            .into_iter()
+            .enumerate()
+        {
+            println!("{i}: ");
+            let mut amount = 0;
+            for w in words {
+                if set.contains(w) {
+                    amount += 1;
+                    print!("{w},");
+                } else {
+                    set.insert(w);
+                }
+            }
+            println!(" -- ({amount})");
+        }
+        println!("---cjk---");
+        set = HashSet::from(CHINESE_SIMPLIFIED);
+        for (i, words) in [CHINESE_TRADITIONAL, JAPANESE, KOREAN]
+            .into_iter()
+            .enumerate()
+        {
+            println!("{i}: ");
+            let mut amount = 0;
+            for w in words {
+                if set.contains(w) {
+                    amount += 1;
+                    print!("{w},");
+                } else {
+                    set.insert(w);
+                }
+            }
+            println!(" -- ({amount})");
+        }
+    }
+
+    #[ignore = "research verified"]
+    #[test]
+    fn pre_test_word_ascii() {
+        assert!(ENGLISH.into_iter().all(str::is_ascii));
+        assert!(ITALIAN.into_iter().all(str::is_ascii));
+        assert!(CZECH.into_iter().all(str::is_ascii));
+        assert!(PORTUGUESE.into_iter().all(str::is_ascii));
+        assert!(!SPANISH.into_iter().all(str::is_ascii));
+        assert!(!FRENCH.into_iter().all(str::is_ascii));
+
+        assert!(!JAPANESE.into_iter().any(str::is_ascii));
+        assert!(!KOREAN.into_iter().any(str::is_ascii));
+        assert!(!CHINESE_TRADITIONAL.into_iter().any(str::is_ascii));
+        assert!(!CHINESE_SIMPLIFIED.into_iter().any(str::is_ascii));
+    }
+
+    // <https://github.com/bitcoin/bips/tree/master/bip-0039>
+    // #[ignore = "fix verified"]
+    // #[test]
+    // fn pre_test_verify_data() {
+    //     let files = [
+    //         include_bytes!("english.txt").to_vec(),
+    //         include_bytes!("japanese.txt").to_vec(),
+    //         include_bytes!("korean.txt").to_vec(),
+    //         include_bytes!("spanish.txt").to_vec(),
+    //         include_bytes!("chinese_simplified.txt").to_vec(),
+    //         include_bytes!("chinese_traditional.txt").to_vec(),
+    //         include_bytes!("french.txt").to_vec(),
+    //         include_bytes!("italian.txt").to_vec(),
+    //         include_bytes!("czech.txt").to_vec(),
+    //         include_bytes!("portuguese.txt").to_vec(),
+    //     ];
+    //     let dics = [
+    //         ENGLISH,
+    //         JAPANESE,
+    //         KOREAN,
+    //         SPANISH,
+    //         CHINESE_SIMPLIFIED,
+    //         CHINESE_TRADITIONAL,
+    //         FRENCH,
+    //         ITALIAN,
+    //         CZECH,
+    //         PORTUGUESE,
+    //     ];
+    //     for (f, dic) in files.iter().zip(dics) {
+    //         let words: Vec<&str> = str::from_utf8(f).unwrap().split_whitespace().collect();
+    //         assert_eq!(words.len(), 2048);
+    //         let set: HashSet<&str> = HashSet::from_iter(words);
+    //         for w in dic {
+    //             assert!(set.contains(w));
+    //         }
+    //         println!("verified!");
+    //     }
+    // }
+}
