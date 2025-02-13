@@ -65,6 +65,7 @@ pub use simple::SimpleDiagram;
 ///
 pub mod error {
     pub use super::bip38::EncryptError as Bip38Error;
+    pub use super::bip39::Bip39Error;
     pub use super::bip85::Bip85Error;
     pub use super::bitcoin::bip32::Error as Bip32Error;
     pub use super::generic::GenericError;
@@ -73,15 +74,18 @@ pub mod error {
     /// Artimonist Error
     #[derive(Error, Debug)]
     pub enum Error {
+        /// Bip32 Error
+        #[error("bip32 error")]
+        Bip32Error(#[from] Bip32Error),
+        /// Bip39 Error
+        #[error("bip39 error")]
+        Bip39Error(#[from] Bip39Error),
         /// Bip85 Error
         #[error("bip85 error")]
         Bip85Error(#[from] Bip85Error),
         /// Bip38 Error
         #[error("bip38 error")]
         Bip38Error(#[from] Bip38Error),
-        /// Bip32 Error
-        #[error("bip32 error")]
-        Bip32Error(#[from] Bip32Error),
         /// Generic Error
         #[error("generic error")]
         GenericError(#[from] GenericError),

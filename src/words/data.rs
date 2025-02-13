@@ -9347,3 +9347,66 @@ pub(super) static PORTUGUESE: [&str; 2048] = [
     "xadre", "xarop", "xequ", "xereta", "xerif", "xinga", "zangad", "zarpa", "zeb", "zelado",
     "zomba", "zoologi", "zumbid",
 ];
+
+#[cfg(test)]
+mod words_test {
+    use super::*;
+    use std::collections::HashSet;
+
+    /// Detect words that are repeated across languages
+    #[ignore = "research verified"]
+    #[test]
+    fn pre_test_word_repeat() {
+        let mut set = HashSet::from(ENGLISH);
+        for (i, words) in [ITALIAN, CZECH, PORTUGUESE, SPANISH, FRANCH]
+            .into_iter()
+            .enumerate()
+        {
+            println!("{i}: ");
+            let mut amount = 0;
+            for w in words {
+                if set.contains(w) {
+                    amount += 1;
+                    print!("{w},");
+                } else {
+                    set.insert(w);
+                }
+            }
+            println!(" -- ({amount})");
+        }
+        println!("---cjk---");
+        set = HashSet::from(CHINESE_SIMPLIFIED);
+        for (i, words) in [JAPANESE, KOREAN, CHINESE_TRADITIONAL]
+            .into_iter()
+            .enumerate()
+        {
+            println!("{i}: ");
+            let mut amount = 0;
+            for w in words {
+                if set.contains(w) {
+                    amount += 1;
+                    print!("{w},");
+                } else {
+                    set.insert(w);
+                }
+            }
+            println!(" -- ({amount})");
+        }
+    }
+
+    #[ignore = "research verified"]
+    #[test]
+    fn pre_test_word_ascii() {
+        assert!(ENGLISH.into_iter().all(str::is_ascii));
+        assert!(ITALIAN.into_iter().all(str::is_ascii));
+        assert!(CZECH.into_iter().all(str::is_ascii));
+        assert!(PORTUGUESE.into_iter().all(str::is_ascii));
+        assert!(!SPANISH.into_iter().all(str::is_ascii));
+        assert!(!FRANCH.into_iter().all(str::is_ascii));
+
+        assert!(!JAPANESE.into_iter().any(str::is_ascii));
+        assert!(!KOREAN.into_iter().any(str::is_ascii));
+        assert!(!CHINESE_TRADITIONAL.into_iter().any(str::is_ascii));
+        assert!(!CHINESE_SIMPLIFIED.into_iter().any(str::is_ascii));
+    }
+}
