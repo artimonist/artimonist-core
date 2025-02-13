@@ -11224,6 +11224,7 @@ pub(super) static PORTUGUESE: [&str; 2048] = [
     "zoologia", "zumbido",
 ];
 
+#[cfg(feature = "multilingual")]
 #[cfg(test)]
 mod words_test {
     use super::*;

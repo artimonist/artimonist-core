@@ -14,7 +14,7 @@ edition = "2021"
 crate-type = ["lib"]
 
 [features]
-default = ["multilingual"]
+default = []
 multilingual = []
 
 [dependencies]

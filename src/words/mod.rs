@@ -74,7 +74,7 @@ impl Language {
     pub fn index_of(&self, word: &str) -> Option<usize> {
         let words = WORD_LIST[*self as usize];
         let dic = WORD_DICS[*self as usize].get_or_init(|| {
-            let iter = words.into_iter().enumerate().map(|(i, &s)| (s, i));
+            let iter = words.iter().enumerate().map(|(i, &s)| (s, i));
             HashMap::from_iter(iter)
         });
         debug_assert!(dic.len() == 2048);

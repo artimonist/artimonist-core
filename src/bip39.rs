@@ -33,7 +33,10 @@ pub trait Derivation {
 impl Derivation for Xpriv {
     fn from_mnemonic(mnemonic: &str, salt: &str) -> Bip39Result<Xpriv> {
         let words: Vec<&str> = mnemonic.split_whitespace().collect();
-        if !words_validate(&words)? {
+        if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
+            return Err(Bip39Error::InvalidLength);
+        }
+        if !words_validate(&words) {
             return Err(Bip39Error::InvalidChecksum);
         }
         let seed = {
@@ -53,10 +56,7 @@ impl Derivation for Xpriv {
     }
 }
 
-fn words_validate(words: &Vec<&str>) -> Bip39Result<bool> {
-    if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
-        return Err(Bip39Error::InvalidLength);
-    }
+fn words_validate(words: &Vec<&str>) -> bool {
     for indices in words_indices(words) {
         let mut entropy = indices
             .into_iter()
@@ -70,12 +70,14 @@ fn words_validate(words: &Vec<&str>) -> Bip39Result<bool> {
             15 => (checksum & 0b1111_1000) ^ (tail & 0b1111_1000) == 0,
             18 => (checksum & 0b1111_1100) ^ (tail & 0b1111_1100) == 0,
             21 => (checksum & 0b1111_1110) ^ (tail & 0b1111_1110) == 0,
-            24 => (checksum & 0b1111_1111) ^ (tail & 0b1111_1111) == 0,
+            24 => checksum ^ tail == 0,
             _ => false,
         };
-        return Ok(valid);
+        if valid {
+            return true;
+        }
     }
-    Ok(false)
+    false
 }
 
 fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
@@ -87,19 +89,31 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
         }
     };
 
-    use crate::Language::*;
-    const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, French];
-    const TONE_LANGS: [Language; 2] = [Spanish, French];
-    const CJK_LANGS: [Language; 4] = [TraditionalChinese, SimplifiedChinese, Japanese, Korean];
-
-    if words.iter().any(|&w| w.is_ascii()) {
+    #[cfg(not(feature = "multilingual"))]
+    {
         if words.iter().all(|&w| w.is_ascii()) {
+            const EN_LANGS: [Language; 1] = [Language::English];
             EN_LANGS.into_iter().filter_map(do_search).collect()
         } else {
-            TONE_LANGS.into_iter().filter_map(do_search).collect()
+            vec![]
         }
-    } else {
-        CJK_LANGS.into_iter().filter_map(do_search).collect()
+    }
+    #[cfg(feature = "multilingual")]
+    {
+        use crate::Language::*;
+        const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, French];
+        const TONE_LANGS: [Language; 2] = [Spanish, French];
+        const CJK_LANGS: [Language; 4] = [TraditionalChinese, SimplifiedChinese, Japanese, Korean];
+
+        if words.iter().any(|&w| w.is_ascii()) {
+            if words.iter().all(|&w| w.is_ascii()) {
+                EN_LANGS.into_iter().filter_map(do_search).collect()
+            } else {
+                TONE_LANGS.into_iter().filter_map(do_search).collect()
+            }
+        } else {
+            CJK_LANGS.into_iter().filter_map(do_search).collect()
+        }
     }
 }
 
@@ -119,6 +133,25 @@ pub enum Bip39Error {
 }
 type Bip39Result<T = ()> = Result<T, Bip39Error>;
 
+#[cfg(not(feature = "multilingual"))]
+#[cfg(test)]
+mod bip39_test {
+    use super::*;
+    #[test]
+    fn test_bip39() -> Bip39Result {
+        const TEST_DATA: &[[&str; 3]] = &[
+          ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
+          "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD"],
+        ];
+        for x in TEST_DATA {
+            let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
+            assert_eq!(xpriv.to_string(), x[2]);
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "multilingual")]
 #[cfg(test)]
 mod bip39_test {
     use super::*;
