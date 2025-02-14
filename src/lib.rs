@@ -90,11 +90,9 @@ pub mod error {
 }
 pub use error::Error;
 
-use std::sync::OnceLock;
-/// Bitcoin network that the lib uses, caller can set once at init time.
-pub static NETWORK: OnceLock<bitcoin::NetworkKind> = OnceLock::new();
 /// Bitcoin network
-#[inline]
-pub fn network() -> bitcoin::NetworkKind {
-    *NETWORK.get_or_init(|| bitcoin::NetworkKind::Main)
-}
+#[cfg(not(feature = "test"))]
+pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Main;
+/// Bitcoin network
+#[cfg(feature = "test")]
+pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Test;

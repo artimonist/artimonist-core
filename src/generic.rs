@@ -47,7 +47,7 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     /// generate extended private key
     fn bip32_master(&self, salt: &[u8]) -> GenericResult<Xpriv> {
         let seed = self.warp_entropy(salt)?;
-        Ok(Xpriv::new_master(crate::network(), &seed)?)
+        Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
     }
 }
 

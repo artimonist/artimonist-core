@@ -51,7 +51,7 @@ impl Derivation for Xpriv {
             );
             output
         };
-        let xpriv = Xpriv::new_master(crate::network(), &seed)?;
+        let xpriv = Xpriv::new_master(crate::NETWORK, &seed)?;
         Ok(xpriv)
     }
 }
