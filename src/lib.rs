@@ -35,7 +35,6 @@
 //! |  |  |  |  |  |  |  |
 //!
 
-pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;
 pub(crate) mod bip85;
@@ -51,7 +50,6 @@ pub(crate) mod words;
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv};
 
-pub use bip38::Encryptor;
 pub use bip39::Derivation as BIP39;
 pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
@@ -64,7 +62,6 @@ pub use simple::SimpleDiagram;
 /// Global error definition
 ///
 pub mod error {
-    pub use super::bip38::EncryptError as Bip38Error;
     pub use super::bip39::Bip39Error;
     pub use super::bip85::Bip85Error;
     pub use super::bitcoin::bip32::Error as Bip32Error;
@@ -83,9 +80,6 @@ pub mod error {
         /// Bip85 Error
         #[error("bip85 error")]
         Bip85Error(#[from] Bip85Error),
-        /// Bip38 Error
-        #[error("bip38 error")]
-        Bip38Error(#[from] Bip38Error),
         /// Generic Error
         #[error("generic error")]
         GenericError(#[from] GenericError),
