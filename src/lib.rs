@@ -17,8 +17,11 @@
 //! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
 //!
+//! # #[cfg(not(feature = "test"))]
 //! assert_eq!(master.bip85_wif(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! # #[cfg(not(feature = "test"))]
 //! assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
+//! # #[cfg(not(feature = "test"))]
 //! assert_eq!(master.bip85_pwd(Password::Emoji, 20, 0)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
 //!
 //! # Ok::<(), artimonist::Error>(())
@@ -35,7 +38,6 @@
 //! |  |  |  |  |  |  |  |
 //!
 
-pub(crate) mod bip38;
 pub(crate) mod bip39;
 pub(crate) mod bip49;
 pub(crate) mod bip85;
@@ -51,7 +53,6 @@ pub(crate) mod words;
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv};
 
-pub use bip38::Encryptor;
 pub use bip39::Derivation as BIP39;
 pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
@@ -64,7 +65,6 @@ pub use simple::SimpleDiagram;
 /// Global error definition
 ///
 pub mod error {
-    pub use super::bip38::EncryptError as Bip38Error;
     pub use super::bip39::Bip39Error;
     pub use super::bip85::Bip85Error;
     pub use super::bitcoin::bip32::Error as Bip32Error;
@@ -83,9 +83,6 @@ pub mod error {
         /// Bip85 Error
         #[error("bip85 error")]
         Bip85Error(#[from] Bip85Error),
-        /// Bip38 Error
-        #[error("bip38 error")]
-        Bip38Error(#[from] Bip38Error),
         /// Generic Error
         #[error("generic error")]
         GenericError(#[from] GenericError),
@@ -96,11 +93,9 @@ pub mod error {
 }
 pub use error::Error;
 
-use std::sync::OnceLock;
-/// Bitcoin network that the lib uses, caller can set once at init time.
-pub static NETWORK: OnceLock<bitcoin::NetworkKind> = OnceLock::new();
 /// Bitcoin network
-#[inline]
-pub fn network() -> bitcoin::NetworkKind {
-    *NETWORK.get_or_init(|| bitcoin::NetworkKind::Main)
-}
+#[cfg(not(feature = "test"))]
+pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Main;
+/// Bitcoin network
+#[cfg(feature = "test")]
+pub const NETWORK: bitcoin::NetworkKind = bitcoin::NetworkKind::Test;

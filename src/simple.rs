@@ -111,11 +111,17 @@ mod simple_diagram_test {
         const SECRET_HEX: &str = "f09f988a412ae78e8b26012800001000012d";
         const WARP_ENTROPY: &str =
             "cff2b0d401d54f32d9035a2eed41f48f57960ac76fb472267ffd6597b3684d82";
+        #[cfg(not(feature = "test"))]
         const MASTER_WIF: &str = "xprv9s21ZrQH143K2r6v9GGWezApYmVuaGiZYoCpsQFVe9Vwh47yZ2CCgqXJY6g2Kk8Ajrz2PbVNnY5HLw4dPkshmcqX8YBEhcwj4wWQ8UgY5m7";
+        #[cfg(feature = "test")]
+        const MASTER_WIF: &str = "tprv8ZgxMBicQKsPdfLSoq81pdnortv7onkZtM7wjpfx87zRUes4YPXxCatkTGqgL7WV7JWoPh78wtf5oncNWyDeag77fBPYMyfmz3FpaCED928";
         const SALT_STR: &str = "123abc";
         const SALT_ENTROPY: &str =
             "7981de9ab25fb45394130deca46b1ad9e18a84717be708cb39343e0700beba67";
+        #[cfg(not(feature = "test"))]
         const SALT_MASTER: &str = "xprv9s21ZrQH143K3m9k6SE8k9kYgPUS2YiuWyV2LZN43xMPSWe8w1vriyFgPh4BnFGevHto27pmDCcnpJRAWLybqaaZeucx9fmJHFd2CWFMwkw";
+        #[cfg(feature = "test")]
+        const SALT_MASTER: &str = "tprv8ZgxMBicQKsPeaPGm15duoNXzWteG4kurXQ9CynWXvqsE7PDvPGcEid8JsDqnceyHjRa2DSXNZCbH9xudZKYedrABYqFp2VMCMNSeBkeo4Y";
 
         let items: Vec<char> = CHARS_STR.chars().collect();
         let sdm = SimpleDiagram::from_values(&items, CHARS_INDICES);

@@ -22,10 +22,13 @@ use thiserror::Error;
 /// # use std::str::FromStr;
 ///
 /// let master = Xpriv::from_str("xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K")?;
-///
+/// # #[cfg(not(feature = "test"))]
 /// assert_eq!(master.bip85_wif(3)?.pk, "L43Bwws5GvHAtct3RqBg5A3JbJmoLrLGohLWDyizaXwh7ucSH6xd");
+/// # #[cfg(not(feature = "test"))]
 /// assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K4AAZnirHuLg8Bq1Q8ozezrJjhyYhF2ZJqDC5qbs1XMCggai5xFrgabXtyyERCAS4k6tiKbe42PRYPP32BN9xgxPP1rv7tSv".to_owned());
+/// # #[cfg(not(feature = "test"))]
 /// assert_eq!(master.bip85_pwd(Password::Distinct, 28, 50)?, "1bJc8dXiPh#&q$qHR$SBNiPxKBfU");
+/// # #[cfg(not(feature = "test"))]
 /// assert_eq!(master.bip85_pwd(Password::Emoji, 20, 100)?, "⏰🍟☕👍🎁🍉🔑👍💪🚗🎈🎄🎄🏆🍦👽🐵🍕🔒🍦");
 ///
 /// # Ok::<(), artimonist::Error>(())
@@ -121,9 +124,9 @@ impl Derivation for Xpriv {
     fn bip85_wif(&self, index: u32) -> Bip85Result<Wif> {
         let path = format!("m/83696968'/2'/{index}'");
         let entropy = bip85_derive(self, &path)?;
-        let priv_key = bitcoin::PrivateKey::from_slice(&entropy[..32], crate::network())?;
+        let priv_key = bitcoin::PrivateKey::from_slice(&entropy[..32], crate::NETWORK)?;
         let pub_key = CompressedPublicKey::from_private_key(&Secp256k1::default(), &priv_key)?;
-        let addr = Address::p2shwpkh(&pub_key, crate::network());
+        let addr = Address::p2shwpkh(&pub_key, crate::NETWORK);
         Ok(Wif {
             pk: priv_key.to_wif(),
             addr: addr.to_string(),
@@ -135,7 +138,7 @@ impl Derivation for Xpriv {
         let entropy = bip85_derive(self, &path)?;
         let chain_code = ChainCode::from_hex(&entropy[..32].to_lower_hex_string())?;
         let xpriv = Xpriv {
-            network: crate::network(),
+            network: crate::NETWORK,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::Normal { index: 0 },
@@ -208,6 +211,7 @@ mod bip85_test {
         Ok(())
     }
 
+    #[cfg(not(feature = "test"))]
     #[test]
     fn test_bip85_wif() -> Bip85Result<()> {
         // PATH: m/83696968'/2'/0';
@@ -219,6 +223,7 @@ mod bip85_test {
         Ok(())
     }
 
+    #[cfg(not(feature = "test"))]
     #[test]
     fn test_bip85_xpriv() -> Bip85Result<()> {
         // PATH: m/83696968'/32'/0'
