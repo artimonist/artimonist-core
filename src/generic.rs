@@ -115,7 +115,10 @@ mod generic_test {
             Some(0),
         ];
         const ENTROPY: &str = "726ea65196a104c64f845d93792fba3a149aaa8b1af323e3d474394bf7c204b2";
+        #[cfg(not(feature = "test"))]
         const XPRIV: &str = "xprv9s21ZrQH143K26wqw5cyn4qGD2CsyVH2Lpma622cgETpFvNfnPAGpmkFisKjr3G3SUKoCXXkctNssYpAXuVeZBw2HmihXxnwYUxicZM2Spt";
+        #[cfg(feature = "test")]
+        const XPRIV: &str = "tprv8ZgxMBicQKsPcvBNbeUUwiTFX9d6D1K2gNggxST5ACxJ3X7kmkW2LX7he3VPrQeMouraCd9WnExgLQMuf7qbNFCcpQw1CKWzTai94JYzs9K";
         {
             // MATRIX easy to use
             let entropy = MATRIX.warp_entropy("test".as_bytes())?;

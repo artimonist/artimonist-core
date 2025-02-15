@@ -17,8 +17,11 @@
 //! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
 //!
+//! # #[cfg(not(feature = "test"))]
 //! assert_eq!(master.bip85_wif(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! # #[cfg(not(feature = "test"))]
 //! assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
+//! # #[cfg(not(feature = "test"))]
 //! assert_eq!(master.bip85_pwd(Password::Emoji, 20, 0)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
 //!
 //! # Ok::<(), artimonist::Error>(())

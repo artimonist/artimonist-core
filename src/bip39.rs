@@ -15,7 +15,7 @@ use bitcoin::{
 /// use artimonist::{BIP39, Xpriv};
 ///
 /// let xprv = Xpriv::from_mnemonic("lake album jump occur hedgehog fantasy drama sauce oyster velvet gadget control behave hamster begin", "🌱")?;
-///
+/// # #[cfg(not(feature = "test"))]  
 /// assert_eq!(xprv.to_string(), "xprv9s21ZrQH143K36NWXJp6dEYdnu27DM1GdQB7jxTtmXZDk4Bs65ZuHTV92tN5Dp42VPEnkAMknGM2FbStkEFUmH8g7AbPVi7jZNQgKMrAZYJ");
 ///
 /// # Ok::<(), artimonist::Error>(())
@@ -139,9 +139,15 @@ mod bip39_test {
     use super::*;
     #[test]
     fn test_bip39() -> Bip39Result {
+        #[cfg(not(feature = "test"))]
         const TEST_DATA: &[[&str; 3]] = &[
           ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
           "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD"],
+        ];
+        #[cfg(feature = "test")]
+        const TEST_DATA: &[[&str; 3]] = &[
+          ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
+          "tprv8ZgxMBicQKsPdZJv4VweGpGJpe3reRgMMr7SmZ2LFDbpuDxrNddQ82fkHSpZjsqcWYnk9VHZmEGN8pFMwivVnDrVn1AvdRPqy3ripW55kfq"]
         ];
         for x in TEST_DATA {
             let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
@@ -151,6 +157,7 @@ mod bip39_test {
     }
 }
 
+#[cfg(not(feature = "test"))]
 #[cfg(feature = "multilingual")]
 #[cfg(test)]
 mod bip39_test {
