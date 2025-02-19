@@ -1,5 +1,5 @@
 use bitcoin::{
-    bip32::{self, DerivationPath, Xpriv, Xpub},
+    bip32::{DerivationPath, Xpriv, Xpub},
     key::Secp256k1,
     Address, CompressedPublicKey,
 };
@@ -37,8 +37,6 @@ pub trait Derivation {
     fn bip49_wallet(&self, account: u32, index: u32) -> Bip49Result;
 }
 
-type Bip49Result<T = (String, String)> = Result<T, bip32::Error>;
-
 impl Derivation for Xpriv {
     fn bip49_account(&self, account: u32) -> Bip49Result {
         let secp = Secp256k1::default();
@@ -58,6 +56,8 @@ impl Derivation for Xpriv {
         Ok((address.to_string(), private_key.to_wif()))
     }
 }
+
+type Bip49Result<T = (String, String)> = Result<T, crate::Error>;
 
 #[cfg(test)]
 mod bip49_test {
@@ -82,7 +82,7 @@ mod bip49_test {
     /// # Reference
     ///     <https://iancoleman.io/bip39>
     #[test]
-    fn test_bip49_master() -> Result<(), bip32::Error> {
+    fn test_bip49_master() -> Result<(), crate::Error> {
         const TEST_DATA: &[[&str; 4]] = &[
           ["36b0d3535aa764d3b33a82241211c5685283918e068e8141f0038a1f0882805f013e102689ecffe25e3e7a6b69540ffb927be0775ec2c1af5052d347e6847342",
           "yprvABrGsX5C9jant1emhiUjqrmH9a9wbmRL88mSwZXEZQFn5jnvkp3Avnu6vtJgpxfSEuoVmnWcn7ijm2WDgqnguxpPPMPobZT7vcqunotD7Xr",
@@ -100,7 +100,7 @@ mod bip49_test {
     }
 
     #[test]
-    fn test_bip49_account() -> Result<(), bip32::Error> {
+    fn test_bip49_account() -> Result<(), crate::Error> {
         const TEST_DATA: &[[&str; 3]] = &[
         ["xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD",
         "xpub6C84nZSWyfEQWFeiPT5bWhBvPvk6UsdNiYTsP47fqFQKxntSs6R7oJodKxnE5bSLNBr2q4ZPmWvSwxNEqKk4sgXJwEawgMMSnkJJ5CzZyv1",
@@ -118,7 +118,7 @@ mod bip49_test {
 
     #[cfg(not(feature = "test"))]
     #[test]
-    fn test_bip49_wallet() -> Result<(), bip32::Error> {
+    fn test_bip49_wallet() -> Result<(), crate::Error> {
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K";
         const TEST_DATA: &[(u32, &str, &str)] = &[
             (

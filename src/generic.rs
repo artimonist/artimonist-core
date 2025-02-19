@@ -2,8 +2,6 @@ use super::bits::BitAggregation;
 use super::matrix::Matrix;
 use bitcoin::bip32::Xpriv;
 use serde::Serialize;
-use std::fmt::Debug;
-use thiserror::Error;
 
 /// Generic Diagram  
 ///   diagram implementation for any matrix
@@ -73,21 +71,8 @@ impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for M
     }
 }
 
-/// GenericError
-#[derive(Error, Debug)]
-pub enum GenericError {
-    /// serialize error
-    #[error("serialize error")]
-    SerializeError(#[from] rmp_serde::encode::Error),
-    /// deserialize eror
-    #[error("deserialize error")]
-    DeserializeError(#[from] rmp_serde::decode::Error),
-    /// bip32 error
-    #[error("bip32 error")]
-    Bip32Error(#[from] bitcoin::bip32::Error),
-}
 /// GenericResult
-pub type GenericResult<T = ()> = Result<T, GenericError>;
+pub type GenericResult<T = ()> = Result<T, crate::Error>;
 
 #[cfg(test)]
 mod generic_test {

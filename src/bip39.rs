@@ -34,10 +34,10 @@ impl Derivation for Xpriv {
     fn from_mnemonic(mnemonic: &str, salt: &str) -> Bip39Result<Xpriv> {
         let words: Vec<&str> = mnemonic.split_whitespace().collect();
         if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
-            return Err(Bip39Error::InvalidLength);
+            return Err(Bip39Error::InvalidParameter("words: 12, 15, 18, 21, 24"));
         }
         if !words_validate(&words) {
-            return Err(Bip39Error::InvalidChecksum);
+            return Err(Bip39Error::InvalidParameter("invalid checksum"));
         }
         let seed = {
             use pbkdf2::pbkdf2_hmac;
@@ -117,21 +117,8 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
     }
 }
 
-use thiserror::Error;
-/// Bip39 error
-#[derive(Error, Debug)]
-pub enum Bip39Error {
-    /// Invalid mnemonic length
-    #[error("Mnemonic invalid length")]
-    InvalidLength,
-    /// Invalid mnemonic checksum
-    #[error("Mnemonic invalid checksum")]
-    InvalidChecksum,
-    /// Bip32 error
-    #[error("bip32 error")]
-    Bip32Error(#[from] bitcoin::bip32::Error),
-}
-type Bip39Result<T = ()> = Result<T, Bip39Error>;
+type Bip39Error = crate::Error;
+type Bip39Result<T = ()> = Result<T, crate::Error>;
 
 #[cfg(not(feature = "multilingual"))]
 #[cfg(test)]
