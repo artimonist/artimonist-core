@@ -65,27 +65,32 @@ pub use simple::SimpleDiagram;
 /// Global error definition
 ///
 pub mod error {
-    pub use super::bip39::Bip39Error;
-    pub use super::bip85::Bip85Error;
-    pub use super::bitcoin::bip32::Error as Bip32Error;
-    pub use super::generic::GenericError;
     use thiserror::Error;
 
     /// Artimonist Error
     #[derive(Error, Debug)]
     pub enum Error {
+        /// Invalid parameter
+        #[error("invalid parameter: {0}")]
+        InvalidParameter(&'static str),
         /// Bip32 Error
         #[error("bip32 error")]
-        Bip32Error(#[from] Bip32Error),
-        /// Bip39 Error
-        #[error("bip39 error")]
-        Bip39Error(#[from] Bip39Error),
-        /// Bip85 Error
-        #[error("bip85 error")]
-        Bip85Error(#[from] Bip85Error),
-        /// Generic Error
-        #[error("generic error")]
-        GenericError(#[from] GenericError),
+        Bip32Error(#[from] bitcoin::bip32::Error),
+        /// Secp error
+        #[error("runtime error")]
+        SecpError(#[from] bitcoin::secp256k1::Error),
+        /// Hex parse error
+        #[error("hex error")]
+        HexError(#[from] bitcoin::hex::HexToArrayError),
+        /// Address error
+        #[error("address error")]
+        AddressError(#[from] bitcoin::key::UncompressedPublicKeyError),
+        /// serialize error
+        #[error("serialize error")]
+        Serialize(#[from] rmp_serde::encode::Error),
+        /// deserialize eror
+        #[error("deserialize error")]
+        Deserialize(#[from] rmp_serde::decode::Error),
     }
 
     /// Artimonist Result

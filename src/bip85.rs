@@ -3,12 +3,11 @@ use bitcoin::{
     bip32::{ChainCode, ChildNumber, Xpriv},
     hashes::{hmac, sha256, sha512, Hash, HashEngine},
     hex::DisplayHex,
-    key::{Secp256k1, UncompressedPublicKeyError},
+    key::Secp256k1,
     secp256k1::SecretKey,
     Address, CompressedPublicKey,
 };
 use std::str::FromStr;
-use thiserror::Error;
 
 /// BIP85 Derivation for Xpriv
 ///
@@ -163,26 +162,8 @@ impl Derivation for Xpriv {
     }
 }
 
-/// Derive error
-#[derive(Error, Debug, PartialEq)]
-pub enum Bip85Error {
-    /// Invalid parameter
-    #[error("invalid parameter: {0}")]
-    InvalidParameter(&'static str),
-    /// Invalid derive path
-    #[error("invalid derive path")]
-    InvalidPath(#[from] bitcoin::bip32::Error),
-    /// Secp error
-    #[error("runtime error")]
-    RuntimeError(#[from] bitcoin::secp256k1::Error),
-    /// Hex parse error
-    #[error("hex error")]
-    HexError(#[from] bitcoin::hex::HexToArrayError),
-    /// Address error
-    #[error("address error")]
-    AddressError(#[from] UncompressedPublicKeyError),
-}
-pub type Bip85Result<T = String> = Result<T, Bip85Error>;
+pub type Bip85Error = crate::Error;
+pub type Bip85Result<T = String> = Result<T, crate::Error>;
 
 #[cfg(test)]
 mod bip85_test {
