@@ -11231,7 +11231,7 @@ mod words_test {
     use std::collections::HashSet;
 
     /// Detect words that are repeated across languages
-    #[ignore = "research verified"]
+    #[ignore = "mnemonic repeat words research verified"]
     #[test]
     fn pre_test_lang_repeat() {
         let mut set = HashSet::from(ENGLISH);
@@ -11271,7 +11271,7 @@ mod words_test {
         }
     }
 
-    #[ignore = "research verified"]
+    #[ignore = "mnemonic ascii words research verified"]
     #[test]
     fn pre_test_word_ascii() {
         assert!(ENGLISH.into_iter().all(str::is_ascii));
@@ -11288,41 +11288,82 @@ mod words_test {
     }
 
     // <https://github.com/bitcoin/bips/tree/master/bip-0039>
-    // #[ignore = "fix verified"]
-    // #[test]
-    // fn pre_test_verify_data() {
-    //     let files = [
-    //         include_bytes!("english.txt").to_vec(),
-    //         include_bytes!("japanese.txt").to_vec(),
-    //         include_bytes!("korean.txt").to_vec(),
-    //         include_bytes!("spanish.txt").to_vec(),
-    //         include_bytes!("chinese_simplified.txt").to_vec(),
-    //         include_bytes!("chinese_traditional.txt").to_vec(),
-    //         include_bytes!("french.txt").to_vec(),
-    //         include_bytes!("italian.txt").to_vec(),
-    //         include_bytes!("czech.txt").to_vec(),
-    //         include_bytes!("portuguese.txt").to_vec(),
-    //     ];
-    //     let dics = [
-    //         ENGLISH,
-    //         JAPANESE,
-    //         KOREAN,
-    //         SPANISH,
-    //         CHINESE_SIMPLIFIED,
-    //         CHINESE_TRADITIONAL,
-    //         FRENCH,
-    //         ITALIAN,
-    //         CZECH,
-    //         PORTUGUESE,
-    //     ];
-    //     for (f, dic) in files.iter().zip(dics) {
-    //         let words: Vec<&str> = str::from_utf8(f).unwrap().split_whitespace().collect();
-    //         assert_eq!(words.len(), 2048);
-    //         let set: HashSet<&str> = HashSet::from_iter(words);
-    //         for w in dic {
-    //             assert!(set.contains(w));
-    //         }
-    //         println!("verified!");
-    //     }
-    // }
+    #[ignore = "mnemonic words verified"]
+    #[test]
+    fn pre_test_verify_data() {
+        let files = [
+            include_str!("english.txt"),
+            include_str!("japanese.txt"),
+            include_str!("korean.txt"),
+            include_str!("spanish.txt"),
+            include_str!("chinese_simplified.txt"),
+            include_str!("chinese_traditional.txt"),
+            include_str!("french.txt"),
+            include_str!("italian.txt"),
+            include_str!("czech.txt"),
+            include_str!("portuguese.txt"),
+        ];
+        let dics = [
+            ENGLISH,
+            JAPANESE,
+            KOREAN,
+            SPANISH,
+            CHINESE_SIMPLIFIED,
+            CHINESE_TRADITIONAL,
+            FRENCH,
+            ITALIAN,
+            CZECH,
+            PORTUGUESE,
+        ];
+        for (f, dic) in files.iter().zip(dics) {
+            let set: HashSet<&str> = HashSet::from_iter(dic);
+            assert_eq!(dic.len(), 2048);
+            let words: Vec<&str> = f.split_whitespace().collect();
+            assert_eq!(words.len(), 2048);
+            for w in words {
+                assert!(set.contains(w));
+            }
+            println!("verified!");
+        }
+    }
+
+    #[ignore = "mnemonic cjk range verified"]
+    #[test]
+    fn pre_test_cjk() {
+        let (min, max) = KOREAN
+            .into_iter()
+            .flat_map(|w| w.chars())
+            .fold((u32::MAX, 0), |(min, max), c| {
+                (min.min(c as u32), max.max(c as u32))
+            });
+        println!("korean: {min:#x}, {max:#x}");
+        assert!(0x1100 <= min && max < 0x11ff); // 韩文字母：0x1100-0x11ff
+
+        let (min, max) = JAPANESE
+            .into_iter()
+            .flat_map(|w| w.chars())
+            .fold((u32::MAX, 0), |(min, max), c| {
+                (min.min(c as u32), max.max(c as u32))
+            });
+        println!("japancese: {min:#x}, {max:#x}");
+        assert!(0x3040 < min && max < 0x309f); // 日文平假名：0x3040-0x309f
+
+        let (min, max) = CHINESE_SIMPLIFIED
+            .into_iter()
+            .flat_map(|w| w.chars())
+            .fold((u32::MAX, 0), |(min, max), c| {
+                (min.min(c as u32), max.max(c as u32))
+            });
+        println!("chinese simplified: {min:#x}, {max:#x}");
+        assert!(0x4e00 <= min && max < 0x9f9f); // 中文常用字：0x4e00-0x9f9f
+
+        let (min, max) = CHINESE_TRADITIONAL
+            .into_iter()
+            .flat_map(|w| w.chars())
+            .fold((u32::MAX, 0), |(min, max), c| {
+                (min.min(c as u32), max.max(c as u32))
+            });
+        println!("chinese traditional: {min:#x}, {max:#x}");
+        assert!(0x4e00 <= min && max < 0x9f9f); // // 中文常用字：0x4e00-0x9f9f
+    }
 }

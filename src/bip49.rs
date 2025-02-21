@@ -18,7 +18,7 @@ use std::str::FromStr;
 ///
 /// let master = Xpriv::from_str("xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K")?;
 /// let (addr, priv_key) = master.bip49_wallet(0, 12)?;
-/// # #[cfg(not(feature = "test"))]
+/// # #[cfg(not(feature = "testnet"))]
 /// assert_eq!((addr.as_str(), priv_key.as_str()), ("32d3TaqdGccbDpu9L5R5vvGHQDnAPGfZea", "L1EDBwkRwzxwc6cufANuNWCwQFhBUXmD4o8dDz2w4pDEpRFM2Tma"));
 ///
 /// # Ok::<(), artimonist::Error>(())
@@ -116,7 +116,7 @@ mod bip49_test {
         Ok(())
     }
 
-    #[cfg(not(feature = "test"))]
+    #[cfg(not(feature = "testnet"))]
     #[test]
     fn test_bip49_wallet() -> Result<(), crate::Error> {
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K";
