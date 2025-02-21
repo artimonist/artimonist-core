@@ -57,11 +57,17 @@ impl Derivation for Xpriv {
 }
 
 fn words_validate(words: &Vec<&str>) -> bool {
+    assert!(matches!(words.len(), 12 | 15 | 18 | 21 | 24));
+
     for indices in words_indices(words) {
+        if indices.len() != words.len() {
+            continue;
+        }
         let mut entropy = indices
             .into_iter()
             .flat_map(|v| (0..11).rev().map(move |i| v & 1 << i > 0))
             .to_bits();
+
         // verify entropy checksum
         let tail = entropy.pop().unwrap();
         let checksum = sha256::Hash::hash(&entropy).as_byte_array()[0];
@@ -91,9 +97,9 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
 
     #[cfg(not(feature = "multilingual"))]
     {
+        use crate::Language::English;
         if words.iter().all(|&w| w.is_ascii()) {
-            const EN_LANGS: [Language; 1] = [Language::English];
-            EN_LANGS.into_iter().filter_map(do_search).collect()
+            [English].into_iter().filter_map(do_search).collect()
         } else {
             vec![]
         }
@@ -103,16 +109,23 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
         use crate::Language::*;
         const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, French];
         const TONE_LANGS: [Language; 2] = [Spanish, French];
-        const CJK_LANGS: [Language; 4] = [TraditionalChinese, SimplifiedChinese, Japanese, Korean];
 
-        if words.iter().any(|&w| w.is_ascii()) {
+        if words[0].is_ascii() {
             if words.iter().all(|&w| w.is_ascii()) {
                 EN_LANGS.into_iter().filter_map(do_search).collect()
             } else {
                 TONE_LANGS.into_iter().filter_map(do_search).collect()
             }
         } else {
-            CJK_LANGS.into_iter().filter_map(do_search).collect()
+            match words[0].chars().next().unwrap() as u32 {
+                0x1100..0x11ff => [Korean].into_iter().filter_map(do_search).collect(),
+                0x3040..0x309f => [Japanese].into_iter().filter_map(do_search).collect(),
+                0x4e00..0x9f9f => [TraditionalChinese, SimplifiedChinese]
+                    .into_iter()
+                    .filter_map(do_search)
+                    .collect(),
+                _ => vec![],
+            }
         }
     }
 }
@@ -176,7 +189,7 @@ mod bip39_test {
         ];
         for x in INVALID_CHECKSUM {
             let r = Xpriv::from_mnemonic(*x, Default::default());
-            assert!(matches!(r, Err(Bip39Error::InvalidChecksum)));
+            assert!(matches!(r, Err(Bip39Error::InvalidParameter(_))));
         }
 
         const INVALID_LENGTH: &[&str] = &[
@@ -185,7 +198,7 @@ mod bip39_test {
         ];
         for x in INVALID_LENGTH {
             let r = Xpriv::from_mnemonic(*x, Default::default());
-            assert!(matches!(r, Err(Bip39Error::InvalidLength)));
+            assert!(matches!(r, Err(Bip39Error::InvalidParameter(_))));
         }
         Ok(())
     }
