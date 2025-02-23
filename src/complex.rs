@@ -40,7 +40,9 @@ use serde::{Deserialize, Serialize};
 pub struct ComplexDiagram(pub [[Option<String>; 7]; 7]);
 ImpDeref!(ComplexDiagram, [[Option<String>; 7]; 7]);
 
-impl GenericDiagram<7, 7, char> for ComplexDiagram {
+impl GenericDiagram<7, 7> for ComplexDiagram {
+    type Item = String;
+
     /// Compatible with previous versions
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut str_list: Vec<&str> = vec![];

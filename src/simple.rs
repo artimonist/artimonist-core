@@ -49,7 +49,9 @@ use serde::{Deserialize, Serialize};
 pub struct SimpleDiagram(pub [[Option<char>; 7]; 7]);
 ImpDeref!(SimpleDiagram, [[Option<char>; 7]; 7]);
 
-impl GenericDiagram<7, 7, char> for SimpleDiagram {
+impl GenericDiagram<7, 7> for SimpleDiagram {
+    type Item = char;
+
     /// Compatible with previous versions
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut chars = Vec::with_capacity(7 * 7);
