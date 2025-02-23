@@ -65,7 +65,7 @@ fn words_validate(words: &Vec<&str>) -> bool {
         }
         let mut entropy = indices
             .into_iter()
-            .flat_map(|v| (0..11).rev().map(move |i| v & 1 << i > 0))
+            .flat_map(|v| (0..11).rev().map(move |i| v & (1 << i) > 0))
             .to_bits();
 
         // verify entropy checksum
