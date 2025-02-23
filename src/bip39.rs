@@ -98,10 +98,9 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
     #[cfg(not(feature = "multilingual"))]
     {
         use crate::Language::English;
-        if words.iter().all(|&w| w.is_ascii()) {
-            [English].into_iter().filter_map(do_search).collect()
-        } else {
-            vec![]
+        match words.iter().all(|&w| w.is_ascii()) {
+            true => [English].into_iter().filter_map(do_search).collect(),
+            false => vec![],
         }
     }
     #[cfg(feature = "multilingual")]
@@ -109,23 +108,16 @@ fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
         use crate::Language::*;
         const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, French];
         const TONE_LANGS: [Language; 2] = [Spanish, French];
+        const CN_LANGS: [Language; 2] = [TraditionalChinese, SimplifiedChinese];
 
-        if words[0].is_ascii() {
-            if words.iter().all(|&w| w.is_ascii()) {
-                EN_LANGS.into_iter().filter_map(do_search).collect()
-            } else {
-                TONE_LANGS.into_iter().filter_map(do_search).collect()
-            }
-        } else {
-            match words[0].chars().next().unwrap() as u32 {
-                0x1100..0x11ff => [Korean].into_iter().filter_map(do_search).collect(),
-                0x3040..0x309f => [Japanese].into_iter().filter_map(do_search).collect(),
-                0x4e00..0x9f9f => [TraditionalChinese, SimplifiedChinese]
-                    .into_iter()
-                    .filter_map(do_search)
-                    .collect(),
-                _ => vec![],
-            }
+        match words[0].chars().next().unwrap() as u32 {
+            0x1100..0x11ff => [Korean].into_iter().filter_map(do_search).collect(),
+            0x3040..0x309f => [Japanese].into_iter().filter_map(do_search).collect(),
+            0x4e00..0x9f9f => CN_LANGS.into_iter().filter_map(do_search).collect(),
+            _ => match words.iter().all(|&w| w.is_ascii()) {
+                true => EN_LANGS.into_iter().filter_map(do_search).collect(),
+                false => TONE_LANGS.into_iter().filter_map(do_search).collect(),
+            },
         }
     }
 }

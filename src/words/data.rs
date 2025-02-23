@@ -11233,7 +11233,7 @@ mod words_test {
     /// Detect words that are repeated across languages
     #[ignore = "mnemonic repeat words research verified"]
     #[test]
-    fn pre_test_lang_repeat() {
+    fn pre_test_repeat() {
         let mut set = HashSet::from(ENGLISH);
         for (i, words) in [FRENCH, ITALIAN, CZECH, PORTUGUESE, SPANISH]
             .into_iter()
@@ -11271,15 +11271,17 @@ mod words_test {
         }
     }
 
-    #[ignore = "mnemonic ascii words research verified"]
+    // #[ignore = "mnemonic ascii words research verified"]
     #[test]
-    fn pre_test_word_ascii() {
+    fn pre_test_ascii() {
         assert!(ENGLISH.into_iter().all(str::is_ascii));
         assert!(ITALIAN.into_iter().all(str::is_ascii));
         assert!(CZECH.into_iter().all(str::is_ascii));
         assert!(PORTUGUESE.into_iter().all(str::is_ascii));
         assert!(!SPANISH.into_iter().all(str::is_ascii));
         assert!(!FRENCH.into_iter().all(str::is_ascii));
+        assert!(SPANISH.into_iter().all(|w| w.chars().any(|c| c.is_ascii())));
+        assert!(FRENCH.into_iter().all(|w| w.chars().any(|c| c.is_ascii())));
 
         assert!(!JAPANESE.into_iter().any(str::is_ascii));
         assert!(!KOREAN.into_iter().any(str::is_ascii));
