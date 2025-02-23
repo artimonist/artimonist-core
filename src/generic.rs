@@ -11,7 +11,10 @@ use serde::Serialize;
 ///   W: matrix weight
 ///   T: matrix item
 ///
-pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
+pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
+    /// cell item type
+    type Item: Serialize;
+
     /// serialize diagram to binary data
     fn to_bytes(&self) -> GenericResult<Vec<u8>>;
 
@@ -49,7 +52,9 @@ pub trait GenericDiagram<const H: usize, const W: usize, T: Serialize> {
     }
 }
 
-impl<const H: usize, const W: usize, T: Serialize> GenericDiagram<H, W, T> for Matrix<H, W, T> {
+impl<T: Serialize, const H: usize, const W: usize> GenericDiagram<H, W> for Matrix<T, H, W> {
+    type Item = T;
+
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
@@ -113,7 +118,7 @@ mod generic_test {
         }
         {
             // VECTOR equal to MATRIX
-            let matrix: Matrix<3, 5, u128> = VECTOR.to_vec().to_matrix::<3, 5>();
+            let matrix: Matrix<u128, 3, 5> = VECTOR.to_vec().to_matrix::<3, 5>();
             let master = matrix.bip32_master("test".as_bytes())?;
             assert_eq!(master.to_string(), XPRIV);
         }
@@ -140,7 +145,7 @@ mod generic_test {
             [None, None, Some(1), None, None],
         ];
         let buf = rmp_serde::to_vec(&MATRIX)?;
-        let mx: Matrix<3, 5, u8> = rmp_serde::from_slice(&buf)?;
+        let mx: Matrix<u8, 3, 5> = rmp_serde::from_slice(&buf)?;
         assert_eq!(mx, MATRIX);
         Ok(())
     }

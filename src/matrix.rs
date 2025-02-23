@@ -1,14 +1,14 @@
 /// type alias for any diagram
-pub type Matrix<const H: usize, const W: usize, T> = [[Option<T>; W]; H];
+pub type Matrix<T, const H: usize, const W: usize> = [[Option<T>; W]; H];
 
 /// transform to generic diagram
 pub trait ToMatrix<T> {
     /// transform to matrix
-    fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<H, W, T>;
+    fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<T, H, W>;
 }
 
 impl<T> ToMatrix<T> for Vec<Option<T>> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<T, H, W> {
         self.resize_with(H * W, || None);
         self.reverse();
         core::array::from_fn(|_| core::array::from_fn(|_| self.pop().unwrap()))
@@ -16,7 +16,7 @@ impl<T> ToMatrix<T> for Vec<Option<T>> {
 }
 
 impl<T: std::fmt::Debug> ToMatrix<T> for Vec<Vec<Option<T>>> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<T, H, W> {
         self.resize_with(H, || [const { None }; W].into_iter().collect());
         self.into_iter()
             .map(|mut r| {
@@ -31,7 +31,7 @@ impl<T: std::fmt::Debug> ToMatrix<T> for Vec<Vec<Option<T>>> {
 }
 
 impl<T: std::fmt::Debug + Default + PartialEq> ToMatrix<T> for Vec<T> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<T, H, W> {
         self.resize_with(H * W, T::default);
         self.reverse();
         core::array::from_fn(|_| {
@@ -41,7 +41,7 @@ impl<T: std::fmt::Debug + Default + PartialEq> ToMatrix<T> for Vec<T> {
 }
 
 impl<T: std::fmt::Debug + Default + PartialEq> ToMatrix<T> for Vec<Vec<T>> {
-    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<H, W, T> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<T, H, W> {
         self.resize_with(H, || (0..W).map(|_| T::default()).collect());
         self.into_iter()
             .map(|mut r| {
