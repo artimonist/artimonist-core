@@ -39,10 +39,10 @@
 //!
 
 pub(crate) mod bip39;
-pub(crate) mod bip49;
 pub(crate) mod bip85;
 pub(crate) mod bits;
 pub(crate) mod complex;
+pub(crate) mod derive;
 pub(crate) mod generic;
 pub(crate) mod macros;
 pub(crate) mod matrix;
@@ -54,9 +54,9 @@ pub(crate) mod words;
 pub use bitcoin::{self, bip32::Xpriv};
 
 pub use bip39::Derivation as BIP39;
-pub use bip49::Derivation as BIP49;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use complex::ComplexDiagram;
+pub use derive::{Bip44 as BIP44, Bip49 as BIP49, Bip84 as BIP84};
 pub use generic::GenericDiagram;
 pub use matrix::{Matrix, ToMatrix};
 pub use simple::SimpleDiagram;
@@ -85,6 +85,9 @@ pub mod error {
         /// Address error
         #[error("address error")]
         AddressError(#[from] bitcoin::key::UncompressedPublicKeyError),
+        /// P2sh error
+        #[error("p2sh error")]
+        P2shError(#[from] bitcoin::address::P2shError),
         /// serialize error
         #[error("serialize error")]
         Serialize(#[from] rmp_serde::encode::Error),

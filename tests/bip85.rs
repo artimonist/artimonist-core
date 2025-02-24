@@ -20,12 +20,12 @@ mod pre_test_bip85 {
     use std::str::FromStr;
 
     use bitcoin::{
+        NetworkKind,
         base64::Engine,
         bip32::{ChildNumber, Xpriv},
-        hashes::{hmac, sha512, Hash, HashEngine},
+        hashes::{Hash, HashEngine, hmac, sha512},
         hex::DisplayHex,
         secp256k1::SecretKey,
-        NetworkKind,
     };
 
     const MASTER_KEY_STR: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
@@ -50,7 +50,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn pre_test_to_mnemonic() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_mnemonic() -> Result<(), bitcoin::bip32::Error> {
         struct Case<'a> {
             pub count: usize,
             pub path: &'a str,
@@ -58,14 +58,14 @@ mod pre_test_bip85 {
             pub words: &'a str,
         }
         const TEST_CASE: &[Case] = &[
-            Case{
+            Case {
                 // 12 English words
                 count: 12,
                 path: "m/83696968'/39'/0'/12'/0'",
                 data: "6250b68daf746d12a24d58b4787a714b",
                 words: "girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
             },
-            Case{
+            Case {
                 // 18 English words
                 count: 18,
                 path: "m/83696968'/39'/0'/18'/0'",
@@ -95,7 +95,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn pre_test_to_wif() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_wif() -> Result<(), bitcoin::bip32::Error> {
         const WIF_PATH: &str = "m/83696968'/2'/0'";
         const PRIV_KEY: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
         let data = master_derive(WIF_PATH)?;
@@ -110,7 +110,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn pre_test_to_xpriv() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_xpriv() -> Result<(), bitcoin::bip32::Error> {
         const XPRIV_PATH: &str = "m/83696968'/32'/0'";
         const DERIVED_ENTROPY: &str =
             "ead0b33988a616cf6a497f1c169d9e92562604e38305ccd3fc96f2252c177682";
@@ -140,7 +140,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn pre_test_to_hex() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_hex() -> Result<(), bitcoin::bip32::Error> {
         const HEX_LEN: usize = 64;
         let hex_path = format!("m/83696968'/128169'/{HEX_LEN}'/0'");
         const HEX_64_STR: &str = "492db4698cf3b73a5a24998aa3e9d7fa96275d85724a91e71aa2d645442f878555d078fd1f1f67e368976f04137b1f7a0d19232136ca50c44614af72b5582a5c";
@@ -156,7 +156,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn pre_test_to_pwd() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_pwd() -> Result<(), bitcoin::bip32::Error> {
         const PWD_LEN: usize = 21;
         let path = format!("m/83696968'/707764'/{PWD_LEN}'/0'");
         const DERIVED_ENTROPY: &str = "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9";
