@@ -1,6 +1,6 @@
 [package]
 name = "artimonist"
-version = "0.10.1"
+version = "0.11.0"
 authors = ["Artimonist <artimonist@gmail.com>"]
 description = "A tool for generating mnemonics based on diagrams."
 homepage = "https://artimonist.org/"
