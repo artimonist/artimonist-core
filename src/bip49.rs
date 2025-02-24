@@ -1,7 +1,8 @@
 use bitcoin::{
+    Address, CompressedPublicKey, PublicKey,
     bip32::{DerivationPath, Xpriv, Xpub},
     key::Secp256k1,
-    Address, CompressedPublicKey,
+    script::Builder,
 };
 use std::str::FromStr;
 
@@ -35,6 +36,16 @@ pub trait Derivation {
     /// # Returns
     ///   (address, private_key)
     fn bip49_wallet(&self, account: u32, index: u32) -> Bip49Result;
+
+    /// Derive multisig addresses from multi accounts
+    /// # Parameters
+    /// - `M`: Number of required signatures
+    /// - `N`: Number of total signatures
+    /// - `account`: Account start index (total use N accounts)
+    /// - `index`: Wallet index
+    /// # Returns
+    ///   [address, redeem_script]
+    fn bip49_multisig<const M: u8, const N: u8>(&self, account: u32, index: u32) -> Bip49Result;
 }
 
 impl Derivation for Xpriv {
@@ -51,9 +62,34 @@ impl Derivation for Xpriv {
         let secp = Secp256k1::default();
         let xpriv = self.derive_priv(&secp, &DerivationPath::from_str(&path)?)?;
         let private_key = xpriv.to_priv();
-        let pub_key = CompressedPublicKey::from_private_key(&secp, &private_key).expect("pub_key");
+        let pub_key = CompressedPublicKey::from_private_key(&secp, &private_key)?;
         let address = Address::p2shwpkh(&pub_key, crate::NETWORK);
         Ok((address.to_string(), private_key.to_wif()))
+    }
+
+    fn bip49_multisig<const M: u8, const N: u8>(&self, account: u32, index: u32) -> Bip49Result {
+        // collect public keys
+        let secp = Secp256k1::default();
+        let mut pub_keys = Vec::with_capacity(N as usize);
+        for account in account..account + N as u32 {
+            let path = DerivationPath::from_str(&format!("m/49'/0'/{account}'/0/{index}"))?;
+            let priv_key = self.derive_priv(&secp, &path)?.to_priv();
+            let pub_key = PublicKey::from_private_key(&secp, &priv_key);
+            pub_keys.push(pub_key);
+        }
+        pub_keys.sort();
+        // create multisig address
+        let mut builder = Builder::new();
+        builder = builder.push_int(M as i64);
+        for key in pub_keys.iter() {
+            builder = builder.push_key(key);
+        }
+        builder = builder.push_int(pub_keys.len() as i64);
+        let script = builder
+            .push_opcode(bitcoin::opcodes::all::OP_CHECKMULTISIG)
+            .into_script();
+        let address = Address::p2sh(&script, crate::NETWORK).unwrap();
+        Ok((address.to_string(), script.to_hex_string()))
     }
 }
 
@@ -83,12 +119,12 @@ mod bip49_test {
     ///     <https://iancoleman.io/bip39>
     #[test]
     fn test_bip49_master() -> Result<(), crate::Error> {
-        const TEST_DATA: &[[&str; 4]] = &[
-          ["36b0d3535aa764d3b33a82241211c5685283918e068e8141f0038a1f0882805f013e102689ecffe25e3e7a6b69540ffb927be0775ec2c1af5052d347e6847342",
-          "yprvABrGsX5C9jant1emhiUjqrmH9a9wbmRL88mSwZXEZQFn5jnvkp3Avnu6vtJgpxfSEuoVmnWcn7ijm2WDgqnguxpPPMPobZT7vcqunotD7Xr",
-          "yprvAJSnjRQ7JFNuoJW4Ab6eb8oAHUAJ9vJdETq3PnxZBwHeEvnCh22247dS8NC8RoWgGuDMmKKGHtAV7jmaeeUJ9gzYZkwA5rQNgWxPB2eiiVQ",
-          "ypub6XS98vw18cwD1naXGcdexGjtqVznZP2UbgkeCBNAkGpd7j7MEZLGbuwuyfCAstNRCLEA8P2FBG9XpLstG4ubGn3hQAKsnV7j2CnEBsCWuAW"],
-        ];
+        const TEST_DATA: &[[&str; 4]] = &[[
+            "36b0d3535aa764d3b33a82241211c5685283918e068e8141f0038a1f0882805f013e102689ecffe25e3e7a6b69540ffb927be0775ec2c1af5052d347e6847342",
+            "yprvABrGsX5C9jant1emhiUjqrmH9a9wbmRL88mSwZXEZQFn5jnvkp3Avnu6vtJgpxfSEuoVmnWcn7ijm2WDgqnguxpPPMPobZT7vcqunotD7Xr",
+            "yprvAJSnjRQ7JFNuoJW4Ab6eb8oAHUAJ9vJdETq3PnxZBwHeEvnCh22247dS8NC8RoWgGuDMmKKGHtAV7jmaeeUJ9gzYZkwA5rQNgWxPB2eiiVQ",
+            "ypub6XS98vw18cwD1naXGcdexGjtqVznZP2UbgkeCBNAkGpd7j7MEZLGbuwuyfCAstNRCLEA8P2FBG9XpLstG4ubGn3hQAKsnV7j2CnEBsCWuAW",
+        ]];
         for x in TEST_DATA {
             let master = Xpriv::new_master(crate::NETWORK, &Vec::from_hex(x[0]).expect("seed"))?;
             assert_eq!(Ypriv(master).to_string(), x[1]);
@@ -102,13 +138,17 @@ mod bip49_test {
     #[test]
     fn test_bip49_account() -> Result<(), crate::Error> {
         const TEST_DATA: &[[&str; 3]] = &[
-        ["xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD",
-        "xpub6C84nZSWyfEQWFeiPT5bWhBvPvk6UsdNiYTsP47fqFQKxntSs6R7oJodKxnE5bSLNBr2q4ZPmWvSwxNEqKk4sgXJwEawgMMSnkJJ5CzZyv1",
-        "xprv9y8iP3ud9Hg7HmaFHRYb9ZFBqtuc5QuXMKYGafi4GusM5zZJKZ6sFWV9UiYmJA5xrZcWXqF25AxAfBFA8ZBCmJY4FiPTErsGw3jjNHwKkgb"],
-        ["xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K",
-        "xpub6CGaEEgcBxtN1jcD2mkpQh9JAKwKqG4MXWxC7SrY8AATitVTvLomWakBcW3zwwizPx6dS8MuypiQ2zTUGSW2t7wQ88hz5JhxuLerijnwHhk",
-        "xprv9yHDpj9iMbL4oFXjvkDp3ZCZcJ6qRoLWAJ2bK4SvZpdUr6AKNoVWxnRhmG4WXJ74AR8jkDVSDuomNcqroNoJNiKgt2HDJ7WR9qk9xym1B3y"],
-      ];
+            [
+                "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD",
+                "xpub6C84nZSWyfEQWFeiPT5bWhBvPvk6UsdNiYTsP47fqFQKxntSs6R7oJodKxnE5bSLNBr2q4ZPmWvSwxNEqKk4sgXJwEawgMMSnkJJ5CzZyv1",
+                "xprv9y8iP3ud9Hg7HmaFHRYb9ZFBqtuc5QuXMKYGafi4GusM5zZJKZ6sFWV9UiYmJA5xrZcWXqF25AxAfBFA8ZBCmJY4FiPTErsGw3jjNHwKkgb",
+            ],
+            [
+                "xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K",
+                "xpub6CGaEEgcBxtN1jcD2mkpQh9JAKwKqG4MXWxC7SrY8AATitVTvLomWakBcW3zwwizPx6dS8MuypiQ2zTUGSW2t7wQ88hz5JhxuLerijnwHhk",
+                "xprv9yHDpj9iMbL4oFXjvkDp3ZCZcJ6qRoLWAJ2bK4SvZpdUr6AKNoVWxnRhmG4WXJ74AR8jkDVSDuomNcqroNoJNiKgt2HDJ7WR9qk9xym1B3y",
+            ],
+        ];
         for x in TEST_DATA {
             let root = Xpriv::from_str(x[0])?;
             assert_eq!(root.bip49_account(0)?, (x[1].to_owned(), x[2].to_owned()));
