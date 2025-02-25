@@ -1,171 +1,112 @@
-/*!
- * Tests BIP 85 algorithm
- */
-#![allow(unused)]
-///
+#![cfg(test)]
+#![cfg(not(feature = "testnet"))]
+
+use artimonist::Language::English;
+use artimonist::{Error, Xpriv, BIP85};
+use std::str::FromStr;
+
 /// # Reference
-/// [1] - BIP 85: Deterministic Entropy From BIP32 Keychains
-///       https://bips.dev/85/
-///       https://github.com/ethankosakovsky/bip85
-///       https://github.com/rikitau/rust-bip85
-///
-/// # Examples
-///   bip39: 83696968'/39'/language'/words'/index'
-///   wif: m/83696968'/2'/index'
-///   hex: m/83696968'/128169p'/index'
-///   xpriv: 83696968'/32'/index'
-///
-#[cfg(test)]
-mod pre_test_bip85 {
-    use std::str::FromStr;
+///   <https://bips.dev/85/>
+#[test]
+fn bip85_define() -> Result<(), Error> {
+    const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
+    let master = Xpriv::from_str(MASTER_KEY).expect("master");
 
-    use bitcoin::{
-        NetworkKind,
-        base64::Engine,
-        bip32::{ChildNumber, Xpriv},
-        hashes::{Hash, HashEngine, hmac, sha512},
-        hex::DisplayHex,
-        secp256k1::SecretKey,
-    };
-
-    const MASTER_KEY_STR: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
-
-    fn master_derive(path: &str) -> Result<Vec<u8>, bitcoin::bip32::Error> {
-        let secp = bitcoin::secp256k1::Secp256k1::new();
-        let master = bitcoin::bip32::Xpriv::from_str(MASTER_KEY_STR)?;
-        let path = bitcoin::bip32::DerivationPath::from_str(path)?;
-        let derived = master.derive_priv(&secp, &path)?;
-
-        let mut hmac =
-            bitcoin::hashes::hmac::HmacEngine::<sha512::Hash>::new("bip-entropy-from-k".as_bytes());
-        hmac.input(&derived.private_key.secret_bytes());
-        let data = hmac::Hmac::from_engine(hmac).to_byte_array();
-
-        Ok(data.to_vec())
+    // mnemonic
+    const MNEMONIC_COUNTS: [u32; 3] = [12, 18, 24];
+    const MNEMONIC_WORDS: [&str; 3] = [
+        "girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
+        "near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token",
+        "puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",
+    ];
+    for (i, count) in MNEMONIC_COUNTS.into_iter().enumerate() {
+        assert_eq!(master.bip85_mnemonic(English, count, 0)?, MNEMONIC_WORDS[i]);
     }
-
-    /// BIP39
-    /// Application number: 39'
-    /// The derivation path format is: m/83696968'/39'/{language}'/{words}'/{index}'
-    ///
-    #[ignore = "pre test"]
-    #[test]
-    fn bip85_mnemonic() -> Result<(), bitcoin::bip32::Error> {
-        struct Case<'a> {
-            pub count: usize,
-            pub path: &'a str,
-            pub data: &'a str,
-            pub words: &'a str,
-        }
-        const TEST_CASE: &[Case] = &[
-            Case {
-                // 12 English words
-                count: 12,
-                path: "m/83696968'/39'/0'/12'/0'",
-                data: "6250b68daf746d12a24d58b4787a714b",
-                words: "girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
-            },
-            Case {
-                // 18 English words
-                count: 18,
-                path: "m/83696968'/39'/0'/18'/0'",
-                data: "938033ed8b12698449d4bbca3c853c66b293ea1b1ce9d9dc",
-                words: "near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token",
-            },
-            Case {
-                // 24 English words
-                count: 24,
-                path: "m/83696968'/39'/0'/24'/0'",
-                data: "ae131e2312cdc61331542efe0d1077bac5ea803adf24b313a4f0e48e9c51f37f",
-                words: "puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",
-            },
-        ];
-
-        for case in TEST_CASE.iter() {
-            let data = master_derive(case.path)?;
-            let len = case.count * 4 / 3;
-            assert_eq!(data[..len].to_lower_hex_string(), case.data);
-        }
-        Ok(())
+    // wif
+    {
+        #[cfg(not(feature = "testnet"))]
+        const WIF: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
+        #[cfg(feature = "testnet")]
+        const WIF: &str = "cRLuXpEtagka2NVmVtg6pcSdUFHp9pqkhCQSweYhQUWMwkdaaVsk";
+        assert_eq!(master.bip85_wif(0)?.pk, WIF);
     }
-
-    /// HD-Seed WIF
-    /// Application number: 2'
-    /// Path format is m/83696968'/2'/{index}'
-    ///
-    #[ignore = "pre test"]
-    #[test]
-    fn bip85_wif() -> Result<(), bitcoin::bip32::Error> {
-        const WIF_PATH: &str = "m/83696968'/2'/0'";
-        const PRIV_KEY: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
-        let data = master_derive(WIF_PATH)?;
-        let priv_key = bitcoin::PrivateKey::from_slice(&data[..32], NetworkKind::Main)?;
-        assert_eq!(priv_key.to_wif(), PRIV_KEY);
-        Ok(())
+    // xpriv
+    {
+        #[cfg(not(feature = "testnet"))]
+        const XPRIV: &str = "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX";
+        #[cfg(feature = "testnet")]
+        const XPRIV: &str = "tprv8ZgxMBicQKsPdh5yFmJBEQgjf3oaE8YyyEgS7CnEHXyPe9eGtubocMTq2BdvXjP6E9smCHogUm5ywmbfWPPhpVS3tM2MZbTaCPoTB1Yq51L";
+        assert_eq!(master.bip85_xpriv(0)?, XPRIV);
     }
+    // pwd
+    const PWD: &str = "dKLoepugzdVJvdL56ogNV";
+    assert_eq!(master.bip85_pwd(artimonist::Password::Legacy, 21, 0)?, PWD);
+    // rsa
+    // todo!();
+    // rsa gpg
+    // todo!();
 
-    /// XPRV
-    /// Application number: 32'
-    /// Path format is m/83696968'/32'/{index}'
-    ///
-    #[ignore = "pre test"]
-    #[test]
-    fn bip85_xpriv() -> Result<(), bitcoin::bip32::Error> {
-        const XPRIV_PATH: &str = "m/83696968'/32'/0'";
-        const DERIVED_ENTROPY: &str =
-            "ead0b33988a616cf6a497f1c169d9e92562604e38305ccd3fc96f2252c177682";
-        const DERIVED_XPRIV: &str = "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX";
-
-        let data = master_derive(XPRIV_PATH)?;
-        let chain_code = bitcoin::bip32::ChainCode::from_hex(&data[..32].to_lower_hex_string())
-            .expect("chain_code");
-        let xpriv = Xpriv {
-            network: NetworkKind::Main,
-            depth: 0,
-            parent_fingerprint: Default::default(),
-            child_number: ChildNumber::Normal { index: 0 },
-            private_key: SecretKey::from_slice(&data[32..]).unwrap(),
-            chain_code: chain_code,
-        };
-        let ext_xpriv = Xpriv::from_str(DERIVED_XPRIV).unwrap();
-        assert_eq!(xpriv, Xpriv::from_str(DERIVED_XPRIV).unwrap());
-        Ok(())
-    }
-
-    /// HEX
-    /// Application number: 128169'
-    /// The derivation path format is: m/83696968'/128169'/{num_bytes}'/{index}'
-    /// 16 <= num_bytes <= 64
-    /// Truncate trailing (least significant) bytes of the entropy after num_bytes
-    ///
-    #[ignore = "pre test"]
-    #[test]
-    fn bip85_hex() -> Result<(), bitcoin::bip32::Error> {
-        const HEX_LEN: usize = 64;
-        let hex_path = format!("m/83696968'/128169'/{HEX_LEN}'/0'");
-        const HEX_64_STR: &str = "492db4698cf3b73a5a24998aa3e9d7fa96275d85724a91e71aa2d645442f878555d078fd1f1f67e368976f04137b1f7a0d19232136ca50c44614af72b5582a5c";
-        let data = master_derive(&hex_path)?;
-        assert_eq!(data[..64].to_lower_hex_string(), HEX_64_STR);
-        Ok(())
-    }
-
-    /// PWD BASE64
-    /// Application number: 707764'
-    /// The derivation path format is: m/83696968'/707764'/{pwd_len}'/{index}'
-    /// 20 <= pwd_len <= 86
-    ///
-    #[ignore = "pre test"]
-    #[test]
-    fn bip85_pwd() -> Result<(), bitcoin::bip32::Error> {
-        const PWD_LEN: usize = 21;
-        let path = format!("m/83696968'/707764'/{PWD_LEN}'/0'");
-        const DERIVED_ENTROPY: &str = "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9";
-        const PWD: &str = "dKLoepugzdVJvdL56ogNV";
-        let data = master_derive(&path)?;
-        assert_eq!(data.to_lower_hex_string(), DERIVED_ENTROPY);
-        let mut pwd = bitcoin::base64::prelude::BASE64_STANDARD.encode(&data);
-        pwd.truncate(PWD_LEN);
-        assert_eq!(pwd, PWD);
-        Ok(())
-    }
+    Ok(())
 }
+
+/// # Reference
+///   <https://iancoleman.io/bip39>
+#[test]
+fn bip85_derive() -> Result<(), Error> {
+    let master = Xpriv::from_str(MASTER_KEY)?;
+    // mnemonic
+    for (i, &ws) in MNEMONICS.into_iter().enumerate() {
+        let count = ws.split_whitespace().count() as u32;
+        assert_eq!(master.bip85_mnemonic(English, count, i as u32)?, ws);
+    }
+    // wif
+    for (i, &wif) in WIFS.into_iter().enumerate() {
+        assert_eq!(master.bip85_wif(i as u32)?.pk, wif);
+    }
+    // xpriv
+    for (i, &xpriv) in XPRIVS.into_iter().enumerate() {
+        assert_eq!(master.bip85_xpriv(i as u32)?, xpriv);
+    }
+    Ok(())
+}
+
+const MASTER_KEY:&str = "xprv9s21ZrQH143K2oVZZGYKXDp3zzT7sqFwmA7TXztxhKdMguQrmdXsxnrXT7jhuQH2TCgWTgChPmQUCkqnT6Fxtkb99KZE6GFBW2MMZGBqhnc";
+
+const MNEMONICS: &[&str] = &[
+  "hen run argue curious battle used census panel couple club stick bargain ordinary fame bid cabbage equip spring south surprise sand buddy angry tunnel",
+  "thumb whale anxiety neglect gather replace picnic foster million gym anger lab upper unhappy recall pen math material unfold world syrup regular defense very",
+  "fossil chuckle magic electric mom invite exchange toy human eye phone letter fox depart vital close friend stadium calm absurd police pipe laptop client",
+  "play end hawk capable elegant lady survey surround render comfort victory base loud alpha insane fuel rookie warfare lawsuit earn during scene roast slender",
+  "flag unique volume cute program answer wine laugh insane emerge student keen control ghost shove glow acid access twice local reduce license crowd foil",
+  "siren name finish ginger quiz print valve section permit alcohol fabric gospel flower artist snap swift market camp source fragile evolve draw gather lion",
+  "adult elite design judge lab square cousin urban wheat bargain claw lion wood drop enforce sister ethics rifle",
+  "mad tent broccoli usage any twin practice spawn try security sand dinner oxygen prison secret guard sword surge",
+  "install find pride betray smoke wheel away parent cruel chat sample come",
+  "left govern affair salute canvas athlete adjust sunset manage capital buddy electric",
+];
+
+const WIFS: &[&str] = &[
+    "L5nxqPAVHzRtfXoXYfkN9QwdreiD1phDJjQ3gbB3qY3RCVeGa52e",
+    "L3xwgEA3QVe8yeJ5ft3AYu7kmAvwtyqT9nPvFZmK9JgUqvtmjfYb",
+    "L5mH6wSp8wLZS6RPUz5vswUiniAB8PjFRs776jtUiM7nGSHfRJzf",
+    "L5AMyUoJ37FCjhjccFbYHv4D82r9TeHYeZCaw63JsteL8t3jrgr1",
+    "L29Ar6DZydWgzMTEk6N2NdQZVt3Kvz2HScSyHz4ska6sDqjSwdHq",
+    "L1838SuXC7QMLpP1iTaYVE5TjWgLTvV4DgaGrmAbXrh2iKaDd4GM",
+    "KxrPUsyTrf3GKGcLnqWdnKD1eUdGm58ge7iCUbimqbAcnXgc4xK2",
+    "L4ohbgCpUNBGKd3ZZWhzDoPmv77BJ4yHJRvmDaXk2WaxHHhMPWYA",
+    "L3s3BaF1n6muPTbSu8PAQ1oe1vpE1LDvok1zB1abnVu7CajgfQkJ",
+    "L5gutB1i2Xa2Hjfg22RRNJgiMo4RzvrWYSb11t6xsBmmBeVcse52",
+];
+
+const XPRIVS: &[&str] = &[
+  "xprv9s21ZrQH143K2zu81ow68qkwiEd24XpVh2kV5q7m77vV934zsnrwkypRD5FJwRn8gC8twKNaSUy6oScTuHEEE69g8EBCMwjgk13mXoHMn4s",
+  "xprv9s21ZrQH143K32UKqSrsHNX8S3wdJPPCZ6hPV4zw9k2LDNU24KmtfShT6iosfP6wbBFe1tG1GRzQhbDBJe7QbRmzK7LKF8PZi129dbakjGj",
+  "xprv9s21ZrQH143K2eUuxQsskkGqUjcfkecqAmN8Cr9WXHFWtKxYm5ja4ieMgBWVThK2XipGaWAgM22GyM4NvXrAi2kdVGUbmV4w7BVGZEi2rLD",
+  "xprv9s21ZrQH143K2bYKXa39nNfoKFtSZt3FTC1jYFaUJyU9xr7XmQrMsRwrHPU6nD9aCCU3cEKL7ouc2rTyACeWACRc6ie77z5FF7JLXw6ze8Q",
+  "xprv9s21ZrQH143K3sW7ojvdesWNE3RYC2zLsxe1vVZby4wsU152RXQ2GLxWTtuaUqSubCdfFQ4Z58RMNjgBp4AqNkvMUEqP2JRULEHQc3HR7oc",
+  "xprv9s21ZrQH143K4FaPzpwaqKJ83c5QnXj5MSo2LntMnbu3g6oyqfMkKMU66gzE4MWUCheYf8hZExTQkSQvWbbNHknzre8m7tMyUaAmW8iT4uf",
+  "xprv9s21ZrQH143K3NoewWhwDUE1FetvivrJ2P9P8PCeqjqbj5JoVLvzovskbDXzrT42LHqxka4UfroaPjMRKgtZw3pg1ysTzRAevwJCXAheZhQ",
+  "xprv9s21ZrQH143K3jSs1QnmBLhtV8ydWChUUFX3rHrvTXnHnCZ3zVkV4NPMvWdtui2Ezjvb1S6tsMYAhRTXT4SP7kisiBAZuFQc4x7WoMXmLbh",
+  "xprv9s21ZrQH143K2QYDTBNWktxHEi1r4qnQAKXLem4gz3xt7GkMYy2Bny2G2Wjiggv7LLff8oEnmKxN7REvCeGacqCxM1aXtDKbspQzZfC9s2G",
+  "xprv9s21ZrQH143K2TiR1zN6Siw88rUxPV7FTiX1hX3ZEyFYeBaKevsHVeCzbLyotN7B8kAQ8c1yAhN9QEvieZ3Z77eRVBJBvvxtDTLa3pidocU",
+];

@@ -36,6 +36,10 @@ impl Derivation for Xpriv {
         if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
             return Err(Bip39Error::InvalidParameter("words: 12, 15, 18, 21, 24"));
         }
+        #[cfg(not(feature = "multilingual"))]
+        if words.iter().any(|w| !w.is_ascii()) {
+            return Err(Bip39Error::InvalidParameter("Unsupported language"));
+        }
         if !words_validate(&words) {
             return Err(Bip39Error::InvalidParameter("invalid checksum"));
         }

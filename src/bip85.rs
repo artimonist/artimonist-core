@@ -50,10 +50,6 @@ pub trait Derivation {
     ///   mnemonic words joined by ascii space
     fn bip85_mnemonic(&self, lang: Language, count: u32, index: u32) -> Bip85Result;
 
-    /// mnemonic list of [24, 21, 18, 15, 12] words from one entropy  
-    // Path format is: m/83696968'/39'/{language}'/24'/{index}'
-    fn bip85_mnemonic_list(&self, lang: Language, index: u32) -> Bip85Result<[String; 5]>;
-
     /// HD-Seed WIF  
     // Path format is m/83696968'/2'/{index}'
     fn bip85_wif(&self, index: u32) -> Bip85Result<Wif>;
@@ -100,24 +96,6 @@ impl Derivation for Xpriv {
             .map(|i| lang.word_at(i as usize))
             .collect::<Vec<_>>()
             .join(" "))
-    }
-
-    fn bip85_mnemonic_list(&self, lang: Language, index: u32) -> Bip85Result<[String; 5]> {
-        let path = format!("m/83696968'/39'/{}'/24'/{index}'", lang as u32); // use max len: 24
-        let raw_entropy = bip85_derive(self, &path)?;
-        Ok([24, 21, 18, 15, 12].map(|n| {
-            let data = {
-                let entropy = &raw_entropy[..(n * 4 / 3)]; // truncate
-                let check = sha256::Hash::hash(entropy).as_byte_array()[0];
-                [entropy, &[check]].concat()
-            };
-            // split to indices, map to words, join to string.
-            data.bit_chunks(11)
-                .take(n)
-                .map(|i| lang.word_at(i as usize))
-                .collect::<Vec<_>>()
-                .join(" ")
-        }))
     }
 
     fn bip85_wif(&self, index: u32) -> Bip85Result<Wif> {
@@ -180,15 +158,6 @@ mod bip85_test {
             let mnemonic = master.bip85_mnemonic(Language::English, 18, 0)?;
             assert_eq!(mnemonic, DERIVED_MNEMONIC);
         }
-        {
-            // PATH: m/83696968'/39'/0'/24'/0'
-            const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
-            const DERIVED_MNEMONIC: &str = "puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano";
-            let master = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-            let mnemonics = master.bip85_mnemonic_list(Language::English, 0)?;
-            assert_eq!(mnemonics[0], DERIVED_MNEMONIC);
-        }
-
         Ok(())
     }
 
