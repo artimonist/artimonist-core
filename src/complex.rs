@@ -29,14 +29,13 @@ use crate::macros::ImpDeref;
 
 use super::generic::{GenericDiagram, GenericResult};
 use bitcoin::hashes::{sha256, Hash};
-use serde::{Deserialize, Serialize};
 
 /// Complex Diagram
 ///
 /// Complex diagram contains strings in 7 * 7 grid cells.
 /// All UTF-8 strings with less than 50 characters are supported.
 ///
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct ComplexDiagram(pub [[Option<String>; 7]; 7]);
 ImpDeref!(ComplexDiagram, [[Option<String>; 7]; 7]);
 

@@ -1,8 +1,8 @@
 use bitcoin::{
-    Address, CompressedPublicKey, PublicKey, ScriptBuf,
     bip32::{DerivationPath, Xpriv, Xpub},
     key::Secp256k1,
     script::Builder,
+    Address, CompressedPublicKey, PublicKey, ScriptBuf,
 };
 use std::str::FromStr;
 
@@ -13,6 +13,7 @@ trait XDevive {
 
 impl XDevive for Xpriv {
     /// Derive a key pair from derivation path
+    #[inline]
     fn derive(&self, path: String) -> Result<(Xpub, Xpriv), crate::Error> {
         let secp = Secp256k1::default();
         let path = DerivationPath::from_str(&path)?;
@@ -282,16 +283,19 @@ trait XprivEncode {
     fn to_zpriv(&self) -> String;
 }
 impl XprivEncode for Xpriv {
+    #[inline]
     fn ext_encode<const PRE: u32>(&self) -> String {
         let data = [&PRE.to_be_bytes(), &self.encode()[4..]].concat();
         bitcoin::base58::encode_check(&data[..])
     }
+    #[inline]
     fn to_ypriv(&self) -> String {
         match crate::NETWORK.is_mainnet() {
             true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(),
             false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(),
         }
     }
+    #[inline]
     fn to_zpriv(&self) -> String {
         match crate::NETWORK.is_mainnet() {
             true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(),
@@ -307,16 +311,19 @@ trait XpubEncode {
 }
 
 impl XpubEncode for Xpub {
+    #[inline]
     fn ext_encode<const PRE: u32>(&self) -> String {
         let data = [&PRE.to_be_bytes(), &self.encode()[4..]].concat();
         bitcoin::base58::encode_check(&data[..])
     }
+    #[inline]
     fn to_ypub(&self) -> String {
         match crate::NETWORK.is_mainnet() {
             true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(),
             false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(),
         }
     }
+    #[inline]
     fn to_zpub(&self) -> String {
         match crate::NETWORK.is_mainnet() {
             true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(),

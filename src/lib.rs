@@ -88,16 +88,15 @@ pub mod error {
         /// P2sh error
         #[error("p2sh error")]
         P2shError(#[from] bitcoin::address::P2shError),
+        #[cfg(feature = "serde")]
         /// serialize error
         #[error("serialize error")]
         Serialize(#[from] rmp_serde::encode::Error),
+        #[cfg(feature = "serde")]
         /// deserialize eror
         #[error("deserialize error")]
         Deserialize(#[from] rmp_serde::decode::Error),
     }
-
-    /// Artimonist Result
-    pub type ArtResult<T = ()> = Result<T, Error>;
 }
 pub use error::Error;
 
