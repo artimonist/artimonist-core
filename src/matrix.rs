@@ -1,5 +1,5 @@
 /// type alias for any diagram
-pub type Matrix<T, const H: usize, const W: usize> = [[Option<T>; W]; H];
+pub type Matrix<T, const H: usize = 7, const W: usize = 7> = [[Option<T>; W]; H];
 
 /// transform to generic diagram
 pub trait ToMatrix<T> {

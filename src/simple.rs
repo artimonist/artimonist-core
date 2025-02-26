@@ -25,7 +25,6 @@
 use super::generic::{GenericDiagram, GenericResult};
 use super::macros::ImpDeref;
 use bitcoin::hashes::{sha256, Hash};
-use serde::{Deserialize, Serialize};
 
 /// Simple Diagram
 ///
@@ -45,7 +44,7 @@ use serde::{Deserialize, Serialize};
 /// # Ok::<(), artimonist::Error>(())
 /// ```
 ///
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct SimpleDiagram(pub [[Option<char>; 7]; 7]);
 ImpDeref!(SimpleDiagram, [[Option<char>; 7]; 7]);
 

@@ -1,7 +1,4 @@
-use super::bits::BitAggregation;
-use super::matrix::Matrix;
 use bitcoin::bip32::Xpriv;
-use serde::Serialize;
 
 /// Generic Diagram  
 ///   diagram implementation for any matrix
@@ -13,7 +10,7 @@ use serde::Serialize;
 ///
 pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
     /// cell item type
-    type Item: Serialize;
+    type Item;
 
     /// serialize diagram to binary data
     fn to_bytes(&self) -> GenericResult<Vec<u8>>;
@@ -52,7 +49,13 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
     }
 }
 
-impl<T: Serialize, const H: usize, const W: usize> GenericDiagram<H, W> for Matrix<T, H, W> {
+#[cfg(feature = "serde")]
+use super::bits::BitAggregation;
+
+#[cfg(feature = "serde")]
+impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
+    for super::Matrix<T, H, W>
+{
     type Item = T;
 
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
@@ -79,10 +82,11 @@ impl<T: Serialize, const H: usize, const W: usize> GenericDiagram<H, W> for Matr
 /// GenericResult
 pub type GenericResult<T = ()> = Result<T, crate::Error>;
 
+#[cfg(feature = "serde")]
 #[cfg(test)]
 mod generic_test {
     use super::*;
-    use crate::ToMatrix;
+    use crate::{Matrix, ToMatrix};
     use bitcoin::hex::DisplayHex;
 
     #[test]
