@@ -1,6 +1,7 @@
 #![cfg(test)]
+#![cfg(not(feature = "rawfmt"))]
 
-use artimonist::{BIP84, Xpriv};
+use artimonist::{Xpriv, BIP84};
 use bitcoin::hex::FromHex;
 
 #[test]

@@ -290,16 +290,24 @@ impl XprivEncode for Xpriv {
     }
     #[inline]
     fn to_ypriv(&self) -> String {
-        match crate::NETWORK.is_mainnet() {
-            true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(),
-            false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(),
+        if cfg!(feature = "rawfmt") {
+            self.to_string()
+        } else {
+            match crate::NETWORK.is_mainnet() {
+                true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(),
+                false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(),
+            }
         }
     }
     #[inline]
     fn to_zpriv(&self) -> String {
-        match crate::NETWORK.is_mainnet() {
-            true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(),
-            false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PRIVATE>(),
+        if cfg!(feature = "rawfmt") {
+            self.to_string()
+        } else {
+            match crate::NETWORK.is_mainnet() {
+                true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(),
+                false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PRIVATE>(),
+            }
         }
     }
 }
@@ -318,16 +326,24 @@ impl XpubEncode for Xpub {
     }
     #[inline]
     fn to_ypub(&self) -> String {
-        match crate::NETWORK.is_mainnet() {
-            true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(),
-            false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(),
+        if cfg!(feature = "rawfmt") {
+            self.to_string()
+        } else {
+            match crate::NETWORK.is_mainnet() {
+                true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(),
+                false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(),
+            }
         }
     }
     #[inline]
     fn to_zpub(&self) -> String {
-        match crate::NETWORK.is_mainnet() {
-            true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(),
-            false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PUBLIC>(),
+        if cfg!(feature = "rawfmt") {
+            self.to_string()
+        } else {
+            match crate::NETWORK.is_mainnet() {
+                true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(),
+                false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PUBLIC>(),
+            }
         }
     }
 }
