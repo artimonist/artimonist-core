@@ -1,6 +1,7 @@
 #![cfg(test)]
+#![cfg(not(feature = "rawfmt"))]
 
-use artimonist::{BIP49, Xpriv};
+use artimonist::{Xpriv, BIP49};
 use bitcoin::hex::FromHex;
 
 #[test]
@@ -20,6 +21,7 @@ fn bip49_derive() {
         assert_eq!(wif, WALLETS[i].split_whitespace().last().unwrap());
     }
 }
+
 /// # References
 ///   <https://iancoleman.io/bip39/>
 #[cfg(not(feature = "testnet"))]

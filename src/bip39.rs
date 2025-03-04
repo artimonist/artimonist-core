@@ -1,8 +1,9 @@
-use crate::{bits::BitAggregation, Language};
+use crate::Language;
 use bitcoin::{
     bip32::Xpriv,
     hashes::{sha256, Hash},
 };
+use nbits::BitConjoin;
 
 /// BIP39 Derivation for Xpriv
 ///
@@ -67,10 +68,7 @@ fn words_validate(words: &Vec<&str>) -> bool {
         if indices.len() != words.len() {
             continue;
         }
-        let mut entropy = indices
-            .into_iter()
-            .flat_map(|v| (0..11).rev().map(move |i| v & (1 << i) > 0))
-            .to_bits();
+        let mut entropy = indices.iter().map(|&v| v as u16).bit_conjoin(11);
 
         // verify entropy checksum
         let tail = entropy.pop().unwrap();

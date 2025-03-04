@@ -1,4 +1,4 @@
-pub use super::{bits::BitOperation, password::Password, words::Language};
+pub use super::{password::Password, words::Language};
 use bitcoin::{
     bip32::{ChainCode, ChildNumber, Xpriv},
     hashes::{hmac, sha256, sha512, Hash, HashEngine},
@@ -7,6 +7,7 @@ use bitcoin::{
     secp256k1::SecretKey,
     Address, CompressedPublicKey,
 };
+use nbits::BitChunks;
 use std::str::FromStr;
 
 /// BIP85 Derivation for Xpriv
@@ -91,7 +92,7 @@ impl Derivation for Xpriv {
         };
 
         Ok(data
-            .bit_chunks(11)
+            .bit_chunks::<u16>(11)
             .take(count)
             .map(|i| lang.word_at(i as usize))
             .collect::<Vec<_>>()
@@ -133,7 +134,7 @@ impl Derivation for Xpriv {
         let entropy = bip85_derive(self, &path)?;
 
         Ok(entropy
-            .bit_chunks(password.bits())
+            .bit_chunks::<u8>(password.bits())
             .take(pwd_len)
             .map(|v| password.char_at(v as usize))
             .collect::<String>())

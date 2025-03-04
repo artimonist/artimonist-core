@@ -2,26 +2,28 @@
 name = "artimonist"
 version = "0.11.3"
 authors = ["Artimonist <artimonist@gmail.com>"]
-description = "A tool for generating mnemonics and wallets based on diagrams."
+description = "A tool for generating mnemonics and wallets."
 homepage = "https://artimonist.org/"
 repository = "https://github.com/artimonist/core/"
 
 license = "MIT"
-keywords = ["bitcoin", "mnemonic", "wallet"]
+keywords = ["bitcoin", "wallet", "mnemonic", "crypto", "art"]
 categories = ["cryptography"]
 rust-version = "1.84"
 edition = "2021"
 crate-type = ["lib"]
 
 [features]
-default = []
+default = ["rawfmt"]
 multilingual = [] # multiple languages
 testnet = [] # use testnet
 serde = ["dep:serde", "dep:rmp-serde"] # generic diagram
+rawfmt = [] # none ypriv, ypub, zpriv, zpub etc. 
 
 [dependencies]
 bitcoin = "0.32.5"
 thiserror = "2.0.11"
+nbits = "0.2.0"
 # crypto libs
 scrypt = { version = "0.11.0", default-features = false }
 pbkdf2 = "0.12.2"
