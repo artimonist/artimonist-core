@@ -1,8 +1,9 @@
-use crate::{bits::BitAggregation, Language};
+use crate::Language;
 use bitcoin::{
     bip32::Xpriv,
     hashes::{sha256, Hash},
 };
+use nbits::ToBits;
 
 /// BIP39 Derivation for Xpriv
 ///

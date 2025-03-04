@@ -6,7 +6,6 @@ use bitcoin::bip32::Xpriv;
 /// # Parameters
 ///   H: matrix height
 ///   W: matrix weight
-///   T: matrix item
 ///
 pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
     /// cell item type
@@ -50,7 +49,7 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
 }
 
 #[cfg(feature = "serde")]
-use super::bits::BitAggregation;
+use nbits::ToBits;
 
 #[cfg(feature = "serde")]
 impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>

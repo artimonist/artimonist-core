@@ -40,7 +40,6 @@
 
 pub(crate) mod bip39;
 pub(crate) mod bip85;
-pub(crate) mod bits;
 pub(crate) mod complex;
 pub(crate) mod derive;
 pub(crate) mod generic;
@@ -65,10 +64,8 @@ pub use simple::SimpleDiagram;
 /// Global error definition
 ///
 pub mod error {
-    use thiserror::Error;
-
     /// Artimonist Error
-    #[derive(Error, Debug)]
+    #[derive(thiserror::Error, Debug)]
     pub enum Error {
         /// Invalid parameter
         #[error("invalid parameter: {0}")]
