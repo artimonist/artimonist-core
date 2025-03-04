@@ -7,7 +7,7 @@ homepage = "https://artimonist.org/"
 repository = "https://github.com/artimonist/core/"
 
 license = "MIT"
-keywords = ["bitcoin", "wallet", "mnemonic", "crypto", "btc", "art"]
+keywords = ["bitcoin", "wallet", "mnemonic", "crypto", "art"]
 categories = ["cryptography"]
 rust-version = "1.84"
 edition = "2021"
