@@ -30,7 +30,10 @@ impl XDevive for Xpriv {
     /// # Returns
     ///  - multisig script
     fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, crate::Error> {
-        assert!(M <= paths.len() as u8 && paths.len() <= 15);
+        assert!(
+            M <= paths.len() as u8 && paths.len() <= 15,
+            "[artimonist] Overflow: M <= paths.len() <= 15"
+        );
         // collect public keys
         let secp = Secp256k1::default();
         let mut pub_keys = paths
@@ -112,6 +115,7 @@ impl Bip44 for Xpriv {
     }
 
     fn bip44_multisig<const M: u8, const N: u8>(&self, account: u32, index: u32) -> DeriveResult {
+        assert!(M <= N && N <= 15, "[artimonist] Overflow: M <= N <= 15");
         let paths = (account..account + N as u32)
             .map(|account: u32| format!("m/44'/{COIN}'/{account}'/0/{index}"))
             .collect::<Vec<_>>();
@@ -190,7 +194,7 @@ impl Bip49 for Xpriv {
     }
 
     fn bip49_multisig<const M: u8, const N: u8>(&self, account: u32, index: u32) -> DeriveResult {
-        assert!(M <= N && N <= 15);
+        assert!(M <= N && N <= 15, "[artimonist] Overflow: M <= N <= 15");
         let paths = (account..account + N as u32)
             .map(|account: u32| format!("m/49'/{COIN}'/{account}'/0/{index}"))
             .collect::<Vec<_>>();
@@ -255,7 +259,7 @@ impl Bip84 for Xpriv {
     }
 
     fn bip84_multisig<const M: u8, const N: u8>(&self, account: u32, index: u32) -> DeriveResult {
-        assert!(M <= N && N <= 15);
+        assert!(M <= N && N <= 15, "[artimonist] Overflow: M <= N <= 15");
         let paths = (account..account + N as u32)
             .map(|account: u32| format!("m/84'/{COIN}'/{account}'/0/{index}"))
             .collect::<Vec<_>>();

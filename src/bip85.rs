@@ -127,7 +127,7 @@ impl Derivation for Xpriv {
     }
 
     fn bip85_pwd(&self, password: Password, pwd_len: usize, index: u32) -> Bip85Result {
-        if !(20..=86).contains(&pwd_len) {
+        if !matches!(pwd_len, 20..=86) {
             return Err(Bip85Error::InvalidParameter("20 <= pwd_len <= 86"));
         }
         let path = format!("m/83696968'/707764'/{pwd_len}'/{index}'");
