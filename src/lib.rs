@@ -1,9 +1,16 @@
 #![warn(missing_docs)]
 //! # Artimonist
 //!
-//! `Artimonist` is a chart-based tool for creating mnemonics.
+//! `Artimonist` is a chart-based tool for creating mnemonics and wallets.
 //!
-//! Try the live web page: <https://www.artimonist.org>
+//! <p>
+//!   <a href="https://github.com/artimonist/artimonist-cli" target="_blank">
+//!     <img alt="cli" src="https://img.shields.io/github/v/release/artimonist/cli?label=artimonist-cli&logo=github&color=green">
+//!   </a>&nbsp;&nbsp;&nbsp;
+//!   <a href="https://www.artimonist.org/simple.htm" target="_blank">
+//!     <img alt="web" src="https://img.shields.io/badge/www.artimonist.org-gray?logo=html5">
+//!   </a>
+//! </p>
 //!
 //! # Examples
 //! ```

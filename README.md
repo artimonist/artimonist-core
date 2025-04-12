@@ -6,7 +6,7 @@
   <p>
     <a href="https://crates.io/crates/artimonist"><img alt="Crate Info" src="https://img.shields.io/crates/v/artimonist.svg"/></a>
     <a href="https://docs.rs/artimonist"><img alt="API Docs" src="https://img.shields.io/badge/docs.rs-artimonist-green"/></a>
-    <a href="https://github.com/artimonist/artimonist-cli"><img alt="cli" src="https://img.shields.io/badge/artimonist--cli-gray.svg?logo=github"></a>
+    <a href="https://github.com/artimonist/artimonist-cli"><img alt="cli" src="https://img.shields.io/github/v/release/artimonist/cli?label=artimonist-cli&logo=github&color=green"></a>
     <a href="https://www.artimonist.org/simple.htm"><img alt="web" src="https://img.shields.io/badge/www.artimonist.org-gray?logo=html5"></a>
   </p>
 </div>
