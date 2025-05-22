@@ -51,21 +51,29 @@ fn multisig23() -> Result<(), Error> {
 #[cfg(not(feature = "testnet"))]
 mod test_data_23 {
     pub const MASTER_KEY: &str = "xprv9s21ZrQH143K2e11sHded37jHumTRiKqGpauB1McmiBbxnf4ZZ4rgSRjyPWF4A8gbNFkzsPGZybFBKX7y3fRKgtgqeFdontXTtPRLoAygY5";
+    #[cfg(not(feature = "rawfmt"))]
     pub const ACCOUNT_XPUBS: [&str; 3] = [
         "ypub6XjcPBDbtUoTrvDk8vkcL8VmKg98HL55XAkPMWnoMFcpjGgQ5Kg5HRzPTDXhoSaq8vqSTLMXPaV5y5mcrUFYMAY7pA3MmM9KqXBodaj7QkB",
         "ypub6XjcPBDbtUoTvUqWtjm5SZdmMYTQEwN6tvTN3uZe4HP2FRToQ6WwHpdwHEZDXVE891v5gXUiDEEdL1tuXTX1FF6WQTAnkSFZVCsX458m7Pf",
         "ypub6XjcPBDbtUoTwgwctTEsSWC2xwihrWmaTLNSUrbzNqiwbWsPannqxM91MCHyKrgnysBruZubtsw4H5QGgmwmfJegp6916Yh2U4DjphSstoY",
-        // "xpub6CuM5WYgjoFz1d2dJZxz83QG9hzgLi5ac4EAa7tuyFEwgAsApfWWfNLFS1a7oXvujHidhrkxvv8Y5oA48mqXYvrWwpLwBSKqZo8AF1FXW2Y",
-        // "xpub6CuM5WYgjoFz5BeQ4NyTEUYGBaJxJKNbyow9GWfkgH19CKea9SMNfkyoG2bdXaaCjNoGw3t9kZt5SjHLom6zT1QuY7UNAXS5DUosfRVnb4t",
-        // "xpub6CuM5WYgjoFz6PkW46TFER6XnyaFutn5YDrDhTi6zqM4YR4AL8dHLHUsKzLPKx2saE54A6K3SDaWPnnhy5Xks4y5wkSaWdsYCLA6S4UfYpf",
     ];
+    #[cfg(feature = "rawfmt")]
+    pub const ACCOUNT_XPUBS: [&str; 3] = [
+        "xpub6CuM5WYgjoFz1d2dJZxz83QG9hzgLi5ac4EAa7tuyFEwgAsApfWWfNLFS1a7oXvujHidhrkxvv8Y5oA48mqXYvrWwpLwBSKqZo8AF1FXW2Y",
+        "xpub6CuM5WYgjoFz5BeQ4NyTEUYGBaJxJKNbyow9GWfkgH19CKea9SMNfkyoG2bdXaaCjNoGw3t9kZt5SjHLom6zT1QuY7UNAXS5DUosfRVnb4t",
+        "xpub6CuM5WYgjoFz6PkW46TFER6XnyaFutn5YDrDhTi6zqM4YR4AL8dHLHUsKzLPKx2saE54A6K3SDaWPnnhy5Xks4y5wkSaWdsYCLA6S4UfYpf",
+    ];
+    #[cfg(not(feature = "rawfmt"))]
     pub const ACCOUNT_XPRVS: [&str; 3] = [
         "yprvAJkFyfgi47FAeS9H2uDbxzZ2meJdssME9wpnZ8PBnv5qrUMFXnMpjdfubvhh8CqeAoLyhFontVMLyGHwy8jkjWrqJaWpFNTLjGoCptLzsKZ",
         "yprvAJkFyfgi47FAhzm3niE55Rh2oWcuqUeFXhXmFXA2Vwr3Nd8erZCgk2KTRx2oaSzDyyypNyaCZ4JP9cob9UzPMLspS5X1Nbeu1fJ2Bfb1n51",
         "yprvAJkFyfgi47FAjCs9nRhs5NFJQutDT43j67SqgUCNpWBxiiYF3FUbQYpXVt9KrQpdcEuRH7RAfKP9Zn6PvRGgh5Z7Ec29tSbvXG21LPP76Fa",
-        // "xprv9yuzg11nuRhgo8xACYRykuTXbgABwFMjEqJZmjVJQuhxoNY2H8CG7a1maik78JBimAEAwnDERpzo5ygPFSKjwHBESEpPfTdrTYjZSQ9QoEq",
-        // "xprv9yuzg11nuRhgrhZvxMSSsLbXdYUTtrekcb1YU8G97wUAKXKRbu387xfKQk5DaYLJaLs1dVye6PwqGLC2RnaNZ7CDZjpangqQjwENoBtRcru",
-        // "xprv9yuzg11nuRhgsug2x4vEsH9oEwjmWS4EAzvcu5JVSVp5fcj1nbK2nVAPUgBjrWAiCbncXdpcCf2bgVUqCirftqsWNGKjJXnSFXxMwpSSVv5",
+    ];
+    #[cfg(feature = "rawfmt")]
+    pub const ACCOUNT_XPRVS: [&str; 3] = [
+        "xprv9yuzg11nuRhgo8xACYRykuTXbgABwFMjEqJZmjVJQuhxoNY2H8CG7a1maik78JBimAEAwnDERpzo5ygPFSKjwHBESEpPfTdrTYjZSQ9QoEq",
+        "xprv9yuzg11nuRhgrhZvxMSSsLbXdYUTtrekcb1YU8G97wUAKXKRbu387xfKQk5DaYLJaLs1dVye6PwqGLC2RnaNZ7CDZjpangqQjwENoBtRcru",
+        "xprv9yuzg11nuRhgsug2x4vEsH9oEwjmWS4EAzvcu5JVSVp5fcj1nbK2nVAPUgBjrWAiCbncXdpcCf2bgVUqCirftqsWNGKjJXnSFXxMwpSSVv5",
     ];
     pub const MULTISIG_ADDRS: [&str; 20] = [
         "3DwW8X9jebqQHakiXKhtCGmMFsaUgXU4Mz",
@@ -217,29 +225,37 @@ fn multisig35() -> Result<(), Error> {
 #[cfg(not(feature = "testnet"))]
 mod test_data_35 {
     pub const MASTER: &str = "xprv9s21ZrQH143K2e11sHded37jHumTRiKqGpauB1McmiBbxnf4ZZ4rgSRjyPWF4A8gbNFkzsPGZybFBKX7y3fRKgtgqeFdontXTtPRLoAygY5";
+    #[cfg(not(feature = "rawfmt"))]
     pub const ACCOUNT_XPUBS: [&str; 5] = [
         "ypub6XjcPBDbtUoTrvDk8vkcL8VmKg98HL55XAkPMWnoMFcpjGgQ5Kg5HRzPTDXhoSaq8vqSTLMXPaV5y5mcrUFYMAY7pA3MmM9KqXBodaj7QkB",
         "ypub6XjcPBDbtUoTvUqWtjm5SZdmMYTQEwN6tvTN3uZe4HP2FRToQ6WwHpdwHEZDXVE891v5gXUiDEEdL1tuXTX1FF6WQTAnkSFZVCsX458m7Pf",
         "ypub6XjcPBDbtUoTwgwctTEsSWC2xwihrWmaTLNSUrbzNqiwbWsPannqxM91MCHyKrgnysBruZubtsw4H5QGgmwmfJegp6916Yh2U4DjphSstoY",
         "ypub6XjcPBDbtUoU1LrADQGrATTxhEs2feeYqgc8zfhLCmvZGT7jPhWmtrgyMbqMMSmo1z6MsfpPCY1hw1dYZRbLNs11zzcK5PtPXnEevDdy49E",
         "ypub6XjcPBDbtUoU3V5Z9FM6JoNRznW3XEfB8yP6PHgLXZLkXj2sTqabHqCAFnbC18k8zshWcWqChnSVsPwJT2Ai9ZhxniGUhq3uFdbadskxD9W",
-        // "xpub6CuM5WYgjoFz1d2dJZxz83QG9hzgLi5ac4EAa7tuyFEwgAsApfWWfNLFS1a7oXvujHidhrkxvv8Y5oA48mqXYvrWwpLwBSKqZo8AF1FXW2Y",
-        // "xpub6CuM5WYgjoFz5BeQ4NyTEUYGBaJxJKNbyow9GWfkgH19CKea9SMNfkyoG2bdXaaCjNoGw3t9kZt5SjHLom6zT1QuY7UNAXS5DUosfRVnb4t",
-        // "xpub6CuM5WYgjoFz6PkW46TFER6XnyaFutn5YDrDhTi6zqM4YR4AL8dHLHUsKzLPKx2saE54A6K3SDaWPnnhy5Xks4y5wkSaWdsYCLA6S4UfYpf",
-        // "xpub6CuM5WYgjoFzA3f3P3VDxNNTXGiaj2f3va5vDGoSpmYgDMJW93MDGo2qLPsmMY7scLyZ8CDpjsfA3j1yqjBKadKR8eutVV4uG4B1Xb9HZ81",
-        // "xpub6CuM5WYgjoFzCBtSJtZU6iGvppMbacfgDrrsbtnT9YxsUdDeDBR2fmY2Eadc1E6DbEahs3EeF85wz7KjjKkhML2MvNa47vEQyuXwFGS2Kuj",
     ];
+    #[cfg(feature = "rawfmt")]
+    pub const ACCOUNT_XPUBS: [&str; 5] = [
+        "xpub6CuM5WYgjoFz1d2dJZxz83QG9hzgLi5ac4EAa7tuyFEwgAsApfWWfNLFS1a7oXvujHidhrkxvv8Y5oA48mqXYvrWwpLwBSKqZo8AF1FXW2Y",
+        "xpub6CuM5WYgjoFz5BeQ4NyTEUYGBaJxJKNbyow9GWfkgH19CKea9SMNfkyoG2bdXaaCjNoGw3t9kZt5SjHLom6zT1QuY7UNAXS5DUosfRVnb4t",
+        "xpub6CuM5WYgjoFz6PkW46TFER6XnyaFutn5YDrDhTi6zqM4YR4AL8dHLHUsKzLPKx2saE54A6K3SDaWPnnhy5Xks4y5wkSaWdsYCLA6S4UfYpf",
+        "xpub6CuM5WYgjoFzA3f3P3VDxNNTXGiaj2f3va5vDGoSpmYgDMJW93MDGo2qLPsmMY7scLyZ8CDpjsfA3j1yqjBKadKR8eutVV4uG4B1Xb9HZ81",
+        "xpub6CuM5WYgjoFzCBtSJtZU6iGvppMbacfgDrrsbtnT9YxsUdDeDBR2fmY2Eadc1E6DbEahs3EeF85wz7KjjKkhML2MvNa47vEQyuXwFGS2Kuj",
+    ];
+    #[cfg(not(feature = "rawfmt"))]
     pub const ACCOUNT_XPRVS: [&str; 5] = [
         "yprvAJkFyfgi47FAeS9H2uDbxzZ2meJdssME9wpnZ8PBnv5qrUMFXnMpjdfubvhh8CqeAoLyhFontVMLyGHwy8jkjWrqJaWpFNTLjGoCptLzsKZ",
         "yprvAJkFyfgi47FAhzm3niE55Rh2oWcuqUeFXhXmFXA2Vwr3Nd8erZCgk2KTRx2oaSzDyyypNyaCZ4JP9cob9UzPMLspS5X1Nbeu1fJ2Bfb1n51",
         "yprvAJkFyfgi47FAjCs9nRhs5NFJQutDT43j67SqgUCNpWBxiiYF3FUbQYpXVt9KrQpdcEuRH7RAfKP9Zn6PvRGgh5Z7Ec29tSbvXG21LPP76Fa",
         "yprvAJkFyfgi47FAnrmh7NjqoKXE9D2YGBvhUTgYCHHieSPaPenarACXM4NVWNGvRLW9HHbm1ffQheXdcw4t5XEbWkDSHyJvg7bKvg6fgXLEZKA",
         "yprvAJkFyfgi47FAq1163Dp5wfRhSkfZ7mwKmkTVauGiyDomevhivJGLk2sgQVbF5h5gZunz8DxzyAPgAXNPnMJzoQs3dK7f6ypXHS2BjedQhFr",
-        // "xprv9yuzg11nuRhgo8xACYRykuTXbgABwFMjEqJZmjVJQuhxoNY2H8CG7a1maik78JBimAEAwnDERpzo5ygPFSKjwHBESEpPfTdrTYjZSQ9QoEq",
-        // "xprv9yuzg11nuRhgrhZvxMSSsLbXdYUTtrekcb1YU8G97wUAKXKRbu387xfKQk5DaYLJaLs1dVye6PwqGLC2RnaNZ7CDZjpangqQjwENoBtRcru",
-        // "xprv9yuzg11nuRhgsug2x4vEsH9oEwjmWS4EAzvcu5JVSVp5fcj1nbK2nVAPUgBjrWAiCbncXdpcCf2bgVUqCirftqsWNGKjJXnSFXxMwpSSVv5",
-        // "xprv9yuzg11nuRhgwZaaH1xDbERiyEt6KZwCZMAKQtPqGS1hLYyMbW2xiziMVAKLRRrDseUxGC4rEzB5jeTKMppaiWXqRdcW6Cmqex32Hvs35H2",
-        // "xprv9yuzg11nuRhgyhoyCs2TjaLCGnX7B9wprdwGoWNqbDRtbptVfe6n7yDYPHdf5nRmAGgBNkNSWW38HEkq4etz1BBSkyREX5131hxYMAQLpfM",
+        ];
+    #[cfg(feature = "rawfmt")]
+    pub const ACCOUNT_XPRVS: [&str; 5] = [
+        "xprv9yuzg11nuRhgo8xACYRykuTXbgABwFMjEqJZmjVJQuhxoNY2H8CG7a1maik78JBimAEAwnDERpzo5ygPFSKjwHBESEpPfTdrTYjZSQ9QoEq",
+        "xprv9yuzg11nuRhgrhZvxMSSsLbXdYUTtrekcb1YU8G97wUAKXKRbu387xfKQk5DaYLJaLs1dVye6PwqGLC2RnaNZ7CDZjpangqQjwENoBtRcru",
+        "xprv9yuzg11nuRhgsug2x4vEsH9oEwjmWS4EAzvcu5JVSVp5fcj1nbK2nVAPUgBjrWAiCbncXdpcCf2bgVUqCirftqsWNGKjJXnSFXxMwpSSVv5",
+        "xprv9yuzg11nuRhgwZaaH1xDbERiyEt6KZwCZMAKQtPqGS1hLYyMbW2xiziMVAKLRRrDseUxGC4rEzB5jeTKMppaiWXqRdcW6Cmqex32Hvs35H2",
+        "xprv9yuzg11nuRhgyhoyCs2TjaLCGnX7B9wprdwGoWNqbDRtbptVfe6n7yDYPHdf5nRmAGgBNkNSWW38HEkq4etz1BBSkyREX5131hxYMAQLpfM",
     ];
     pub const MULTISIG_ADDRS: [&str; 20] = [
         "3LNtQT4hv5YX1RYPRJpTwYfy239x1g9XBv",
