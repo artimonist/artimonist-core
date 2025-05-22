@@ -7,10 +7,11 @@
  * # Descriptions
  *
  * [1] - Simple Diagram secret data construction
+ *      (diagram version == 0)
  *      |--utf8 chars---|-7 bytes-|-1 byte-|
  *      |Char1|Char2|...| Indices |CheckSum|
  *      |---------------|---------|--------|
- *      n = indices.count_ones()  (version == 0)
+ *      chars count = indices.count_ones()
  *
  * [2] - Simple Diagram indices data construction
  *      0b0xxx_xxxx
@@ -59,7 +60,7 @@ impl GenericDiagram<7, 7> for SimpleDiagram {
             (0..7).rev().for_each(|row| {
                 if let Some(ch) = self[row][col] {
                     chars.push(ch);
-                    indices[row] |= INDICES_MASK[col];
+                    indices[row] |= 1 << (6 - col);
                 }
             });
         });
@@ -72,16 +73,6 @@ impl GenericDiagram<7, 7> for SimpleDiagram {
         Ok(secret)
     }
 }
-
-const INDICES_MASK: [u8; 7] = [
-    0b0100_0000,
-    0b0010_0000,
-    0b0001_0000,
-    0b0000_1000,
-    0b0000_0100,
-    0b0000_0010,
-    0b0000_0001,
-];
 
 impl SimpleDiagram {
     /// create simple diagram
