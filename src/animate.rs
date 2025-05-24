@@ -45,7 +45,7 @@ impl CubeDiagram<7, 7> for AnimateDiagram {
     fn to_bytes(&self) -> GenericResult<Vec<u8>> {
         let mut chars = Vec::new();
         let mut frames = Vec::new();
-        self.rev().for_each(|mx| {
+        self.0.rev().for_each(|mx| {
             let mut indices = [0; 7];
             (0..7).rev().for_each(|col| {
                 (0..7).rev().for_each(|row| {
@@ -65,5 +65,11 @@ impl CubeDiagram<7, 7> for AnimateDiagram {
         let check = sha256::Hash::hash(&secret).as_byte_array()[0];
         secret.push(check);
         Ok(secret)
+    }
+}
+
+impl std::convert::From<Vec<[[Option<char>; 7]; 7]>> for AnimateDiagram {
+    fn from(mx: Vec<[[Option<char>; 7]; 7]>) -> Self {
+        Self(mx)
     }
 }
