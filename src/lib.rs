@@ -38,20 +38,22 @@
 //! |  |  |  |  |  |  |  |
 //!
 
-pub(crate) mod bip39;
-pub(crate) mod bip85;
-pub(crate) mod complex;
-pub(crate) mod derive;
-pub(crate) mod generic;
-pub(crate) mod macros;
-pub(crate) mod matrix;
-pub(crate) mod password;
-pub(crate) mod simple;
-pub(crate) mod words;
+mod animate;
+mod bip39;
+mod bip85;
+mod complex;
+mod derive;
+mod generic;
+mod macros;
+mod matrix;
+mod password;
+mod simple;
+mod words;
 
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv};
 
+pub use animate::AnimateDiagram;
 pub use bip39::Derivation as BIP39;
 pub use bip85::{Derivation as BIP85, Language, Password, Wif};
 pub use complex::ComplexDiagram;
