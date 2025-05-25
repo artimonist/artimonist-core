@@ -98,4 +98,4 @@ and **12 unicode characters provide the equivalent encryption strength of 24 mne
 | 24 | 12 | 2²⁶⁹ |
 
 **ComplexDiagram can be filled with 50 unicode characters in a cell, providing better encryption strength.**  
-_(In fact, higher entropy values are meaningless because the length of the private key is 256 bits.)_ 
+_(In fact, higher entropy values are meaningless because the length of the private key is 256 bits. So, we support multisig address generation.)_ 
