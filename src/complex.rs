@@ -7,10 +7,11 @@
  * # Descriptions
  *
  * [1] - Complex Diagram secret data construction
+ *      (diagram version == 1)
  *      |-----n segments----|-n bytes-|-7 bytes-|-1 byte-|
  *      |String1|String2|...|N1|N2|...| Indices |CheckSum|
- *      |-------------------|---------|---------|--------|
- *      n = indices.count_ones() - 1  (version == 1)
+ *      |-------->>>--------|--->>>---|---------|--------|
+ *      n = indices.count_ones() - 1
  *      N1,N2... is bytes count of String1,String2...
  *
  * [2] - Complex Diagram indices data construction
@@ -54,30 +55,19 @@ impl GenericDiagram<7, 7> for ComplexDiagram {
                     if !s.is_empty() && s.len() < u8::MAX as usize {
                         str_list.push(s);
                         str_lens.push(s.len() as u8);
-                        indices[row] |= INDICES_MASK[col];
+                        indices[row] |= 1 << (6 - col);
                     }
                 }
             });
         });
 
-        indices[0] |= VERSION_MASK; // version number of complex diagram
+        indices[0] |= 1 << 7; // version number of complex diagram
         let mut secret = [str_list.join("").as_bytes(), &str_lens[..], &indices[..]].concat();
         let check = sha256::Hash::hash(&secret).as_byte_array()[0];
         secret.push(check);
         Ok(secret)
     }
 }
-
-const INDICES_MASK: [u8; 7] = [
-    0b0100_0000,
-    0b0010_0000,
-    0b0001_0000,
-    0b0000_1000,
-    0b0000_0100,
-    0b0000_0010,
-    0b0000_0001,
-];
-const VERSION_MASK: u8 = 0b1000_0000;
 
 impl ComplexDiagram {
     /// cell chars count limit
