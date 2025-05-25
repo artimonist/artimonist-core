@@ -92,11 +92,12 @@ mod tests {
             ]
         );
 
-        let master = diagram.bip32_master(&[])?;
-        assert_eq!(
-            master.to_string(),
-            "1xprv9s21ZrQH143K2dWWmG5XopsnwstmU3pME5P9pXJvoZbW78CUALKa3zdGEBjwfkqgASdXkH1eYJwipTZeVnZ26fDBN18UPzHyd9kRffk22Vs"
-        );
+        let master = diagram.bip32_master("123456".as_bytes())?;
+        #[cfg(not(feature = "testnet"))]
+        const MASTER: &str = "xprv9s21ZrQH143K3LZCYpVpieDdNgMkymbiawMFUAPysrTJJrkrVCpaFtEUXBpr32nVVeHjPtqRCqih7ptuiu5A34VHPPPZMZfqisJyV6jhCwU";
+        #[cfg(feature = "testnet")]
+        const MASTER: &str = "tprv8ZgxMBicQKsPe9njDPMKtHqcgomyDHdivVGNLapSMpwn6TVwUaAKmdbvSMzW3QAos5pWPzTBNCJVagSer7R6r7ksv2bs1vPtdy4Pvr2uKuZ";
+        assert_eq!(master.to_string(), MASTER);
         Ok(())
     }
 }
