@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use artimonist::{BIP44, Xpriv};
+use artimonist::{Xpriv, BIP44};
 use bitcoin::hex::FromHex;
 
 #[test]
@@ -15,7 +15,7 @@ fn bip44_derive() {
         assert_eq!(xpriv, ACCOUNT_XPRIVS[i]);
     });
     (0..WALLETS.len()).for_each(|i| {
-        let (address, wif) = master.bip44_wallet(0, i as u32).expect("wallet");
+        let (address, wif) = master.bip44_wallet_harden(0, i as u32).expect("wallet");
         assert_eq!(address, WALLETS[i].split_whitespace().next().unwrap());
         assert_eq!(wif, WALLETS[i].split_whitespace().last().unwrap());
     });
