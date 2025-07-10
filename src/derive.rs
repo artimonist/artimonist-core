@@ -341,24 +341,24 @@ impl XprivEncode for Xpriv {
     }
     #[inline]
     fn to_ypriv(&self) -> String {
-        if cfg!(feature = "rawfmt") {
-            self.to_string()
-        } else {
+        if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
                 true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(),
                 false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(),
             }
+        } else {
+            self.to_string()
         }
     }
     #[inline]
     fn to_zpriv(&self) -> String {
-        if cfg!(feature = "rawfmt") {
-            self.to_string()
-        } else {
+        if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
                 true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(),
                 false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PRIVATE>(),
             }
+        } else {
+            self.to_string()
         }
     }
 }
@@ -377,24 +377,24 @@ impl XpubEncode for Xpub {
     }
     #[inline]
     fn to_ypub(&self) -> String {
-        if cfg!(feature = "rawfmt") {
-            self.to_string()
-        } else {
+        if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
                 true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(),
                 false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(),
             }
+        } else {
+            self.to_string()
         }
     }
     #[inline]
     fn to_zpub(&self) -> String {
-        if cfg!(feature = "rawfmt") {
-            self.to_string()
-        } else {
+        if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
                 true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(),
                 false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PUBLIC>(),
             }
+        } else {
+            self.to_string()
         }
     }
 }

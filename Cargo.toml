@@ -14,11 +14,11 @@ edition = "2021"
 crate-type = ["lib"]
 
 [features]
-default = ["rawfmt"]
+default = []
 multilingual = [] # multiple languages
 testnet = [] # use testnet
 serde = ["dep:serde", "dep:rmp-serde"] # generic diagram
-rawfmt = [] # none ypriv, ypub, zpriv, zpub etc. 
+extfmt = [] # ypriv, ypub, zpriv, zpub etc.
 
 [dependencies]
 bitcoin = "0.32.5"
