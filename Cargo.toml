@@ -15,7 +15,6 @@ crate-type = ["lib"]
 
 [features]
 default = []
-multilingual = [] # multiple languages
 testnet = [] # use testnet
 serde = ["dep:serde", "dep:rmp-serde"] # generic diagram
 extfmt = [] # ypriv, ypub, zpriv, zpub etc.
@@ -23,7 +22,7 @@ extfmt = [] # ypriv, ypub, zpriv, zpub etc.
 [dependencies]
 bitcoin = "0.32.5"
 thiserror = "2.0.11"
-nbits = "0.2.0"
+xbits = "0.8.0"
 # crypto libs
 scrypt = { version = "0.11.0", default-features = false }
 pbkdf2 = "0.12.2"

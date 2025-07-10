@@ -4,8 +4,24 @@
 use artimonist::{Xpriv, BIP39};
 
 #[test]
-fn bip39_mnemonic() {
-    use test_data::*;
+fn bip39_mnemonic_english() {
+    use test_data_english::*;
+
+    for (i, mnemonic) in MNEMONICS.iter().enumerate() {
+        let master = Xpriv::from_mnemonic(mnemonic, Default::default()).expect("master");
+        assert_eq!(master.to_string(), MASTERS[i]);
+    }
+    for words in INVALIDS {
+        let result = Xpriv::from_mnemonic(words, Default::default());
+        assert!(result.is_err(), "{words:?}");
+        println!("{}", result.unwrap_err().to_string());
+    }
+}
+
+#[test]
+fn bip39_mnemonic_multilingual() {
+    use test_data_multilingual::*;
+
     for (i, mnemonic) in MNEMONICS.iter().enumerate() {
         let master = Xpriv::from_mnemonic(mnemonic, Default::default()).expect("master");
         assert_eq!(master.to_string(), MASTERS[i]);
@@ -19,8 +35,7 @@ fn bip39_mnemonic() {
 
 /// # Reference
 ///   <https://iancoleman.io/bip39>
-#[cfg(not(feature = "multilingual"))]
-mod test_data {
+mod test_data_english {
     pub const MNEMONICS: [&str; 5] = [
         "remind harvest mountain swim romance sense grunt current culture draw pistol favorite",
         "remind harvest mountain swim romance sense grunt current culture draw pistol feel mask blue tube",
@@ -37,13 +52,13 @@ mod test_data {
     ];
     pub const INVALIDS: &[&str] = &[
       "march cost giggle innocent blossom carpet region improve panel impact below wolf never marble battle topple lock wage",
-      "函 布 语 厚 象 导 届 宪 旅 亮 意 叠 雪 凡 第 棚 床 腊",
-      "manga choque gasolina ironía aval broca pipa impulso ochenta imperio asno volcán manejar muerte arte terapia logro vecino",
-      "nautica conoscere gregge longevo bagnato bussola ricreduto lido pianta levigato atono voga naturale ostacolo aspro terme mordere veduto",
+      "函 布 语 厚 象 导 届 宪 旅 亮 意 叠 雪 凡 第 床 棚 腊",
+      "manga choque gasolina ironía aval broca pipa ochenta impulso imperio asno volcán manejar muerte arte terapia logro vecino",
+      "conoscere gregge longevo bagnato bussola ricreduto lido pianta levigato atono voga naturale ostacolo aspro terme mordere veduto",
     ];
 }
-#[cfg(feature = "multilingual")]
-mod test_data {
+
+mod test_data_multilingual {
     pub const MNEMONICS: [&str; 15] = [
       "know emerge excuse warfare tape rival bargain often box bottom palace wrist castle dragon caution coral relief famous return intact camera search opera letter",
       "ぜんら　けんこう　こくはく　らっか　ほしょう　ねんかん　うがい　つたえる　えいご　えいが　てさげ　ろんぎ　おそわる　げきとつ　おとなしい　きおん　にんめい　このまま　ねそべる　せっきゃく　おかえり　はさみ　つめたい　そとづら",
