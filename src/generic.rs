@@ -49,7 +49,7 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
 }
 
 #[cfg(feature = "serde")]
-use nbits::ToBits;
+use xbits::FromBits;
 
 #[cfg(feature = "serde")]
 impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
@@ -72,7 +72,7 @@ impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
             });
         });
 
-        let indices = indices.into_iter().to_bits();
+        let indices = Vec::from_bits(indices.into_iter());
         let data = rmp_serde::to_vec(&(indices, items))?;
         Ok(data)
     }

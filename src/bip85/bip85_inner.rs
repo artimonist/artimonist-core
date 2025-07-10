@@ -8,8 +8,8 @@ use bitcoin::{
     secp256k1::SecretKey,
     Address, CompressedPublicKey,
 };
-use nbits::BitChunks;
 use std::str::FromStr;
+use xbits::XBits;
 
 /// BIP85 Derivation for Xpriv
 ///
@@ -126,9 +126,10 @@ impl Derivation for Xpriv {
         let entropy = bip85_derive(self, &path)?;
 
         Ok(entropy
-            .bit_chunks::<u8>(password.bits())
+            .bits()
+            .chunks(password.bits())
             .take(pwd_len)
-            .map(|v| password.char_at(v as usize))
+            .map(|v| password.char_at(v))
             .collect::<String>())
     }
 }

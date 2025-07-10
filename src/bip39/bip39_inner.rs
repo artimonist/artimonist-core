@@ -42,9 +42,8 @@ pub trait Derivation {
 
 impl Derivation for Xpriv {}
 
-#[cfg(not(feature = "multilingual"))]
 #[cfg(test)]
-mod bip39_test {
+mod bip39_test_english {
     use super::*;
     #[test]
     fn test_bip39() -> Result<(), Bip39Error> {
@@ -67,15 +66,14 @@ mod bip39_test {
 }
 
 #[cfg(not(feature = "testnet"))]
-#[cfg(feature = "multilingual")]
 #[cfg(test)]
-mod bip39_test {
+mod bip39_test_multilingual {
     use super::*;
 
     /// # Reference
     ///     <https://iancoleman.io/bip39>
     #[test]
-    fn test_bip39() -> Bip39Result {
+    fn test_bip39() -> Result<(), Bip39Error> {
         const TEST_DATA: &[[&str; 3]] = &[
           ["solda osso frasco encontro donzela oficina colono vidraria fruteira sinal visto sacola mirtilo flamingo ereto", "",
             "xprv9s21ZrQH143K2KFS6iHoFXZC9Y5AWVKwxZis4GMRkQeaTFHiNRTkrjCsnBZ46s7VNihoMapH64FE93ZbzZ28Ld2oiHh6FYQx4eA8jEisYsc"],
@@ -98,7 +96,7 @@ mod bip39_test {
         ];
         for x in INVALID_CHECKSUM {
             let r = Xpriv::from_mnemonic(*x, Default::default());
-            assert!(matches!(r, Err(Bip39Error::InvalidParameter(_))));
+            assert!(matches!(r, Err(Bip39Error::InvalidChecksum)));
         }
 
         const INVALID_LENGTH: &[&str] = &[
@@ -107,7 +105,7 @@ mod bip39_test {
         ];
         for x in INVALID_LENGTH {
             let r = Xpriv::from_mnemonic(*x, Default::default());
-            assert!(matches!(r, Err(Bip39Error::InvalidParameter(_))));
+            assert!(matches!(r, Err(Bip39Error::InvalidLength)));
         }
         Ok(())
     }
