@@ -15,7 +15,7 @@ fn bip84_derive() {
         assert_eq!(xpriv, ACCOUNT_XPRIVS[i]);
     }
     for i in 0..WALLETS.len() {
-        let (address, wif) = master.bip84_wallet(0, i as u32).expect("wallet");
+        let (address, wif) = master.bip84_wallet_harden(0, i as u32).expect("wallet");
         assert_eq!(address, WALLETS[i].split_whitespace().next().unwrap());
         assert_eq!(wif, WALLETS[i].split_whitespace().last().unwrap());
     }
