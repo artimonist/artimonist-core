@@ -14,7 +14,7 @@ edition = "2021"
 crate-type = ["lib"]
 
 [features]
-default = ["serde"]
+default = []
 testnet = [] # use testnet
 serde = ["dep:serde", "dep:rmp-serde"] # generic diagram
 extfmt = [] # ypriv, ypub, zpriv, zpub etc.
