@@ -53,16 +53,14 @@ mod derive;
 mod generic;
 mod macros;
 mod matrix;
-mod password;
 mod simple;
-mod words;
 
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv};
 
 pub use animate::AnimateDiagram;
-pub use bip39::Derivation as BIP39;
-pub use bip85::{Derivation as BIP85, Language, Password, Wif};
+pub use bip39::{Derivation as BIP39, Language};
+pub use bip85::{Derivation as BIP85, Password, Wif};
 pub use complex::ComplexDiagram;
 pub use derive::{Bip44 as BIP44, Bip49 as BIP49, Bip84 as BIP84};
 pub use generic::GenericDiagram;
@@ -73,6 +71,8 @@ pub use simple::SimpleDiagram;
 /// Global error definition
 ///
 pub mod error {
+    use crate::bip39;
+
     /// Artimonist Error
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
@@ -82,6 +82,9 @@ pub mod error {
         /// Bip32 Error
         #[error("bip32 error")]
         Bip32Error(#[from] bitcoin::bip32::Error),
+        /// Bip39 Error
+        #[error("bip39 error")]
+        Bip39Error(#[from] bip39::Bip39Error),
         /// Secp error
         #[error("runtime error")]
         SecpError(#[from] bitcoin::secp256k1::Error),

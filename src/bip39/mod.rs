@@ -1,11 +1,13 @@
-mod bip39;
+mod bip39_inner;
 mod language;
 mod mnemonic;
 
-pub use bip39::*;
+pub use bip39_inner::*;
 pub use language::Language;
+pub use mnemonic::Mnemonic;
 
 use thiserror::Error;
+
 #[derive(Error, Debug)]
 pub enum Bip39Error {
     #[error("invalid BIP39 language")]
@@ -22,4 +24,7 @@ pub enum Bip39Error {
 
     #[error("invalid mnemonic checksum")]
     InvalidChecksum,
+
+    #[error("bip32 error")]
+    Bip32Error(#[from] bitcoin::bip32::Error),
 }

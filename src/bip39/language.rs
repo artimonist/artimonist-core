@@ -9,22 +9,34 @@ const KOREAN: &str = include_str!("raw/korean.txt");
 const PORTUGUESE: &str = include_str!("raw/portuguese.txt");
 const SPANISH: &str = include_str!("raw/spanish.txt");
 
+/// BIP39 languages
 #[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Language {
-    ChineseSimplified,
-    ChineseTraditional,
-    Czech,
+    /// Chinese Simplified
+    ChineseSimplified = 4,
+    /// Chinese Traditional
+    ChineseTraditional = 5,
+    /// Czech
+    Czech = 8,
+    /// English
     #[default]
-    English,
-    French,
-    Italian,
-    Japanese,
-    Korean,
-    Portuguese,
-    Spanish,
+    English = 0,
+    /// French
+    French = 6,
+    /// Italian
+    Italian = 7,
+    /// Japanese
+    Japanese = 1,
+    /// Korean
+    Korean = 2,
+    /// Portuguese
+    Portuguese = 9,
+    /// Spanish
+    Spanish = 3,
 }
 
 impl Language {
+    /// All bip39 languages
     pub fn all() -> [Language; 10] {
         [
             Self::ChineseSimplified,
@@ -40,6 +52,7 @@ impl Language {
         ]
     }
 
+    /// Language's words list
     pub fn wordlist(&self) -> impl Iterator<Item = &str> {
         match self {
             Self::ChineseSimplified => CHINESE_SIMPLIFIED.split_whitespace(),
@@ -55,6 +68,7 @@ impl Language {
         }
     }
 
+    /// Get mnemonic word at index  
     pub fn word_at(&self, index: usize) -> Option<&str> {
         if index < 2048 {
             Some(self.wordlist().nth(index).unwrap())
@@ -63,10 +77,12 @@ impl Language {
         }
     }
 
+    /// Get mnemonic word index  
     pub fn index_of(&self, word: &str) -> Option<usize> {
         self.wordlist().position(|w| w == word)
     }
 
+    /// Detect word language
     pub fn detect(word: &str) -> Vec<Language> {
         use super::Language::*;
         if let Some(ch) = word.chars().next() {

@@ -1,7 +1,8 @@
-pub use super::{password::Password, words::Language};
+use super::Password;
+use crate::bip39::{Language, Mnemonic};
 use bitcoin::{
     bip32::{ChainCode, ChildNumber, Xpriv},
-    hashes::{hmac, sha256, sha512, Hash, HashEngine},
+    hashes::{hmac, sha512, Hash, HashEngine},
     hex::DisplayHex,
     key::Secp256k1,
     secp256k1::SecretKey,
@@ -78,25 +79,16 @@ fn bip85_derive(root: &Xpriv, path: &str) -> Bip85Result<[u8; 64]> {
 }
 
 impl Derivation for Xpriv {
-    fn bip85_mnemonic(&self, lang: Language, count: u32, index: u32) -> Bip85Result {
+    fn bip85_mnemonic(&self, language: Language, count: u32, index: u32) -> Bip85Result {
         if !matches!(count, 12 | 15 | 18 | 21 | 24) {
             return Err(Bip85Error::InvalidParameter("count: 12, 15, 18, 21, 24"));
         }
-        let (count, index) = (count as usize, index as usize);
+        // let (count, index) = (count as usize, index as usize);
 
-        let data = {
-            let path = format!("m/83696968'/39'/{}'/{count}'/{index}'", lang as u32);
-            let entropy = bip85_derive(self, &path)?[..(count * 4 / 3)].to_vec(); // truncate
-            let check = sha256::Hash::hash(&entropy).as_byte_array()[0];
-            [entropy, vec![check]].concat()
-        };
-
-        Ok(data
-            .bit_chunks::<u16>(11)
-            .take(count)
-            .map(|i| lang.word_at(i as usize))
-            .collect::<Vec<_>>()
-            .join(" "))
+        let path = format!("m/83696968'/39'/{}'/{count}'/{index}'", language as u32);
+        let entropy = bip85_derive(self, &path)?[..(count as usize * 4 / 3)].to_vec();
+        let mnemonic = Mnemonic::new(&entropy, language)?;
+        Ok(mnemonic.to_string())
     }
 
     fn bip85_wif(&self, index: u32) -> Bip85Result<Wif> {

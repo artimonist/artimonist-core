@@ -10,6 +10,7 @@ pub struct Mnemonic {
 
 type MnemonicError = super::Bip39Error;
 
+#[allow(unused)]
 impl Mnemonic {
     const fn check_mask(len: usize) -> u8 {
         match len {

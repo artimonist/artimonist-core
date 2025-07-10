@@ -1,9 +1,7 @@
-use crate::Language;
-use bitcoin::{
-    bip32::Xpriv,
-    hashes::{sha256, Hash},
-};
-use nbits::BitConjoin;
+use super::Mnemonic;
+use crate::bip39::Bip39Error;
+use bitcoin::bip32::Xpriv;
+use std::str::FromStr;
 
 /// BIP39 Derivation for Xpriv
 ///
@@ -27,33 +25,14 @@ use nbits::BitConjoin;
 //
 pub trait Derivation {
     /// # Parameters
-    ///   mnemonic: mnemonic words joined by ascii space.
-    fn from_mnemonic(mnemonic: &str, salt: &str) -> Bip39Result<Xpriv>;
-}
-
-impl Derivation for Xpriv {
-    fn from_mnemonic(mnemonic: &str, salt: &str) -> Bip39Result<Xpriv> {
-        let words: Vec<&str> = mnemonic.split_whitespace().collect();
-        if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
-            return Err(Bip39Error::InvalidParameter("words: 12, 15, 18, 21, 24"));
-        }
-        #[cfg(not(feature = "multilingual"))]
-        if words.iter().any(|w| !w.is_ascii()) {
-            return Err(Bip39Error::InvalidParameter("Unsupported language"));
-        }
-        if !words_validate(&words) {
-            return Err(Bip39Error::InvalidParameter("invalid checksum"));
-        }
+    ///   mnemonic: mnemonic str.
+    fn from_mnemonic(mnemonic: &str, salt: &str) -> Result<Xpriv, Bip39Error> {
+        let mnemonic = Mnemonic::from_str(mnemonic)?.to_string();
         let seed = {
             use pbkdf2::pbkdf2_hmac;
             let salt = format!("mnemonic{salt}").into_bytes();
             let mut output: [u8; 64] = [0; 64];
-            pbkdf2_hmac::<sha2::Sha512>(
-                words.join(" ").as_bytes(),
-                &salt,
-                u32::pow(2, 11),
-                &mut output,
-            );
+            pbkdf2_hmac::<sha2::Sha512>(mnemonic.as_bytes(), &salt, u32::pow(2, 11), &mut output);
             output
         };
         let xpriv = Xpriv::new_master(crate::NETWORK, &seed)?;
@@ -61,78 +40,14 @@ impl Derivation for Xpriv {
     }
 }
 
-fn words_validate(words: &Vec<&str>) -> bool {
-    assert!(matches!(words.len(), 12 | 15 | 18 | 21 | 24));
-
-    for indices in words_indices(words) {
-        if indices.len() != words.len() {
-            continue;
-        }
-        let mut entropy = indices.iter().map(|&v| v as u16).bit_conjoin(11);
-
-        // verify entropy checksum
-        let tail = entropy.pop().unwrap();
-        let checksum = sha256::Hash::hash(&entropy).as_byte_array()[0];
-        let valid = match words.len() {
-            12 => (checksum & 0b1111_0000) ^ (tail & 0b1111_0000) == 0,
-            15 => (checksum & 0b1111_1000) ^ (tail & 0b1111_1000) == 0,
-            18 => (checksum & 0b1111_1100) ^ (tail & 0b1111_1100) == 0,
-            21 => (checksum & 0b1111_1110) ^ (tail & 0b1111_1110) == 0,
-            24 => checksum ^ tail == 0,
-            _ => false,
-        };
-        if valid {
-            return true;
-        }
-    }
-    false
-}
-
-fn words_indices(words: &Vec<&str>) -> Vec<Vec<usize>> {
-    let do_search = |lang: Language| {
-        let indices: Vec<_> = words.iter().map_while(|&w| lang.index_of(w)).collect();
-        match indices.len() == words.len() {
-            true => Some(indices),
-            false => None,
-        }
-    };
-
-    #[cfg(not(feature = "multilingual"))]
-    {
-        use crate::Language::English;
-        match words.iter().all(|&w| w.is_ascii()) {
-            true => [English].into_iter().filter_map(do_search).collect(),
-            false => vec![],
-        }
-    }
-    #[cfg(feature = "multilingual")]
-    {
-        use crate::Language::*;
-        const EN_LANGS: [Language; 6] = [English, Italian, Czech, Portuguese, Spanish, French];
-        const TONE_LANGS: [Language; 2] = [Spanish, French];
-        const CN_LANGS: [Language; 2] = [TraditionalChinese, SimplifiedChinese];
-
-        match words[0].chars().next().unwrap() as u32 {
-            0x1100..0x11ff => [Korean].into_iter().filter_map(do_search).collect(),
-            0x3040..0x309f => [Japanese].into_iter().filter_map(do_search).collect(),
-            0x4e00..0x9f9f => CN_LANGS.into_iter().filter_map(do_search).collect(),
-            _ => match words.iter().all(|&w| w.is_ascii()) {
-                true => EN_LANGS.into_iter().filter_map(do_search).collect(),
-                false => TONE_LANGS.into_iter().filter_map(do_search).collect(),
-            },
-        }
-    }
-}
-
-type Bip39Error = crate::Error;
-type Bip39Result<T = ()> = Result<T, crate::Error>;
+impl Derivation for Xpriv {}
 
 #[cfg(not(feature = "multilingual"))]
 #[cfg(test)]
 mod bip39_test {
     use super::*;
     #[test]
-    fn test_bip39() -> Bip39Result {
+    fn test_bip39() -> Result<(), Bip39Error> {
         #[cfg(not(feature = "testnet"))]
         const TEST_DATA: &[[&str; 3]] = &[
           ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
