@@ -37,7 +37,7 @@
 use super::generic::{GenericDiagram, GenericResult};
 use bitcoin::hashes::{sha256, Hash};
 
-///
+/// Animate Diagram
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimateDiagram(pub Vec<[[Option<char>; 7]; 7]>);
 
