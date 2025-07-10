@@ -276,6 +276,7 @@ where
     ///   m/84'/0'/account'/0/index'
     /// # Returns
     ///   (address, private_key): (p2wpkh, wif)
+    #[deprecated]
     fn bip84_wallet_harden(&self, account: u32, index: u32) -> DeriveResult {
         let network = match crate::NETWORK.is_mainnet() {
             true => bitcoin::Network::Bitcoin,
