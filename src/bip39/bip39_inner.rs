@@ -23,7 +23,7 @@ use std::str::FromStr;
 // [1] - [BIP39 spec](https://bips.dev/39/)
 // [2] - [Ref website](https://iancoleman.io/bip39/)
 //
-pub trait Derivation {
+pub trait Bip39 {
     /// # Parameters
     ///   mnemonic: mnemonic str.
     fn from_mnemonic(mnemonic: &str, salt: &str) -> Result<Xpriv, Bip39Error> {
@@ -40,7 +40,7 @@ pub trait Derivation {
     }
 }
 
-impl Derivation for Xpriv {}
+impl Bip39 for Xpriv {}
 
 #[cfg(test)]
 mod bip39_test_english {

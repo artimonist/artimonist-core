@@ -39,7 +39,7 @@ use xbits::XBits;
 // [2] - [Ref impl](https://github.com/rikitau/rust-bip85)
 //
 #[allow(unused)]
-pub trait Derivation {
+pub trait Bip85 {
     /// Mnemonic words  
     // Path format is: m/83696968'/39'/{language}'/{words}'/{index}'
     ///
@@ -78,7 +78,7 @@ fn bip85_derive(root: &Xpriv, path: &str) -> Bip85Result<[u8; 64]> {
     Ok(data)
 }
 
-impl Derivation for Xpriv {
+impl Bip85 for Xpriv {
     fn bip85_mnemonic(&self, language: Language, count: u32, index: u32) -> Bip85Result {
         if !matches!(count, 12 | 15 | 18 | 21 | 24) {
             return Err(Bip85Error::InvalidParameter("count: 12, 15, 18, 21, 24"));

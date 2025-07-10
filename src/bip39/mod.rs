@@ -2,7 +2,7 @@ mod bip39_inner;
 mod language;
 mod mnemonic;
 
-pub use bip39_inner::*;
+pub use bip39_inner::Bip39;
 pub use language::Language;
 pub use mnemonic::Mnemonic;
 
