@@ -339,7 +339,7 @@ impl XprivEncode for Xpriv {
         let data = [&PRE.to_be_bytes(), &self.encode()[4..]].concat();
         bitcoin::base58::encode_check(&data[..])
     }
-    #[inline]
+    #[inline(always)]
     fn to_ypriv(&self) -> String {
         if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
@@ -350,7 +350,7 @@ impl XprivEncode for Xpriv {
             self.to_string()
         }
     }
-    #[inline]
+    #[inline(always)]
     fn to_zpriv(&self) -> String {
         if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
@@ -375,7 +375,7 @@ impl XpubEncode for Xpub {
         let data = [&PRE.to_be_bytes(), &self.encode()[4..]].concat();
         bitcoin::base58::encode_check(&data[..])
     }
-    #[inline]
+    #[inline(always)]
     fn to_ypub(&self) -> String {
         if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
@@ -386,7 +386,7 @@ impl XpubEncode for Xpub {
             self.to_string()
         }
     }
-    #[inline]
+    #[inline(always)]
     fn to_zpub(&self) -> String {
         if cfg!(feature = "extfmt") {
             match crate::NETWORK.is_mainnet() {
