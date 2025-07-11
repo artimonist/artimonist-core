@@ -59,7 +59,7 @@ mod simple;
 pub use bitcoin::{self, bip32::Xpriv};
 
 pub use animate::AnimateDiagram;
-pub use bip39::{Bip39 as BIP39, Language};
+pub use bip39::{Bip39 as BIP39, Language, Mnemonic};
 pub use bip85::{Bip85 as BIP85, Password, Wif};
 pub use complex::ComplexDiagram;
 pub use derive::{Bip44 as BIP44, Bip49 as BIP49, Bip84 as BIP84};

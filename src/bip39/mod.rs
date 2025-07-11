@@ -6,6 +6,7 @@ pub use bip39_inner::Bip39;
 pub use language::Language;
 pub use mnemonic::Mnemonic;
 
+/// BIP39 error types
 use thiserror::Error;
 
 #[derive(Error, Debug)]

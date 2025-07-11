@@ -2,6 +2,8 @@ use super::Language;
 use sha2::{Digest, Sha256};
 use xbits::{FromBits, XBits};
 
+/// A BIP39 mnemonic phrase, which is a sequence of words
+/// used to represent a seed for cryptographic purposes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mnemonic {
     words: Vec<String>,
@@ -68,11 +70,13 @@ impl Mnemonic {
         self.words.len()
     }
 
+    /// Mnemonic words indices.
     #[inline]
     pub fn indices(&self) -> Vec<usize> {
         self.language.indices(self.words.iter()).unwrap()[..self.words.len()].to_vec()
     }
 
+    /// Detect the language of a mnemonic phrase based on its words.
     pub fn detect_language<T>(words: impl Iterator<Item = T>) -> Vec<Language>
     where
         T: AsRef<str>,
@@ -87,6 +91,7 @@ impl Mnemonic {
             .unwrap_or_default()
     }
 
+    /// Verify the checksum of a mnemonic phrase based on its indices.
     pub fn verify_checksum(indices: &[usize]) -> Result<(), MnemonicError> {
         // verify length
         if !matches!(indices.len(), 12 | 15 | 18 | 21 | 24) {
