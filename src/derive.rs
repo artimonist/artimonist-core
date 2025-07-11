@@ -65,6 +65,29 @@ const COIN: u8 = 0;
 #[cfg(feature = "testnet")]
 const COIN: u8 = 1;
 
+/// BIP32 derivation
+pub trait Bip32
+where
+    Self: XDerive,
+{
+    /// Derive a BIP32 wallet with custom path
+    /// # Derivation path sample  
+    ///   Electrum wallet derive, based on master key: `m/0/{index}`
+    ///   Ref: <https://iancoleman.io/bip39/>
+    ///     Bitcoin Core: `m/0'/0'/{index}'`
+    ///     blockchain.info: `m/44'/0'/0'/{index}`
+    ///     MultiBit HD: `m/0'/0/{index}`
+    ///     Coinomi, Ledger: `m/44'/0'/0'/{index}`
+    /// # Returns
+    ///  (address, private_key): (p2pkh, wif)
+    fn bip32_wallet(&self, path: String) -> DeriveResult {
+        self.derive(path).map(|(xpub, xpriv)| {
+            let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
+            (address.to_string(), xpriv.to_priv().to_wif())
+        })
+    }
+}
+
 /// BIP44 derivation
 pub trait Bip44
 where
@@ -85,15 +108,12 @@ where
     ///   m/44'/0'/account'/0/index
     /// # Returns
     ///   (address, private_key): (p2pkh, wif)
-    fn bip44_wallet(&self, account: u32, index: u32, is_change: bool) -> DeriveResult {
-        let change = if is_change { 1 } else { 0 };
+    fn bip44_wallet(&self, account: u32, index: u32, change: bool) -> DeriveResult {
+        let change = if change { 1 } else { 0 };
         self.derive(format!("m/44'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
-                (
-                    Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK)
-                        .to_string(),
-                    xpriv.to_priv().to_wif(),
-                )
+                let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
 
@@ -103,14 +123,11 @@ where
     /// # Returns
     ///   (address, private_key): (p2pkh, wif)
     #[deprecated]
-    fn bip44_wallet_harden(&self, account: u32, index: u32) -> DeriveResult {
+    fn bip44_harden(&self, account: u32, index: u32) -> DeriveResult {
         self.derive(format!("m/44'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
-                (
-                    Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK)
-                        .to_string(),
-                    xpriv.to_priv().to_wif(),
-                )
+                let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
 
@@ -140,8 +157,6 @@ where
     }
 }
 
-impl Bip44 for Xpriv {}
-
 /// BIP49 derivation  
 /// Derivation scheme for P2WPKH-nested-in-P2SH based accounts.  
 ///
@@ -151,9 +166,9 @@ impl Bip44 for Xpriv {}
 /// # use std::str::FromStr;
 ///
 /// let master = Xpriv::from_str("xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K")?;
-/// let (addr, priv_key) = master.bip49_wallet_harden(0, 12)?;
+/// let (addr, priv_key) = master.bip49_wallet(0, 12, false)?;
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!((addr.as_str(), priv_key.as_str()), ("32d3TaqdGccbDpu9L5R5vvGHQDnAPGfZea", "L1EDBwkRwzxwc6cufANuNWCwQFhBUXmD4o8dDz2w4pDEpRFM2Tma"));
+/// assert_eq!((addr.as_str(), priv_key.as_str()), ("3H8oU4pWZoVxrUt6huGhqAxecBTrpxjaYW", "L3nsXsh8rctbRKcL3xgRWZYALffdtKv43VpzDnbFFfAU6TAQxUgz"));
 ///
 /// # Ok::<(), artimonist::Error>(())
 /// ```
@@ -179,15 +194,13 @@ where
     ///   m/49'/0'/account'/0/index
     /// # Returns
     ///   (address, private_key): (p2shwpkh, wif)
-    fn bip49_wallet(&self, account: u32, index: u32, is_change: bool) -> DeriveResult {
-        let change = if is_change { 1 } else { 0 };
+    fn bip49_wallet(&self, account: u32, index: u32, change: bool) -> DeriveResult {
+        let change = if change { 1 } else { 0 };
         self.derive(format!("m/49'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
-                (
-                    Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK)
-                        .to_string(),
-                    xpriv.to_priv().to_wif(),
-                )
+                let address =
+                    Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
 
@@ -197,14 +210,12 @@ where
     /// # Returns
     ///   (address, private_key): (p2shwpkh, wif)
     #[deprecated]
-    fn bip49_wallet_harden(&self, account: u32, index: u32) -> DeriveResult {
+    fn bip49_harden(&self, account: u32, index: u32) -> DeriveResult {
         self.derive(format!("m/49'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
-                (
-                    Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK)
-                        .to_string(),
-                    xpriv.to_priv().to_wif(),
-                )
+                let address =
+                    Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
 
@@ -234,8 +245,6 @@ where
     }
 }
 
-impl Bip49 for Xpriv {}
-
 /// BIP84 derivation
 pub trait Bip84
 where
@@ -256,18 +265,16 @@ where
     ///   m/84'/0'/account'/0/index
     /// # Returns
     ///   (address, private_key): (p2wpkh, wif)
-    fn bip84_wallet(&self, account: u32, index: u32, is_change: bool) -> DeriveResult {
-        let change = if is_change { 1 } else { 0 };
+    fn bip84_wallet(&self, account: u32, index: u32, change: bool) -> DeriveResult {
+        let change = if change { 1 } else { 0 };
         let network = match crate::NETWORK.is_mainnet() {
             true => bitcoin::Network::Bitcoin,
             false => bitcoin::Network::Testnet,
         };
         self.derive(format!("m/84'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
-                (
-                    Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network).to_string(),
-                    xpriv.to_priv().to_wif(),
-                )
+                let address = Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network);
+                (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
 
@@ -277,17 +284,15 @@ where
     /// # Returns
     ///   (address, private_key): (p2wpkh, wif)
     #[deprecated]
-    fn bip84_wallet_harden(&self, account: u32, index: u32) -> DeriveResult {
+    fn bip84_harden(&self, account: u32, index: u32) -> DeriveResult {
         let network = match crate::NETWORK.is_mainnet() {
             true => bitcoin::Network::Bitcoin,
             false => bitcoin::Network::Testnet,
         };
         self.derive(format!("m/84'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
-                (
-                    Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network).to_string(),
-                    xpriv.to_priv().to_wif(),
-                )
+                let address = Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network);
+                (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
 
@@ -317,6 +322,9 @@ where
     }
 }
 
+impl Bip32 for Xpriv {}
+impl Bip44 for Xpriv {}
+impl Bip49 for Xpriv {}
 impl Bip84 for Xpriv {}
 
 const BIP49_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x049d7878; // ypriv
