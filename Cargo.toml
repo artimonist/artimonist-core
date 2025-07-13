@@ -1,17 +1,21 @@
 [package]
 name = "artimonist"
 version = "1.2.3"
-authors = ["Artimonist <artimonist@gmail.com>"]
-description = "A tool for generating mnemonics and wallets."
+edition = "2024"
+crate-type = ["lib"]
+
 homepage = "https://artimonist.org/"
 repository = "https://github.com/artimonist/core/"
-
+authors = ["Artimonist <artimonist@gmail.com>"]
+description = "A tool for generating mnemonics and wallets."
 license = "MIT"
 keywords = ["bitcoin", "wallet", "mnemonic", "crypto", "art"]
 categories = ["cryptography"]
-rust-version = "1.84"
-edition = "2021"
-crate-type = ["lib"]
+
+exclude = [
+    "github/*",
+    "Cargo.lock",
+]
 
 [features]
 default = []
@@ -34,3 +38,4 @@ rmp-serde = { version = "1.3.0", optional = true }
 [dev-dependencies]
 bitcoin = { version = "0.32.5", features = ["base64"] }
 rust-crypto = "0.2" # not support wasm, because of rustc-serialize v0.3.25
+
