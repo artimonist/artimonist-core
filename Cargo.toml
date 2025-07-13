@@ -13,7 +13,7 @@ keywords = ["bitcoin", "wallet", "mnemonic", "crypto", "art"]
 categories = ["cryptography"]
 
 exclude = [
-    "github/*",
+    ".github/*",
 ]
 
 [features]
