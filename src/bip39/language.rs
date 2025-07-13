@@ -37,18 +37,19 @@ pub enum Language {
 
 impl Language {
     /// All bip39 languages
+    ///   Ordered by BIP85 specification
     pub fn all() -> [Language; 10] {
         [
-            Self::ChineseSimplified,
-            Self::ChineseTraditional,
-            Self::Czech,
             Self::English,
-            Self::French,
-            Self::Italian,
             Self::Japanese,
             Self::Korean,
-            Self::Portuguese,
             Self::Spanish,
+            Self::ChineseSimplified,
+            Self::ChineseTraditional,
+            Self::French,
+            Self::Italian,
+            Self::Czech,
+            Self::Portuguese,
         ]
     }
 
