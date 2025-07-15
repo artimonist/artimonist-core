@@ -56,7 +56,7 @@ mod matrix;
 mod simple;
 
 #[doc(no_inline)]
-pub use bitcoin::{self, bip32::Xpriv};
+pub use bitcoin::{self, bip32::Xpriv, bip32::Xpub};
 
 pub use animate::AnimateDiagram;
 pub use bip39::{Bip39 as BIP39, Language, Mnemonic};
