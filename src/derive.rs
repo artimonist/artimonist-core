@@ -1,22 +1,22 @@
 use bitcoin::{
+    Address, CompressedPublicKey, PublicKey, ScriptBuf,
     bip32::{DerivationPath, Xpriv, Xpub},
     key::Secp256k1,
     script::Builder,
-    Address, CompressedPublicKey, PublicKey, ScriptBuf,
 };
 use std::str::FromStr;
 
-pub trait XDerive {
-    fn derive(&self, path: String) -> Result<(Xpub, Xpriv), crate::Error>;
+pub trait DeriveInner {
+    fn derive(&self, path: &str) -> Result<(Xpub, Xpriv), crate::Error>;
     fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, crate::Error>;
 }
 
-impl XDerive for Xpriv {
+impl DeriveInner for Xpriv {
     /// Derive a key pair from derivation path
     #[inline]
-    fn derive(&self, path: String) -> Result<(Xpub, Xpriv), crate::Error> {
+    fn derive(&self, path_str: &str) -> Result<(Xpub, Xpriv), crate::Error> {
         let secp = Secp256k1::default();
-        let path = DerivationPath::from_str(&path)?;
+        let path = DerivationPath::from_str(path_str)?;
         let xpriv = self.derive_priv(&secp, &path)?;
         let xpub = Xpub::from_priv(&secp, &xpriv);
         Ok((xpub, xpriv))
@@ -68,8 +68,18 @@ const COIN: u8 = 1;
 /// BIP32 derivation
 pub trait Bip32
 where
-    Self: XDerive,
+    Self: DeriveInner,
 {
+    /// Derive a BIP32 account
+    /// # Derivation path
+    ///   m/0/0, m/0'/0', etc.
+    /// # Returns
+    ///   (xpub, xpriv)
+    fn bip32_account(&self, path: &str) -> DeriveResult {
+        self.derive(path)
+            .map(|(xpub, xpriv)| (xpub.to_string(), xpriv.to_string()))
+    }
+
     /// Derive a BIP32 wallet with custom path
     /// # Derivation path sample  
     ///   Electrum wallet derive, based on master key: `m/0/{index}`
@@ -80,8 +90,8 @@ where
     ///     Coinomi, Ledger: `m/44'/0'/0'/{index}`
     /// # Returns
     ///  (address, private_key): (p2pkh, wif)
-    fn bip32_wallet(&self, path: String) -> DeriveResult {
-        self.derive(path).map(|(xpub, xpriv)| {
+    fn bip32_wallet(&self, path: &str) -> DeriveResult {
+        self.derive(&path).map(|(xpub, xpriv)| {
             let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
             (address.to_string(), xpriv.to_priv().to_wif())
         })
@@ -91,7 +101,7 @@ where
 /// BIP44 derivation
 pub trait Bip44
 where
-    Self: XDerive,
+    Self: DeriveInner,
 {
     /// Derive a BIP44 account
     /// # Derivation path
@@ -99,7 +109,7 @@ where
     /// # Returns
     ///   (xpub, xpriv)
     fn bip44_account(&self, account: u32) -> DeriveResult {
-        self.derive(format!("m/44'/{COIN}'/{account}'"))
+        self.derive(&format!("m/44'/{COIN}'/{account}'"))
             .map(|(xpub, xpriv)| (xpub.to_string(), xpriv.to_string()))
     }
 
@@ -110,7 +120,7 @@ where
     ///   (address, private_key): (p2pkh, wif)
     fn bip44_wallet(&self, account: u32, index: u32, change: bool) -> DeriveResult {
         let change = if change { 1 } else { 0 };
-        self.derive(format!("m/44'/{COIN}'/{account}'/{change}/{index}"))
+        self.derive(&format!("m/44'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
                 let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
                 (address.to_string(), xpriv.to_priv().to_wif())
@@ -124,7 +134,7 @@ where
     ///   (address, private_key): (p2pkh, wif)
     #[deprecated]
     fn bip44_harden(&self, account: u32, index: u32) -> DeriveResult {
-        self.derive(format!("m/44'/{COIN}'/{account}'/0/{index}'"))
+        self.derive(&format!("m/44'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
                 let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
                 (address.to_string(), xpriv.to_priv().to_wif())
@@ -177,7 +187,7 @@ where
 // [2] - [Ref website](https://iancoleman.io/bip39/)
 pub trait Bip49
 where
-    Self: XDerive,
+    Self: DeriveInner,
 {
     /// Derive a BIP49 account
     /// # Derivation path
@@ -185,7 +195,7 @@ where
     /// # Returns
     ///   (xpub, xpriv)
     fn bip49_account(&self, account: u32) -> DeriveResult {
-        self.derive(format!("m/49'/{COIN}'/{account}'"))
+        self.derive(&format!("m/49'/{COIN}'/{account}'"))
             .map(|(xpub, xpriv)| (xpub.to_ypub(), xpriv.to_ypriv()))
     }
 
@@ -196,7 +206,7 @@ where
     ///   (address, private_key): (p2shwpkh, wif)
     fn bip49_wallet(&self, account: u32, index: u32, change: bool) -> DeriveResult {
         let change = if change { 1 } else { 0 };
-        self.derive(format!("m/49'/{COIN}'/{account}'/{change}/{index}"))
+        self.derive(&format!("m/49'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
                 let address =
                     Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK);
@@ -211,7 +221,7 @@ where
     ///   (address, private_key): (p2shwpkh, wif)
     #[deprecated]
     fn bip49_harden(&self, account: u32, index: u32) -> DeriveResult {
-        self.derive(format!("m/49'/{COIN}'/{account}'/0/{index}'"))
+        self.derive(&format!("m/49'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
                 let address =
                     Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK);
@@ -248,7 +258,7 @@ where
 /// BIP84 derivation
 pub trait Bip84
 where
-    Self: XDerive,
+    Self: DeriveInner,
 {
     /// Derive a BIP84 account
     /// # Derivation path
@@ -256,7 +266,7 @@ where
     /// # Returns
     ///   (xpub, xpriv)
     fn bip84_account(&self, account: u32) -> DeriveResult {
-        self.derive(format!("m/84'/{COIN}'/{account}'"))
+        self.derive(&format!("m/84'/{COIN}'/{account}'"))
             .map(|(xpub, xpriv)| (xpub.to_zpub(), xpriv.to_zpriv()))
     }
 
@@ -271,7 +281,7 @@ where
             true => bitcoin::Network::Bitcoin,
             false => bitcoin::Network::Testnet,
         };
-        self.derive(format!("m/84'/{COIN}'/{account}'/{change}/{index}"))
+        self.derive(&format!("m/84'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
                 let address = Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network);
                 (address.to_string(), xpriv.to_priv().to_wif())
@@ -289,7 +299,7 @@ where
             true => bitcoin::Network::Bitcoin,
             false => bitcoin::Network::Testnet,
         };
-        self.derive(format!("m/84'/{COIN}'/{account}'/0/{index}'"))
+        self.derive(&format!("m/84'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
                 let address = Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network);
                 (address.to_string(), xpriv.to_priv().to_wif())
