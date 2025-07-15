@@ -91,7 +91,7 @@ where
     /// # Returns
     ///  (address, private_key): (p2pkh, wif)
     fn bip32_wallet(&self, path: &str) -> DeriveResult {
-        self.derive(&path).map(|(xpub, xpriv)| {
+        self.derive(path).map(|(xpub, xpriv)| {
             let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
             (address.to_string(), xpriv.to_priv().to_wif())
         })
