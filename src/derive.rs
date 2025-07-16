@@ -1,5 +1,5 @@
 use bitcoin::{
-    Address, CompressedPublicKey, PublicKey, ScriptBuf,
+    Address, PublicKey, ScriptBuf,
     bip32::{DerivationPath, Xpriv, Xpub},
     key::Secp256k1,
     script::Builder,
@@ -92,7 +92,7 @@ where
     ///  (address, private_key): (p2pkh, wif)
     fn bip32_wallet(&self, path: &str) -> DeriveResult {
         self.derive(path).map(|(xpub, xpriv)| {
-            let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
+            let address = Address::p2pkh(xpub.to_pub(), crate::NETWORK);
             (address.to_string(), xpriv.to_priv().to_wif())
         })
     }
@@ -122,7 +122,7 @@ where
         let change = if change { 1 } else { 0 };
         self.derive(&format!("m/44'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
-                let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                let address = Address::p2pkh(xpub.to_pub(), crate::NETWORK);
                 (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
@@ -136,7 +136,7 @@ where
     fn bip44_harden(&self, account: u32, index: u32) -> DeriveResult {
         self.derive(&format!("m/44'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
-                let address = Address::p2pkh(CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                let address = Address::p2pkh(xpub.to_pub(), crate::NETWORK);
                 (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
@@ -196,7 +196,7 @@ where
     ///   (xpub, xpriv)
     fn bip49_account(&self, account: u32) -> DeriveResult {
         self.derive(&format!("m/49'/{COIN}'/{account}'"))
-            .map(|(xpub, xpriv)| (xpub.to_ypub(), xpriv.to_ypriv()))
+            .map(|(xpub, xpriv)| (Ypub(xpub).to_string(), Ypriv(xpriv).to_string()))
     }
 
     /// Derive a wallet from BIP49 account
@@ -208,8 +208,7 @@ where
         let change = if change { 1 } else { 0 };
         self.derive(&format!("m/49'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
-                let address =
-                    Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                let address = Address::p2shwpkh(&xpub.to_pub(), crate::NETWORK);
                 (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
@@ -223,8 +222,7 @@ where
     fn bip49_harden(&self, account: u32, index: u32) -> DeriveResult {
         self.derive(&format!("m/49'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
-                let address =
-                    Address::p2shwpkh(&CompressedPublicKey(xpub.public_key), crate::NETWORK);
+                let address = Address::p2shwpkh(&xpub.to_pub(), crate::NETWORK);
                 (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
@@ -267,7 +265,7 @@ where
     ///   (xpub, xpriv)
     fn bip84_account(&self, account: u32) -> DeriveResult {
         self.derive(&format!("m/84'/{COIN}'/{account}'"))
-            .map(|(xpub, xpriv)| (xpub.to_zpub(), xpriv.to_zpriv()))
+            .map(|(xpub, xpriv)| (Zpub(xpub).to_string(), Zpriv(xpriv).to_string()))
     }
 
     /// Derive a wallet from BIP84 account
@@ -276,14 +274,14 @@ where
     /// # Returns
     ///   (address, private_key): (p2wpkh, wif)
     fn bip84_wallet(&self, account: u32, index: u32, change: bool) -> DeriveResult {
-        let change = if change { 1 } else { 0 };
-        let network = match crate::NETWORK.is_mainnet() {
-            true => bitcoin::Network::Bitcoin,
-            false => bitcoin::Network::Testnet,
+        let network = match crate::NETWORK {
+            bitcoin::NetworkKind::Main => bitcoin::Network::Bitcoin,
+            bitcoin::NetworkKind::Test => bitcoin::Network::Testnet,
         };
+        let change = if change { 1 } else { 0 };
         self.derive(&format!("m/84'/{COIN}'/{account}'/{change}/{index}"))
             .map(|(xpub, xpriv)| {
-                let address = Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network);
+                let address = Address::p2wpkh(&xpub.to_pub(), network);
                 (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
@@ -295,13 +293,13 @@ where
     ///   (address, private_key): (p2wpkh, wif)
     #[deprecated]
     fn bip84_harden(&self, account: u32, index: u32) -> DeriveResult {
-        let network = match crate::NETWORK.is_mainnet() {
-            true => bitcoin::Network::Bitcoin,
-            false => bitcoin::Network::Testnet,
+        let network = match crate::NETWORK {
+            bitcoin::NetworkKind::Main => bitcoin::Network::Bitcoin,
+            bitcoin::NetworkKind::Test => bitcoin::Network::Testnet,
         };
         self.derive(&format!("m/84'/{COIN}'/{account}'/0/{index}'"))
             .map(|(xpub, xpriv)| {
-                let address = Address::p2wpkh(&CompressedPublicKey(xpub.public_key), network);
+                let address = Address::p2wpkh(&xpub.to_pub(), network);
                 (address.to_string(), xpriv.to_priv().to_wif())
             })
     }
@@ -337,83 +335,108 @@ impl Bip44 for Xpriv {}
 impl Bip49 for Xpriv {}
 impl Bip84 for Xpriv {}
 
-const BIP49_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x049d7878; // ypriv
-const BIP49_VERSION_BYTES_MAINNET_PUBLIC: u32 = 0x049d7cb2; // ypub
-const BIP49_VERSION_BYTES_TESTNET_PRIVATE: u32 = 0x044a4e28; // upriv
-const BIP49_VERSION_BYTES_TESTNET_PUBLIC: u32 = 0x044a5262; // upub
+struct Ypriv(Xpriv);
 
-const BIP84_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x04b2430c; // zpriv
-const BIP84_VERSION_BYTES_MAINNET_PUBLIC: u32 = 0x04b24746; // zpub
-const BIP84_VERSION_BYTES_TESTNET_PRIVATE: u32 = 0x045f18bc; // vpriv
-const BIP84_VERSION_BYTES_TESTNET_PUBLIC: u32 = 0x045f1cf6; // vpub
+impl ToString for Ypriv {
+    #[cfg(not(feature = "extfmt"))]
+    #[inline(always)]
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
 
-trait XprivEncode {
-    fn ext_encode<const PRE: u32>(&self) -> String;
-    fn to_ypriv(&self) -> String;
-    fn to_zpriv(&self) -> String;
-}
-impl XprivEncode for Xpriv {
-    #[inline]
-    fn ext_encode<const PRE: u32>(&self) -> String {
-        let data = [&PRE.to_be_bytes(), &self.encode()[4..]].concat();
-        bitcoin::base58::encode_check(&data[..])
-    }
-    #[inline(always)]
-    fn to_ypriv(&self) -> String {
-        if cfg!(feature = "extfmt") {
-            match crate::NETWORK.is_mainnet() {
-                true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(),
-                false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(),
-            }
-        } else {
-            self.to_string()
-        }
-    }
-    #[inline(always)]
-    fn to_zpriv(&self) -> String {
-        if cfg!(feature = "extfmt") {
-            match crate::NETWORK.is_mainnet() {
-                true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(),
-                false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PRIVATE>(),
-            }
-        } else {
-            self.to_string()
+    #[cfg(feature = "extfmt")]
+    fn to_string(&self) -> String {
+        use bitcoin::NetworkKind;
+
+        const BIP49_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x049d7878; // ypriv
+        const BIP49_VERSION_BYTES_TESTNET_PRIVATE: u32 = 0x044a4e28; // upriv
+
+        match crate::NETWORK {
+            NetworkKind::Main => encode_xprv::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(&self.0),
+            NetworkKind::Test => encode_xprv::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(&self.0),
         }
     }
 }
 
-trait XpubEncode {
-    fn ext_encode<const PRE: u32>(&self) -> String;
-    fn to_ypub(&self) -> String;
-    fn to_zpub(&self) -> String;
+struct Ypub(Xpub);
+
+impl ToString for Ypub {
+    #[cfg(not(feature = "extfmt"))]
+    #[inline(always)]
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+
+    #[cfg(feature = "extfmt")]
+    fn to_string(&self) -> String {
+        use bitcoin::NetworkKind;
+
+        const BIP49_VERSION_BYTES_MAINNET_PUBLIC: u32 = 0x049d7cb2; // ypub
+        const BIP49_VERSION_BYTES_TESTNET_PUBLIC: u32 = 0x044a5262; // upub
+
+        match crate::NETWORK {
+            NetworkKind::Main => encode_xpub::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(&self.0),
+            NetworkKind::Test => encode_xpub::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(&self.0),
+        }
+    }
 }
 
-impl XpubEncode for Xpub {
-    #[inline]
-    fn ext_encode<const PRE: u32>(&self) -> String {
-        let data = [&PRE.to_be_bytes(), &self.encode()[4..]].concat();
-        bitcoin::base58::encode_check(&data[..])
-    }
+struct Zpriv(Xpriv);
+
+impl ToString for Zpriv {
+    #[cfg(not(feature = "extfmt"))]
     #[inline(always)]
-    fn to_ypub(&self) -> String {
-        if cfg!(feature = "extfmt") {
-            match crate::NETWORK.is_mainnet() {
-                true => self.ext_encode::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(),
-                false => self.ext_encode::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(),
-            }
-        } else {
-            self.to_string()
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+
+    #[cfg(feature = "extfmt")]
+    fn to_string(&self) -> String {
+        use bitcoin::NetworkKind;
+
+        const BIP84_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x04b2430c; // zpriv
+        const BIP84_VERSION_BYTES_TESTNET_PRIVATE: u32 = 0x045f18bc; // vpriv
+
+        match crate::NETWORK {
+            NetworkKind::Main => encode_xprv::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(&self.0),
+            NetworkKind::Test => encode_xprv::<BIP84_VERSION_BYTES_TESTNET_PRIVATE>(&self.0),
         }
     }
+}
+
+struct Zpub(Xpub);
+
+impl ToString for Zpub {
+    #[cfg(not(feature = "extfmt"))]
     #[inline(always)]
-    fn to_zpub(&self) -> String {
-        if cfg!(feature = "extfmt") {
-            match crate::NETWORK.is_mainnet() {
-                true => self.ext_encode::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(),
-                false => self.ext_encode::<BIP84_VERSION_BYTES_TESTNET_PUBLIC>(),
-            }
-        } else {
-            self.to_string()
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+
+    #[cfg(feature = "extfmt")]
+    fn to_string(&self) -> String {
+        use bitcoin::NetworkKind;
+
+        const BIP84_VERSION_BYTES_MAINNET_PUBLIC: u32 = 0x04b24746; // zpub
+        const BIP84_VERSION_BYTES_TESTNET_PUBLIC: u32 = 0x045f1cf6; // vpub
+
+        match crate::NETWORK {
+            NetworkKind::Main => encode_xpub::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(&self.0),
+            NetworkKind::Test => encode_xpub::<BIP84_VERSION_BYTES_TESTNET_PUBLIC>(&self.0),
         }
     }
+}
+
+#[cfg(feature = "extfmt")]
+#[inline]
+fn encode_xprv<const PRE: u32>(key: &Xpriv) -> String {
+    let data = [&PRE.to_be_bytes(), &key.encode()[4..]].concat();
+    bitcoin::base58::encode_check(&data[..])
+}
+
+#[cfg(feature = "extfmt")]
+#[inline]
+fn encode_xpub<const PRE: u32>(key: &Xpub) -> String {
+    let data = [&PRE.to_be_bytes(), &key.encode()[4..]].concat();
+    bitcoin::base58::encode_check(&data[..])
 }
