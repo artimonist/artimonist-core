@@ -1,11 +1,11 @@
 #![cfg(test)]
 
-use artimonist::{BIP32, Xpriv};
-use bitcoin::hex::FromHex;
-
 #[cfg(not(feature = "testnet"))]
 #[test]
 fn bip32_derive() {
+    use artimonist::{BIP32, Xpriv};
+    use bitcoin::hex::FromHex;
+
     use test_data::*;
     let seed = Vec::from_hex(SEED_HEX).expect("seed");
     let master = Xpriv::new_master(artimonist::NETWORK, &seed).expect("master");

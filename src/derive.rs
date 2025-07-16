@@ -335,108 +335,97 @@ impl Bip44 for Xpriv {}
 impl Bip49 for Xpriv {}
 impl Bip84 for Xpriv {}
 
-struct Ypriv(Xpriv);
+struct Ypriv(pub Xpriv);
+struct Ypub(pub Xpub);
+struct Zpriv(pub Xpriv);
+struct Zpub(pub Xpub);
 
-impl ToString for Ypriv {
+impl std::fmt::Display for Ypriv {
     #[cfg(not(feature = "extfmt"))]
     #[inline(always)]
-    fn to_string(&self) -> String {
-        self.0.to_string()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 
     #[cfg(feature = "extfmt")]
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use bitcoin::NetworkKind;
 
-        const BIP49_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x049d7878; // ypriv
-        const BIP49_VERSION_BYTES_TESTNET_PRIVATE: u32 = 0x044a4e28; // upriv
+        const BIP49_VER_BYTES_MAINNET_PRIVATE: u32 = 0x049d7878; // ypriv
+        const BIP49_VER_BYTES_TESTNET_PRIVATE: u32 = 0x044a4e28; // upriv
 
         match crate::NETWORK {
-            NetworkKind::Main => encode_xprv::<BIP49_VERSION_BYTES_MAINNET_PRIVATE>(&self.0),
-            NetworkKind::Test => encode_xprv::<BIP49_VERSION_BYTES_TESTNET_PRIVATE>(&self.0),
+            NetworkKind::Main => encode_fmt::<BIP49_VER_BYTES_MAINNET_PRIVATE>(f, &self.0.encode()),
+            NetworkKind::Test => encode_fmt::<BIP49_VER_BYTES_TESTNET_PRIVATE>(f, &self.0.encode()),
         }
     }
 }
 
-struct Ypub(Xpub);
-
-impl ToString for Ypub {
+impl std::fmt::Display for Ypub {
     #[cfg(not(feature = "extfmt"))]
     #[inline(always)]
-    fn to_string(&self) -> String {
-        self.0.to_string()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 
     #[cfg(feature = "extfmt")]
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use bitcoin::NetworkKind;
 
-        const BIP49_VERSION_BYTES_MAINNET_PUBLIC: u32 = 0x049d7cb2; // ypub
-        const BIP49_VERSION_BYTES_TESTNET_PUBLIC: u32 = 0x044a5262; // upub
+        const BIP49_VER_BYTES_MAINNET_PUBLIC: u32 = 0x049d7cb2; // ypub
+        const BIP49_VER_BYTES_TESTNET_PUBLIC: u32 = 0x044a5262; // upub
 
         match crate::NETWORK {
-            NetworkKind::Main => encode_xpub::<BIP49_VERSION_BYTES_MAINNET_PUBLIC>(&self.0),
-            NetworkKind::Test => encode_xpub::<BIP49_VERSION_BYTES_TESTNET_PUBLIC>(&self.0),
+            NetworkKind::Main => encode_fmt::<BIP49_VER_BYTES_MAINNET_PUBLIC>(f, &self.0.encode()),
+            NetworkKind::Test => encode_fmt::<BIP49_VER_BYTES_TESTNET_PUBLIC>(f, &self.0.encode()),
         }
     }
 }
 
-struct Zpriv(Xpriv);
-
-impl ToString for Zpriv {
+impl std::fmt::Display for Zpriv {
     #[cfg(not(feature = "extfmt"))]
     #[inline(always)]
-    fn to_string(&self) -> String {
-        self.0.to_string()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 
     #[cfg(feature = "extfmt")]
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use bitcoin::NetworkKind;
 
-        const BIP84_VERSION_BYTES_MAINNET_PRIVATE: u32 = 0x04b2430c; // zpriv
-        const BIP84_VERSION_BYTES_TESTNET_PRIVATE: u32 = 0x045f18bc; // vpriv
+        const BIP84_VER_BYTES_MAINNET_PRIVATE: u32 = 0x04b2430c; // zpriv
+        const BIP84_VER_BYTES_TESTNET_PRIVATE: u32 = 0x045f18bc; // vpriv
 
         match crate::NETWORK {
-            NetworkKind::Main => encode_xprv::<BIP84_VERSION_BYTES_MAINNET_PRIVATE>(&self.0),
-            NetworkKind::Test => encode_xprv::<BIP84_VERSION_BYTES_TESTNET_PRIVATE>(&self.0),
+            NetworkKind::Main => encode_fmt::<BIP84_VER_BYTES_MAINNET_PRIVATE>(f, &self.0.encode()),
+            NetworkKind::Test => encode_fmt::<BIP84_VER_BYTES_TESTNET_PRIVATE>(f, &self.0.encode()),
         }
     }
 }
 
-struct Zpub(Xpub);
-
-impl ToString for Zpub {
+impl std::fmt::Display for Zpub {
     #[cfg(not(feature = "extfmt"))]
     #[inline(always)]
-    fn to_string(&self) -> String {
-        self.0.to_string()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 
     #[cfg(feature = "extfmt")]
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use bitcoin::NetworkKind;
 
-        const BIP84_VERSION_BYTES_MAINNET_PUBLIC: u32 = 0x04b24746; // zpub
-        const BIP84_VERSION_BYTES_TESTNET_PUBLIC: u32 = 0x045f1cf6; // vpub
+        const BIP84_VER_BYTES_MAINNET_PUBLIC: u32 = 0x04b24746; // zpub
+        const BIP84_VER_BYTES_TESTNET_PUBLIC: u32 = 0x045f1cf6; // vpub
 
         match crate::NETWORK {
-            NetworkKind::Main => encode_xpub::<BIP84_VERSION_BYTES_MAINNET_PUBLIC>(&self.0),
-            NetworkKind::Test => encode_xpub::<BIP84_VERSION_BYTES_TESTNET_PUBLIC>(&self.0),
+            NetworkKind::Main => encode_fmt::<BIP84_VER_BYTES_MAINNET_PUBLIC>(f, &self.0.encode()),
+            NetworkKind::Test => encode_fmt::<BIP84_VER_BYTES_TESTNET_PUBLIC>(f, &self.0.encode()),
         }
     }
 }
 
 #[cfg(feature = "extfmt")]
-#[inline]
-fn encode_xprv<const PRE: u32>(key: &Xpriv) -> String {
-    let data = [&PRE.to_be_bytes(), &key.encode()[4..]].concat();
-    bitcoin::base58::encode_check(&data[..])
-}
-
-#[cfg(feature = "extfmt")]
-#[inline]
-fn encode_xpub<const PRE: u32>(key: &Xpub) -> String {
-    let data = [&PRE.to_be_bytes(), &key.encode()[4..]].concat();
-    bitcoin::base58::encode_check(&data[..])
+fn encode_fmt<const PRE: u32>(f: &mut std::fmt::Formatter<'_>, data: &[u8]) -> std::fmt::Result {
+    let new_data = [&PRE.to_be_bytes(), &data[4..]].concat();
+    write!(f, "{}", bitcoin::base58::encode_check(&new_data))
 }
