@@ -29,7 +29,7 @@
 use crate::macros::ImpDeref;
 
 use super::generic::{GenericDiagram, GenericResult};
-use bitcoin::hashes::{sha256, Hash};
+use bitcoin::hashes::{Hash, sha256};
 
 /// Complex Diagram
 ///
@@ -51,12 +51,13 @@ impl GenericDiagram<7, 7> for ComplexDiagram {
 
         (0..7).rev().for_each(|col| {
             (0..7).rev().for_each(|row| {
-                if let Some(s) = &self[row][col] {
-                    if !s.is_empty() && s.len() < u8::MAX as usize {
-                        str_list.push(s);
-                        str_lens.push(s.len() as u8);
-                        indices[row] |= 1 << (6 - col);
-                    }
+                if let Some(s) = &self[row][col]
+                    && !s.is_empty()
+                    && s.len() < u8::MAX as usize
+                {
+                    str_list.push(s);
+                    str_lens.push(s.len() as u8);
+                    indices[row] |= 1 << (6 - col);
                 }
             });
         });
