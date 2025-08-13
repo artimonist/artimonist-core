@@ -139,7 +139,20 @@ impl std::str::FromStr for Mnemonic {
                 words: words.into_iter().map(String::from).collect(),
                 language: languages.pop().unwrap(),
             }),
-            2.. => Err(MnemonicError::InconclusiveLanguage(languages)),
+            2.. => {
+                use Language::*;
+                if languages == [ChineseSimplified, ChineseTraditional]
+                    || languages == [ChineseTraditional, ChineseSimplified]
+                {
+                    // chinese common words has same indices, choice any one.
+                    Ok(Mnemonic {
+                        words: words.into_iter().map(String::from).collect(),
+                        language: ChineseSimplified,
+                    })
+                } else {
+                    Err(MnemonicError::InconclusiveLanguage(languages))
+                }
+            }
         }
     }
 }
