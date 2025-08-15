@@ -20,12 +20,12 @@ pub enum Bip39Error {
     #[error("invalid mnemonic language")]
     InvalidLanguage,
 
-    #[error("inconclusive mnemonic language")]
-    InconclusiveLanguage(Vec<Language>),
+    #[error("inconclusive mnemonic languages: {0:?}")]
+    AmbiguousLanguages(Vec<Language>),
 
     #[error("invalid mnemonic checksum")]
     InvalidChecksum,
 
-    #[error("bip32 error")]
+    #[error("bip32 error: {0}")]
     Bip32Error(#[from] bitcoin::bip32::Error),
 }
