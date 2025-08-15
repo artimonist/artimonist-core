@@ -7,7 +7,7 @@
 //!   <a href="https://github.com/artimonist/artimonist-cli/releases">
 //!     <img alt="cli" src="https://img.shields.io/github/v/release/artimonist/cli?label=artimonist-cli">
 //!   </a>&nbsp;&nbsp;&nbsp;
-//!   <a href="https://www.artimonist.org/simple.htm">
+//!   <a href="https://www.artimonist.org">
 //!     <img alt="web" src="https://img.shields.io/badge/artimonist.org-gray?logo=html5">
 //!   </a>
 //! </p>
