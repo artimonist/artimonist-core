@@ -60,7 +60,7 @@ mod simple;
 pub use bitcoin::{self, bip32::Xpriv, bip32::Xpub};
 
 pub use animate::AnimateDiagram;
-pub use bip38::Bip38 as BIP38;
+pub use bip38::{Bip38 as BIP38, MnemonicEncryption};
 pub use bip39::{Bip39 as BIP39, Language, Mnemonic};
 pub use bip85::{Bip85 as BIP85, Password, Wif};
 pub use complex::ComplexDiagram;
