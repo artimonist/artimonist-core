@@ -46,6 +46,7 @@
 //!
 
 mod animate;
+mod bip38;
 mod bip39;
 mod bip85;
 mod complex;
@@ -59,6 +60,7 @@ mod simple;
 pub use bitcoin::{self, bip32::Xpriv, bip32::Xpub};
 
 pub use animate::AnimateDiagram;
+pub use bip38::Bip38 as BIP38;
 pub use bip39::{Bip39 as BIP39, Language, Mnemonic};
 pub use bip85::{Bip85 as BIP85, Password, Wif};
 pub use complex::ComplexDiagram;
@@ -71,7 +73,7 @@ pub use simple::SimpleDiagram;
 /// Global error definition
 ///
 pub mod error {
-    use crate::bip39;
+    use crate::{bip38, bip39};
 
     /// Artimonist Error
     #[derive(thiserror::Error, Debug)]
@@ -80,10 +82,13 @@ pub mod error {
         #[error("invalid parameter: {0}")]
         InvalidParameter(&'static str),
         /// Bip32 Error
-        #[error("bip32 error")]
+        #[error("bip32 error: {0}")]
         Bip32Error(#[from] bitcoin::bip32::Error),
+        /// Bip38 Error
+        #[error("bip38 error: {0}")]
+        Bip38Error(#[from] bip38::Bip38Error),
         /// Bip39 Error
-        #[error("bip39 error")]
+        #[error("bip39 error: {0}")]
         Bip39Error(#[from] bip39::Bip39Error),
         /// Secp error
         #[error("runtime error")]
