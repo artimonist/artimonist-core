@@ -38,8 +38,8 @@ pub enum Language {
 impl Language {
     /// All bip39 languages
     ///   Ordered by BIP85 specification
-    pub fn all() -> [Language; 10] {
-        [
+    pub fn all() -> &'static [Language] {
+        &[
             Self::English,
             Self::Japanese,
             Self::Korean,
@@ -70,6 +70,7 @@ impl Language {
     }
 
     /// Get mnemonic word at index  
+    #[inline]
     pub fn word_at(&self, index: usize) -> Option<&str> {
         if index < 2048 {
             Some(self.wordlist().nth(index).unwrap())
@@ -79,8 +80,15 @@ impl Language {
     }
 
     /// Get mnemonic word index  
+    #[inline]
     pub fn index_of(&self, word: &str) -> Option<usize> {
         self.wordlist().position(|w| w == word)
+    }
+
+    /// Check if word is in language's wordlist
+    #[inline]
+    pub fn contains(&self, word: &str) -> bool {
+        self.index_of(word).is_some()
     }
 
     /// Detect word language

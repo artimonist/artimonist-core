@@ -1,4 +1,4 @@
-use super::Language;
+use super::{Bip39Error, Language};
 use sha2::{Digest, Sha256};
 use xbits::{FromBits, XBits};
 
@@ -9,8 +9,6 @@ pub struct Mnemonic {
     words: Vec<String>,
     language: Language,
 }
-
-type MnemonicError = super::Bip39Error;
 
 #[allow(unused)]
 impl Mnemonic {
@@ -33,7 +31,7 @@ impl Mnemonic {
     /// * `language` - The language of the mnemonic.
     /// # Returns
     /// * `Ok(Mnemonic)` - If the mnemonic is successfully created.
-    pub fn new(entropy: &[u8], language: Language) -> Result<Self, MnemonicError> {
+    pub fn new(entropy: &[u8], language: Language) -> Result<Self, Bip39Error> {
         // verify length
         let length = match entropy.len() {
             16 => 12,
@@ -41,7 +39,7 @@ impl Mnemonic {
             24 => 18,
             28 => 21,
             32 => 24,
-            _ => return Err(MnemonicError::InvalidLength),
+            _ => return Err(Bip39Error::InvalidLength),
         };
 
         // calculate checksum
@@ -64,16 +62,38 @@ impl Mnemonic {
         Ok(Mnemonic { words, language })
     }
 
+    /// Mnemonic language
+    #[inline]
+    pub fn language(&self) -> Language {
+        self.language
+    }
+
     /// Mnemonic words count.
     #[inline]
     pub fn count(&self) -> usize {
         self.words.len()
     }
 
+    /// Get an iterator over the words.
+    #[inline]
+    pub fn words(&self) -> impl Iterator<Item = &String> {
+        self.words.iter()
+    }
+
     /// Mnemonic words indices.
     #[inline]
-    pub fn indices(&self) -> Vec<usize> {
-        self.language.indices(self.words.iter()).unwrap()[..self.words.len()].to_vec()
+    pub fn indices(&self) -> impl Iterator<Item = usize> {
+        self.words
+            .iter()
+            .map(|w| self.language.index_of(w).unwrap())
+    }
+
+    /// Get mnemonic raw entropy
+    #[inline]
+    pub fn entropy(&self) -> Vec<u8> {
+        let mut entropy: Vec<u8> = Vec::from_bits_chunk(self.indices(), 11);
+        entropy.pop(); // remove checksum
+        entropy
     }
 
     /// Detect the language of a mnemonic phrase based on its words.
@@ -92,10 +112,10 @@ impl Mnemonic {
     }
 
     /// Verify the checksum of a mnemonic phrase based on its indices.
-    pub fn verify_checksum(indices: &[usize]) -> Result<(), MnemonicError> {
+    pub fn verify_checksum(indices: &[usize]) -> Result<(), Bip39Error> {
         // verify length
         if !matches!(indices.len(), 12 | 15 | 18 | 21 | 24) {
-            return Err(MnemonicError::InvalidLength);
+            return Err(Bip39Error::InvalidLength);
         }
 
         let mut entropy = Vec::from_bits_chunk(indices.iter().copied(), 11);
@@ -104,20 +124,20 @@ impl Mnemonic {
 
         // verify checksum
         if checksum != tail {
-            return Err(MnemonicError::InvalidChecksum);
+            return Err(Bip39Error::InvalidChecksum);
         }
         Ok(())
     }
 }
 
 impl std::str::FromStr for Mnemonic {
-    type Err = MnemonicError;
+    type Err = Bip39Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // verify length
         let words: Vec<&str> = s.split_whitespace().collect();
         if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
-            return Err(MnemonicError::InvalidLength);
+            return Err(Bip39Error::InvalidLength);
         }
 
         // detect languages
@@ -134,7 +154,7 @@ impl std::str::FromStr for Mnemonic {
 
         // return mnemonic
         match languages.len() {
-            0 => Err(MnemonicError::InvalidChecksum),
+            0 => Err(Bip39Error::InvalidChecksum),
             1 => Ok(Mnemonic {
                 words: words.into_iter().map(String::from).collect(),
                 language: languages.pop().unwrap(),
@@ -150,7 +170,7 @@ impl std::str::FromStr for Mnemonic {
                         language: ChineseSimplified,
                     })
                 } else {
-                    Err(MnemonicError::InconclusiveLanguage(languages))
+                    Err(Bip39Error::AmbiguousLanguages(languages))
                 }
             }
         }
@@ -164,18 +184,18 @@ impl std::fmt::Display for Mnemonic {
 }
 
 trait Indices {
-    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>, MnemonicError>
+    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>, Bip39Error>
     where
         T: AsRef<str>;
 }
 impl Indices for Language {
-    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>, MnemonicError>
+    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>, Bip39Error>
     where
         T: AsRef<str>,
     {
         words
             .map(|w| self.index_of(w.as_ref()))
             .collect::<Option<Vec<_>>>()
-            .ok_or(MnemonicError::InvalidLanguage)
+            .ok_or(Bip39Error::InvalidLanguage)
     }
 }
