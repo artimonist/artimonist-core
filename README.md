@@ -1,8 +1,6 @@
 <div align="center">
   <h1>Artimonist</h1>
-
-  <p>A tool for generating mnemonics based on diagrams.</p>
-
+  <h3>A tool for generating mnemonics based on diagrams.</h3>
   <p>
     <a href="https://crates.io/crates/artimonist"><img alt="Crate Info" src="https://img.shields.io/crates/v/artimonist.svg"/></a>
     <a href="https://docs.rs/artimonist"><img alt="API Docs" src="https://img.shields.io/badge/docs.rs-artimonist-green"/></a>
@@ -11,52 +9,48 @@
   </p>
 </div>
 
-[Documentation](https://docs.rs/artimonist/)
-
-## Example
+#### Sample diagram 
 ```
-let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
-let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
-let diagram = SimpleDiagram::from_values(&values, &indices);
+  let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];  
+  let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];  
+  let diagram = SimpleDiagram::from_values(&values, &indices);
 ```
-The simple diagram looks like this:
-
 |　|　|　|　|　|　|　|
 |--|--|--|--|--|--|--|  
 |  |🍔|  |  |  |🍟|  |
 |　|  |  |  |  |  |  |
-|  |  |  |🍩|  |  |  |
+|  |  |  |🍩|  |  |  |   
 |　|  |  |  |  |  |  |
 |  |🍦|  |  |  |🌭|  |
-|　|  |  |  |  |  |  |
+|　|  |  |  |  |  |  |  
 
-Generate **mnemonic**:
+#### Generate mnemonic
 ```
-let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
-let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
+  let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
+  let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
 ```
-`lady announce wife please settle connect april hour caution split festival genuine logic digital dignity`
+> `"lady announce wife please settle connect april hour caution split festival genuine logic digital dignity"`
 
-Generate wallet **private key**
+#### Generate wallet
 ```
-let priv_key = master.bip85_wif(0)?;
+  let priv_key = master.bip85_wif(0)?;
 ```
-`L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd`
+> `L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd`
 
-Generate **xpriv**
+#### Generate master key
 ```
-let xpriv = master.bip85_xpriv(0)?;
+  let xpriv = master.bip85_xpriv(0)?;
 ```
-`xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B`
+> `xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B`
 
-Generate **password**
+#### Generate password
 ```
-let pwd = master.bip85_pwd(Password::Emoji, 20, 0)?;
+  let pwd = master.bip85_pwd(Password::Emoji, 20, 0)?;
 ```
-`🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗`
+> `🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗`
   
   
-## Entropy Evaluation  
+### Entropy Evaluation  
 mnemonic 12 words entropy = (2048)¹² = (2¹¹)¹² = 2¹³²  
 mnemonic 24 words entropy = (2048)²⁴ = (2¹¹)²⁴ = 2²⁶⁴  
 _(In fact, because the tail of 4bits/8bits is a checksum, the real entropy is 2¹²⁸/2²⁵⁶.)_
@@ -98,4 +92,4 @@ and **12 unicode characters provide the equivalent encryption strength of 24 mne
 | 24 | 12 | 2²⁶⁹ |
 
 **ComplexDiagram can be filled with 50 unicode characters in a cell, providing better encryption strength.**  
-_(In fact, higher entropy values are meaningless because the length of the private key is 256 bits. So, we support multisig address generation.)_ 
+_(In fact, higher entropy values are meaningless because the length of the private key is 256 bits. So, we support multisig address derivation.)_ 
