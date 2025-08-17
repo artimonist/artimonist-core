@@ -24,8 +24,8 @@
  *      x bits indices string position in diagram.
 **/
 use super::generic::{GenericDiagram, GenericResult};
-use super::macros::ImpDeref;
-use bitcoin::hashes::{sha256, Hash};
+use crate::macros::ImpDeref;
+use bitcoin::hashes::{Hash, sha256};
 
 /// Simple Diagram
 ///
