@@ -45,29 +45,22 @@
 //! |  |  |  |  |  |  |  |
 //!
 
-mod animate;
 mod bip38;
 mod bip39;
 mod bip85;
-mod complex;
 mod derive;
-mod generic;
+mod diagram;
 mod macros;
-mod matrix;
-mod simple;
 
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv, bip32::Xpub};
 
-pub use animate::AnimateDiagram;
 pub use bip38::{Bip38 as BIP38, MnemonicEncryption};
 pub use bip39::{Bip39 as BIP39, Language, Mnemonic};
 pub use bip85::{Bip85 as BIP85, Password, Wif};
-pub use complex::ComplexDiagram;
 pub use derive::{Bip32 as BIP32, Bip44 as BIP44, Bip49 as BIP49, Bip84 as BIP84};
-pub use generic::GenericDiagram;
-pub use matrix::{Matrix, ToMatrix};
-pub use simple::SimpleDiagram;
+pub use diagram::{AnimateDiagram, ComplexDiagram, GenericDiagram, SimpleDiagram};
+pub use diagram::{Matrix, ToMatrix};
 
 ///
 /// Global error definition
