@@ -79,7 +79,7 @@ pub trait NoneEc {
 
         // Verify the checksum
         if *salt != &prvk.p2pkh()?.as_bytes().sha256_n(2)[..4] {
-            return Err(Bip38Error::InvalidPassphrase);
+            return Err(Bip38Error::InvalidPass);
         }
         Ok(prvk.to_string())
     }
@@ -257,7 +257,7 @@ pub trait EcMultiply {
 
         // checksum
         if address_hash != &prvk.p2pkh()?.as_bytes().sha256_n(2)[..4] {
-            return Err(Bip38Error::InvalidPassphrase);
+            return Err(Bip38Error::InvalidPass);
         }
         Ok(prvk.to_string())
     }

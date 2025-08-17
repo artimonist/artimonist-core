@@ -9,7 +9,7 @@ pub enum Bip38Error {
     #[error("Invalid encrypted key")]
     InvalidKey,
     #[error("Invalid passphrase")]
-    InvalidPassphrase,
+    InvalidPass,
     #[error("Invalid lot or sequence number: lot: {0}, seq: {1}")]
     InvalidEcNumber(u32, u32),
     #[error("Invalid ec passphrase")]
@@ -20,8 +20,8 @@ pub enum Bip38Error {
     InvalidWif(#[from] bitcoin::key::FromWifError),
     #[error("Mnemonic error: {0}")]
     MnemonicError(#[from] crate::bip39::Bip39Error),
-    #[error("Invalid word count: {0}")]
-    InvalidWordCount(usize),
+    #[error("Invalid word count")]
+    InvalidSize,
     #[error("Inner error: {0}")]
     InnerError(String),
 }

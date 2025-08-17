@@ -70,7 +70,7 @@ impl Mnemonic {
 
     /// Mnemonic words count.
     #[inline]
-    pub fn count(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.words.len()
     }
 
