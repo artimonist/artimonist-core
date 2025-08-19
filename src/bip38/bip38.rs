@@ -5,6 +5,8 @@ use bitcoin::{Address, Network, NetworkKind, PrivateKey, PublicKey, base58};
 use rand::RngCore;
 use unicode_normalization::UnicodeNormalization;
 
+type Result<T = ()> = std::result::Result<T, Bip38Error>;
+
 /// Prefix of all non ec encrypted keys.
 const PRE_NON_EC: [u8; 2] = [0x01, 0x42];
 
@@ -12,7 +14,7 @@ const PRE_NON_EC: [u8; 2] = [0x01, 0x42];
 const PRE_EC: [u8; 2] = [0x01, 0x43];
 
 pub trait NoneEc {
-    fn encrypt_non_ec(wif: &str, passphrase: &str) -> Result<String, Bip38Error> {
+    fn encrypt_non_ec(wif: &str, passphrase: &str) -> Result<String> {
         let prvk = PrivateKey::from_wif(wif)?;
         let compress = prvk.compressed;
         let salt = prvk.p2pkh()?.as_bytes().sha256_n(2)[0..4].to_vec();
@@ -48,7 +50,7 @@ pub trait NoneEc {
         Ok(base58::encode_check(&buffer))
     }
 
-    fn decrypt_non_ec(wif: &str, passphrase: &str) -> Result<String, Bip38Error> {
+    fn decrypt_non_ec(wif: &str, passphrase: &str) -> Result<String> {
         let mut ebuffer = base58::decode_check(wif)?;
         if ebuffer.len() != 39 || ebuffer[..2] != PRE_NON_EC {
             return Err(Bip38Error::InvalidKey);
@@ -92,12 +94,7 @@ pub trait EcMultiply {
     /// EC_PASS not has "lot" and "sequence".
     const PRE_EC_PASS_NON: [u8; 8] = [0x2C, 0xE9, 0xB3, 0xE1, 0xFF, 0x39, 0xE2, 0x53];
 
-    fn generate_ec_factor(
-        passphrase: &str,
-        salt: [u8; 8],
-        lot: u32,
-        seq: u32,
-    ) -> Result<String, Bip38Error> {
+    fn generate_ec_factor(passphrase: &str, salt: [u8; 8], lot: u32, seq: u32) -> Result<String> {
         match (lot, seq) {
             (100000..=999999, 1..=4095) => {
                 let salt = salt[..4].to_vec();
@@ -150,7 +147,7 @@ pub trait EcMultiply {
         }
     }
 
-    fn generate_ec_key(seed: [u8; 24], ec_factor: &str) -> Result<String, Bip38Error> {
+    fn generate_ec_key(seed: [u8; 24], ec_factor: &str) -> Result<String> {
         let compress = true;
         let ec_pass = base58::decode_check(ec_factor)?;
         let [ec_pre, entropy, pass_point] = ec_pass.segments([8, 8, 33]);
@@ -201,7 +198,7 @@ pub trait EcMultiply {
         Ok(base58::encode_check(&result))
     }
 
-    fn decrypt_ec_key(wif_ec_key: &str, passphrase: &str) -> Result<String, Bip38Error> {
+    fn decrypt_ec_key(wif_ec_key: &str, passphrase: &str) -> Result<String> {
         let ebuffer = base58::decode_check(wif_ec_key)?;
         if ebuffer.len() != 39 || ebuffer[..2] != PRE_EC {
             return Err(Bip38Error::InvalidKey);
@@ -270,28 +267,28 @@ pub trait EcMultiply {
 ///  [Implementation](https://github.com/ceca69ec/bip38)
 pub trait Bip38: NoneEc + EcMultiply {
     /// Encrypts a WIF private key using BIP38 standard.
-    fn bip38_encrypt(&self, passphrase: &str) -> Result<String, Bip38Error>;
+    fn bip38_encrypt(&self, passphrase: &str) -> Result<String>;
 
     /// Decrypts a BIP38 encrypted key using the provided passphrase.
-    fn bip38_decrypt(&self, passphrase: &str) -> Result<String, Bip38Error>;
+    fn bip38_decrypt(&self, passphrase: &str) -> Result<String>;
 
     /// Generates an EC factor for BIP38 encryption.
-    fn bip38_ec_factor(&self, lot: u32, seq: u32) -> Result<String, Bip38Error>;
+    fn bip38_ec_factor(&self, lot: u32, seq: u32) -> Result<String>;
 
     /// Generates an EC key for BIP38 encryption.
-    fn bip38_ec_generate(&self) -> Result<String, Bip38Error>;
+    fn bip38_ec_generate(&self) -> Result<String>;
 }
 
 impl NoneEc for str {}
 impl EcMultiply for str {}
 impl Bip38 for str {
     #[inline(always)]
-    fn bip38_encrypt(&self, passphrase: &str) -> Result<String, Bip38Error> {
+    fn bip38_encrypt(&self, passphrase: &str) -> Result<String> {
         Self::encrypt_non_ec(self, passphrase)
     }
 
     #[inline(always)]
-    fn bip38_decrypt(&self, passphrase: &str) -> Result<String, Bip38Error> {
+    fn bip38_decrypt(&self, passphrase: &str) -> Result<String> {
         if self.starts_with("6P") && self.len() == 58 {
             let pre = base58::decode_check(self)?[..2].to_vec();
             if pre == PRE_NON_EC {
@@ -304,14 +301,14 @@ impl Bip38 for str {
     }
 
     #[inline]
-    fn bip38_ec_factor(&self, lot: u32, seq: u32) -> Result<String, Bip38Error> {
+    fn bip38_ec_factor(&self, lot: u32, seq: u32) -> Result<String> {
         let mut salt = [0u8; 8];
         rand::thread_rng().fill_bytes(&mut salt);
         Self::generate_ec_factor(self, salt, lot, seq)
     }
 
     #[inline]
-    fn bip38_ec_generate(&self) -> Result<String, Bip38Error> {
+    fn bip38_ec_generate(&self) -> Result<String> {
         let mut seed = [0u8; 24];
         rand::thread_rng().fill_bytes(&mut seed);
         Self::generate_ec_key(seed, self)
@@ -372,20 +369,20 @@ trait SecpOperation
 where
     Self: Sized,
 {
-    fn p2pkh(&self) -> Result<String, Bip38Error>;
-    fn mul_tweak(self, scalar: [u8; 32]) -> Result<Self, Bip38Error>;
+    fn p2pkh(&self) -> Result<String>;
+    fn mul_tweak(self, scalar: [u8; 32]) -> Result<Self>;
 }
 
 impl SecpOperation for PrivateKey {
     #[inline(always)]
-    fn p2pkh(&self) -> Result<String, Bip38Error> {
+    fn p2pkh(&self) -> Result<String> {
         let pub_key = self.public_key(&Secp256k1::default());
         let address = Address::p2pkh(pub_key, NetworkKind::Main).to_string();
         Ok(address)
     }
 
     #[inline(always)]
-    fn mul_tweak(mut self, scalar: [u8; 32]) -> Result<Self, Bip38Error> {
+    fn mul_tweak(mut self, scalar: [u8; 32]) -> Result<Self> {
         use bitcoin::secp256k1::Scalar;
         self.inner = self.inner.mul_tweak(&Scalar::from_be_bytes(scalar)?)?;
         Ok(self)
@@ -394,13 +391,13 @@ impl SecpOperation for PrivateKey {
 
 impl SecpOperation for PublicKey {
     #[inline(always)]
-    fn p2pkh(&self) -> Result<String, Bip38Error> {
+    fn p2pkh(&self) -> Result<String> {
         let address = Address::p2pkh(self, NetworkKind::Main).to_string();
         Ok(address)
     }
 
     #[inline(always)]
-    fn mul_tweak(mut self, scalar: [u8; 32]) -> Result<Self, Bip38Error> {
+    fn mul_tweak(mut self, scalar: [u8; 32]) -> Result<Self> {
         use bitcoin::secp256k1::Scalar;
         let scalar = Scalar::from_be_bytes(scalar)?;
         self.inner = self.inner.mul_tweak(&Secp256k1::default(), &scalar)?;
@@ -453,7 +450,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ec_pass() -> Result<(), anyhow::Error> {
+    fn test_ec_pass() -> std::result::Result<(), anyhow::Error> {
         const TEST_DATA: &[&str] = &[
             //EC multiply, no compression, no lot/sequence numbers
             "TestingOneTwoThree",
@@ -504,7 +501,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ec_decrypt() -> Result<(), anyhow::Error> {
+    fn test_ec_decrypt() -> Result<()> {
         const TEST_DATA: &[&str] = &[
             // EC multiply, no compression, no lot/sequence numbers
             "TestingOneTwoThree",
@@ -529,7 +526,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ec_generate() -> Result<(), anyhow::Error> {
+    fn test_ec_generate() -> std::result::Result<(), anyhow::Error> {
         const TEST_DATA: &[&str] = &[
             // EC multiply, no compression, no lot/sequence numbers
             "69b14acff7bf5b659d43f73f9274631308ee405700fc8585",
@@ -555,7 +552,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ec() -> Result<(), anyhow::Error> {
+    fn test_ec() -> Result<()> {
         const TEST_DATA: &[&str] = &[
             "TestingOneTwoThree",
             "Satoshi",

@@ -231,4 +231,30 @@ mod mnemonic_tests {
         }
         Ok(())
     }
+
+    #[test]
+    fn test_nfc_salt() -> Result<()> {
+        use unicode_normalization::UnicodeNormalization;
+
+        let mnemonic = "caution want scheme basic teach bulb shadow pioneer blue add expand guess";
+        let salt1 = "música"; // no nfc
+        let salt2 = "música"; // nfc
+        assert_eq!(salt1.nfc().collect::<String>(), salt2);
+        assert_ne!(salt1.chars().count(), salt2.chars().count());
+
+        let master1 = mnemonic.parse::<Mnemonic>()?.to_master(salt1)?;
+        let master2 = mnemonic.parse::<Mnemonic>()?.to_master(salt2)?;
+        assert_ne!(master1, master2);
+
+        use crate::BIP49;
+        let wallet1 = master1.bip49_wallet(0, 0, false).unwrap();
+        let wallet2 = master2.bip49_wallet(0, 0, false).unwrap();
+        assert_ne!(wallet1, wallet2);
+
+        println!("wallet1: {wallet1:?}");
+        println!("wallet2: {wallet2:?}");
+        let electrum_address = "3NgaBMn1fQ9wrAVAhhnVKaTVP5gFo2Wedn";
+        assert_eq!(electrum_address, wallet1.0);
+        Ok(())
+    }
 }
