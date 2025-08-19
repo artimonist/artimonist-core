@@ -1,7 +1,6 @@
 use super::{Bip39Error, Language};
 use bitcoin::bip32::Xpriv;
 use sha2::{Digest, Sha256};
-use unicode_normalization::UnicodeNormalization;
 use xbits::{FromBits, XBits};
 
 type Result<T> = std::result::Result<T, Bip39Error>;
@@ -55,7 +54,7 @@ impl Mnemonic {
     /// Generate a master key from the mnemonic phrase.
     pub fn to_master(&self, salt: &str) -> Result<Xpriv> {
         let mnemonic = self.to_string();
-        let salt = format!("mnemonic{}", salt.nfc().collect::<String>());
+        let salt = format!("mnemonic{salt}");
 
         let mut seed: [u8; 64] = [0; 64];
         pbkdf2::pbkdf2_hmac::<sha2::Sha512>(
