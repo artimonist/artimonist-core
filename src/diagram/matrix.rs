@@ -1,7 +1,11 @@
+#![allow(deprecated)]
+
 /// type alias for any diagram
+#[deprecated(since = "1.7.2", note = "use `Diagram` trait instead")]
 pub type Matrix<T, const H: usize = 7, const W: usize = 7> = [[Option<T>; W]; H];
 
 /// transform to generic diagram
+#[deprecated(since = "1.7.2", note = "use `Diagram` trait instead")]
 pub trait ToMatrix<T> {
     /// transform to matrix
     fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<T, H, W>;

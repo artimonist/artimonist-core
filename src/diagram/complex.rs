@@ -75,11 +75,14 @@ impl ComplexDiagram {
     pub const CELL_CHARS_LIMIT: usize = 50;
 
     /// create complex diagram
+    #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
     pub fn new() -> Self {
         Self(core::array::from_fn(|_| core::array::from_fn(|_| None)))
     }
 
     /// create ComplexDiagram from items
+    #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
+    #[allow(deprecated)]
     pub fn from_values(items: &[&str], indices: &[(usize, usize)]) -> Self {
         let mut diagram = ComplexDiagram::new();
         indices.iter().zip(items).for_each(|(&(r, c), &s)| {
@@ -98,6 +101,7 @@ mod complex_diagram_test {
     use bitcoin::hex::DisplayHex;
 
     #[test]
+    #[allow(deprecated)]
     fn test_complex_diagram() -> GenericResult {
         const STR_LIST: &[&str] = &["ABC", "123", "测试", "混A1", "A&*王😊"];
         const INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
@@ -108,10 +112,14 @@ mod complex_diagram_test {
         assert_eq!(cdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
         assert_eq!(cdm[6][6], Some(STR_LIST[4].to_owned()));
 
+        let master = "xprv9s21ZrQH143K3DUYRs4DRSY7JGsaL6FrXCAwuv1ZseQdHs6NJTX7wg99bUp7z3zgRUFwJTZfZp3Zhs9nrsfK6rFdkY78tbkAr1ovxALxUJu";
+        assert_eq!(cdm.bip32_master(&[])?.to_string(), master);
+
         Ok(())
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_complex_entropy() -> GenericResult<()> {
         const STR_LIST: &[&str] = &["ABC", "混A1", "123", "测试", "A&*王😊"];
         const INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];
@@ -132,6 +140,8 @@ mod complex_diagram_test {
         let salt_entropy = cdm.warp_entropy(SALT_STR.as_bytes())?;
         assert_eq!(salt_entropy.to_lower_hex_string(), SALT_ENTROPY);
 
+        let master = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
+        assert_eq!(cdm.bip32_master(SALT_STR.as_bytes())?.to_string(), master);
         Ok(())
     }
 }

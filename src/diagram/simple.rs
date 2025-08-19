@@ -76,11 +76,13 @@ impl GenericDiagram<7, 7> for SimpleDiagram {
 
 impl SimpleDiagram {
     /// create simple diagram
+    #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
     pub fn new() -> Self {
         Self([[None; 7]; 7])
     }
 
     /// create SimpleDiagram from items
+    #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
     pub fn from_values(items: &[char], indices: &[(usize, usize)]) -> Self {
         let mut data = [[None; 7]; 7];
         indices
@@ -97,6 +99,7 @@ mod simple_diagram_test {
     use bitcoin::hex::DisplayHex;
 
     #[test]
+    #[allow(deprecated)]
     fn test_simple_diagram() -> GenericResult {
         const CHARS_STR: &str = "A&*王😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
@@ -133,6 +136,7 @@ mod simple_diagram_test {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_simple_diagram2() -> GenericResult<()> {
         const CHARS_STR: &str = "A王&*😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];
