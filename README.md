@@ -11,9 +11,13 @@
 
 #### Sample diagram 
 ```
-  let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];  
-  let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];  
-  let diagram = SimpleDiagram::from_values(&values, &indices);
+  let mut mx = [[None; 7]; 7];
+  mx[1][1] = Some('🍔');
+  mx[1][5] = Some('🍟');
+  mx[3][3] = Some('🍩');
+  mx[5][1] = Some('🍦');
+  mx[5][5] = Some('🌭');
+  let diagram = SimpleDiagram(mx);
 ```
 |　|　|　|　|　|　|　|
 |--|--|--|--|--|--|--|  
@@ -27,7 +31,7 @@
 #### Generate mnemonic
 ```
   let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
-  let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
+  let mnemonic = master.bip85_mnemonic(0, 15, Default::default())?;
 ```
 > `"lady announce wife please settle connect april hour caution split festival genuine logic digital dignity"`
 
@@ -45,7 +49,7 @@
 
 #### Generate password
 ```
-  let pwd = master.bip85_pwd(Password::Emoji, 20, 0)?;
+  let pwd = master.bip85_pwd(0, 20, Password::Emoji)?;
 ```
 > `🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗`
   

@@ -1,7 +1,6 @@
 use super::{ComplexDiagram, GenericDiagram, Result, SimpleDiagram};
 use bitcoin::bip32::Xpriv;
 use std::ops::Not;
-use unicode_normalization::UnicodeNormalization;
 
 /// Diagram
 pub trait Diagram {
@@ -16,18 +15,16 @@ impl Diagram for [&str] {
     fn art_simple_master(&self, salt: &str) -> Result<Xpriv> {
         let mut mx = [[None; 7]; 7];
         self.iter().take(7 * 7).enumerate().for_each(|(i, &s)| {
-            mx[i / 7][i % 7] = s.nfc().next();
+            mx[i / 7][i % 7] = s.chars().next();
         });
-        let salt: String = salt.nfc().collect();
         SimpleDiagram(mx).bip32_master(salt.as_bytes())
     }
 
     fn art_complex_master(&self, salt: &str) -> Result<Xpriv> {
         let mut mx = std::array::from_fn(|_| std::array::from_fn(|_| None));
         self.iter().take(7 * 7).enumerate().for_each(|(i, &s)| {
-            mx[i / 7][i % 7] = s.is_empty().not().then_some(s.nfc().collect());
+            mx[i / 7][i % 7] = s.is_empty().not().then_some(s.to_string());
         });
-        let salt: String = salt.nfc().collect();
         ComplexDiagram(mx).bip32_master(salt.as_bytes())
     }
 }

@@ -1,6 +1,9 @@
 use super::{Bip39Error, Language};
+use bitcoin::bip32::Xpriv;
 use sha2::{Digest, Sha256};
 use xbits::{FromBits, XBits};
+
+type Result<T> = std::result::Result<T, Bip39Error>;
 
 /// A BIP39 mnemonic phrase, which is a sequence of words
 /// used to represent a seed for cryptographic purposes.
@@ -12,17 +15,6 @@ pub struct Mnemonic {
 
 #[allow(unused)]
 impl Mnemonic {
-    const fn check_mask(len: usize) -> u8 {
-        match len {
-            12 => 0b1111_0000,
-            15 => 0b1111_1000,
-            18 => 0b1111_1100,
-            21 => 0b1111_1110,
-            24 => 0b1111_1111,
-            _ => unreachable!(),
-        }
-    }
-
     /// Create a new mnemonic from raw entropy and language.
     /// # Arguments
     /// * `entropy` - A byte slice representing the entropy.  
@@ -31,26 +23,23 @@ impl Mnemonic {
     /// * `language` - The language of the mnemonic.
     /// # Returns
     /// * `Ok(Mnemonic)` - If the mnemonic is successfully created.
-    pub fn new(entropy: &[u8], language: Language) -> Result<Self, Bip39Error> {
+    pub fn new(entropy: &[u8], language: Language) -> Result<Self> {
         // verify length
-        let length = match entropy.len() {
-            16 => 12,
-            20 => 15,
-            24 => 18,
-            28 => 21,
-            32 => 24,
-            _ => return Err(Bip39Error::InvalidLength),
-        };
+        if !matches!(entropy.len(), 16 | 20 | 24 | 28 | 32) {
+            return Err(Bip39Error::InvalidLength);
+        }
 
         // calculate checksum
-        let checksum = Sha256::digest(entropy)[0] & Mnemonic::check_mask(length);
+        let size = entropy.len() / 4 * 3;
+        let check_mask = 0xff << (8 - size / 3);
+        let checksum = Sha256::digest(entropy)[0] & check_mask;
 
         // convert entropy to indices
         let indices: Vec<usize> = [entropy.to_vec(), vec![checksum]]
             .concat()
             .bits()
             .chunks(11)
-            .take(length)
+            .take(size)
             .collect();
 
         // convert indices to words
@@ -60,6 +49,22 @@ impl Mnemonic {
             .collect();
 
         Ok(Mnemonic { words, language })
+    }
+
+    /// Generate a master key from the mnemonic phrase.
+    pub fn to_master(&self, salt: &str) -> Result<Xpriv> {
+        let mnemonic = self.to_string();
+        let salt = format!("mnemonic{salt}");
+
+        let mut seed: [u8; 64] = [0; 64];
+        pbkdf2::pbkdf2_hmac::<sha2::Sha512>(
+            mnemonic.as_bytes(),
+            salt.as_bytes(),
+            u32::pow(2, 11),
+            &mut seed,
+        );
+
+        Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
     }
 
     /// Mnemonic language
@@ -97,7 +102,7 @@ impl Mnemonic {
     }
 
     /// Detect the language of a mnemonic phrase based on its words.
-    pub fn detect_language<T>(words: impl Iterator<Item = T>) -> Vec<Language>
+    fn detect_language<T>(words: impl Iterator<Item = T>) -> Vec<Language>
     where
         T: AsRef<str>,
     {
@@ -112,7 +117,7 @@ impl Mnemonic {
     }
 
     /// Verify the checksum of a mnemonic phrase based on its indices.
-    pub fn verify_checksum(indices: &[usize]) -> Result<(), Bip39Error> {
+    fn verify_checksum(indices: &[usize]) -> Result<()> {
         // verify length
         if !matches!(indices.len(), 12 | 15 | 18 | 21 | 24) {
             return Err(Bip39Error::InvalidLength);
@@ -120,7 +125,8 @@ impl Mnemonic {
 
         let mut entropy = Vec::from_bits_chunk(indices.iter().copied(), 11);
         let tail = entropy.pop().unwrap();
-        let checksum = Sha256::digest(&entropy)[0] & Mnemonic::check_mask(indices.len());
+        let check_mask = 0xff << (8 - indices.len() / 3);
+        let checksum = Sha256::digest(&entropy)[0] & check_mask;
 
         // verify checksum
         if checksum != tail {
@@ -133,9 +139,10 @@ impl Mnemonic {
 impl std::str::FromStr for Mnemonic {
     type Err = Bip39Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // verify length
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let words: Vec<&str> = s.split_whitespace().collect();
+
+        // verify words count
         if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
             return Err(Bip39Error::InvalidLength);
         }
@@ -184,12 +191,12 @@ impl std::fmt::Display for Mnemonic {
 }
 
 trait Indices {
-    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>, Bip39Error>
+    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>>
     where
         T: AsRef<str>;
 }
 impl Indices for Language {
-    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>, Bip39Error>
+    fn indices<T>(&self, words: impl Iterator<Item = T>) -> Result<Vec<usize>>
     where
         T: AsRef<str>,
     {
@@ -197,5 +204,58 @@ impl Indices for Language {
             .map(|w| self.index_of(w.as_ref()))
             .collect::<Option<Vec<_>>>()
             .ok_or(Bip39Error::InvalidLanguage)
+    }
+}
+
+#[cfg(test)]
+mod mnemonic_tests {
+    use super::*;
+
+    #[test]
+    fn test_mnemonic_master() -> Result<()> {
+        #[cfg(not(feature = "testnet"))]
+        const TEST_DATA: &[[&str; 3]] = &[[
+            "theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest",
+            "🍔🍟🌭🍕",
+            "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD",
+        ]];
+        #[cfg(feature = "testnet")]
+        const TEST_DATA: &[[&str; 3]] = &[[
+            "theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest",
+            "🍔🍟🌭🍕",
+            "tprv8ZgxMBicQKsPdZJv4VweGpGJpe3reRgMMr7SmZ2LFDbpuDxrNddQ82fkHSpZjsqcWYnk9VHZmEGN8pFMwivVnDrVn1AvdRPqy3ripW55kfq",
+        ]];
+        for data in TEST_DATA {
+            let mnemonic: Mnemonic = data[0].parse()?;
+            assert_eq!(mnemonic.to_master(data[1])?.to_string(), data[2]);
+        }
+        Ok(())
+    }
+
+    #[cfg(not(feature = "testnet"))]
+    #[test]
+    fn test_nfc_salt() -> Result<()> {
+        use unicode_normalization::UnicodeNormalization;
+
+        let mnemonic = "caution want scheme basic teach bulb shadow pioneer blue add expand guess";
+        let salt1 = "música"; // no nfc
+        let salt2 = "música"; // nfc
+        assert_eq!(salt1.nfc().collect::<String>(), salt2);
+        assert_ne!(salt1.chars().count(), salt2.chars().count());
+
+        let master1 = mnemonic.parse::<Mnemonic>()?.to_master(salt1)?;
+        let master2 = mnemonic.parse::<Mnemonic>()?.to_master(salt2)?;
+        assert_ne!(master1, master2);
+
+        use crate::BIP49;
+        let wallet1 = master1.bip49_wallet(0, 0, false).unwrap();
+        let wallet2 = master2.bip49_wallet(0, 0, false).unwrap();
+        assert_ne!(wallet1, wallet2);
+
+        println!("wallet1: {wallet1:?}");
+        println!("wallet2: {wallet2:?}");
+        let electrum_address = "3NgaBMn1fQ9wrAVAhhnVKaTVP5gFo2Wedn";
+        assert_eq!(electrum_address, wallet1.0);
+        Ok(())
     }
 }

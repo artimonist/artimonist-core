@@ -1,7 +1,8 @@
-use super::Mnemonic;
-use crate::bip39::Bip39Error;
+use super::{Bip39Error, Mnemonic};
 use bitcoin::bip32::Xpriv;
 use std::str::FromStr;
+
+type Result<T> = std::result::Result<T, Bip39Error>;
 
 /// BIP39 Derivation for Xpriv
 ///
@@ -26,7 +27,8 @@ use std::str::FromStr;
 pub trait Bip39 {
     /// # Parameters
     ///   mnemonic: mnemonic str.
-    fn from_mnemonic(mnemonic: &str, salt: &str) -> Result<Xpriv, Bip39Error> {
+    #[deprecated(since = "1.8.0", note = "Use `Mnemonic::to_master()` instead")]
+    fn from_mnemonic(mnemonic: &str, salt: &str) -> Result<Xpriv> {
         let mnemonic = Mnemonic::from_str(mnemonic)?.to_string();
         let seed = {
             use pbkdf2::pbkdf2_hmac;
@@ -42,21 +44,24 @@ pub trait Bip39 {
 
 impl Bip39 for Xpriv {}
 
+#[allow(deprecated)]
 #[cfg(test)]
 mod bip39_test_english {
     use super::*;
     #[test]
-    fn test_bip39() -> Result<(), Bip39Error> {
+    fn test_bip39() -> Result<()> {
         #[cfg(not(feature = "testnet"))]
-        const TEST_DATA: &[[&str; 3]] = &[
-          ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
-          "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD"],
-        ];
+        const TEST_DATA: &[[&str; 3]] = &[[
+            "theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest",
+            "🍔🍟🌭🍕",
+            "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD",
+        ]];
         #[cfg(feature = "testnet")]
-        const TEST_DATA: &[[&str; 3]] = &[
-          ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
-          "tprv8ZgxMBicQKsPdZJv4VweGpGJpe3reRgMMr7SmZ2LFDbpuDxrNddQ82fkHSpZjsqcWYnk9VHZmEGN8pFMwivVnDrVn1AvdRPqy3ripW55kfq"]
-        ];
+        const TEST_DATA: &[[&str; 3]] = &[[
+            "theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest",
+            "🍔🍟🌭🍕",
+            "tprv8ZgxMBicQKsPdZJv4VweGpGJpe3reRgMMr7SmZ2LFDbpuDxrNddQ82fkHSpZjsqcWYnk9VHZmEGN8pFMwivVnDrVn1AvdRPqy3ripW55kfq",
+        ]];
         for x in TEST_DATA {
             let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
             assert_eq!(xpriv.to_string(), x[2]);
@@ -65,6 +70,7 @@ mod bip39_test_english {
     }
 }
 
+#[allow(deprecated)]
 #[cfg(not(feature = "testnet"))]
 #[cfg(test)]
 mod bip39_test_multilingual {
@@ -73,16 +79,28 @@ mod bip39_test_multilingual {
     /// # Reference
     ///     <https://iancoleman.io/bip39>
     #[test]
-    fn test_bip39() -> Result<(), Bip39Error> {
+    fn test_bip39() -> Result<()> {
         const TEST_DATA: &[[&str; 3]] = &[
-          ["solda osso frasco encontro donzela oficina colono vidraria fruteira sinal visto sacola mirtilo flamingo ereto", "",
-            "xprv9s21ZrQH143K2KFS6iHoFXZC9Y5AWVKwxZis4GMRkQeaTFHiNRTkrjCsnBZ46s7VNihoMapH64FE93ZbzZ28Ld2oiHh6FYQx4eA8jEisYsc"],
-          ["岗 跨 困 倒 考 邦 调 晒 慢 孟 畅 埋 黎 句 皮", "黎句皮",
-            "xprv9s21ZrQH143K2SwhdXXWCKa3Sj3mw6123eUe4osWEbHavCv7FDqgFChzfedPDmgnHm9qnQrdveb8sVrywNxxBYCXTdaeNyxRRmhF4q33ovb"],
-          ["클럽 작가 소설 부족 별도 일정 모금 확장 소형 콤플렉스 회복 촛불 위성 성별 비바람", "😎",
-            "xprv9s21ZrQH143K43d7XRnapkCsoE2bLUJfA57hYseNpDaJxf5rpuhHgHjSXNMGMpaGYNNZfxxBzv1e2kW5CSy7p1rddfWYXtvYhgC6MPfHd9Z"],
-          ["theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest", "🍔🍟🌭🍕",
-            "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD"],
+            [
+                "solda osso frasco encontro donzela oficina colono vidraria fruteira sinal visto sacola mirtilo flamingo ereto",
+                "",
+                "xprv9s21ZrQH143K2KFS6iHoFXZC9Y5AWVKwxZis4GMRkQeaTFHiNRTkrjCsnBZ46s7VNihoMapH64FE93ZbzZ28Ld2oiHh6FYQx4eA8jEisYsc",
+            ],
+            [
+                "岗 跨 困 倒 考 邦 调 晒 慢 孟 畅 埋 黎 句 皮",
+                "黎句皮",
+                "xprv9s21ZrQH143K2SwhdXXWCKa3Sj3mw6123eUe4osWEbHavCv7FDqgFChzfedPDmgnHm9qnQrdveb8sVrywNxxBYCXTdaeNyxRRmhF4q33ovb",
+            ],
+            [
+                "클럽 작가 소설 부족 별도 일정 모금 확장 소형 콤플렉스 회복 촛불 위성 성별 비바람",
+                "😎",
+                "xprv9s21ZrQH143K43d7XRnapkCsoE2bLUJfA57hYseNpDaJxf5rpuhHgHjSXNMGMpaGYNNZfxxBzv1e2kW5CSy7p1rddfWYXtvYhgC6MPfHd9Z",
+            ],
+            [
+                "theme rain hollow final expire proud detect wife hotel taxi witness strategy park head forest",
+                "🍔🍟🌭🍕",
+                "xprv9s21ZrQH143K2k5PPw697AeKWWdeQueM2JCKu8bsmF7M7dDmPGHecHJJNGeujWTJ97Fy9PfobsgZfxhcpWaYyAauFMxcy4fo3x7JNnbYQyD",
+            ],
         ];
         for x in TEST_DATA {
             let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
@@ -90,9 +108,9 @@ mod bip39_test_multilingual {
         }
 
         const INVALID_CHECKSUM: &[&str] = &[
-          "solda osso frasco encontro donzela oficina colono vidraria fruteira sinal visto sacola mirtilo flamingo final",
-          "theme rain hollow sinal expire proud detect wife hotel taxi witness strategy park head forest",
-          "岗 跨 困 倒 考 邦 调 晒 慢 孟 畅 句 埋 黎 皮"
+            "solda osso frasco encontro donzela oficina colono vidraria fruteira sinal visto sacola mirtilo flamingo final",
+            "theme rain hollow sinal expire proud detect wife hotel taxi witness strategy park head forest",
+            "岗 跨 困 倒 考 邦 调 晒 慢 孟 畅 句 埋 黎 皮",
         ];
         for x in INVALID_CHECKSUM {
             let r = Xpriv::from_mnemonic(*x, Default::default());

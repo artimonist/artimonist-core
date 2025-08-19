@@ -1,12 +1,12 @@
 use super::Password;
 use crate::bip39::{Language, Mnemonic};
 use bitcoin::{
+    Address, CompressedPublicKey,
     bip32::{ChainCode, ChildNumber, Xpriv},
-    hashes::{hmac, sha512, Hash, HashEngine},
+    hashes::{Hash, HashEngine, hmac, sha512},
     hex::DisplayHex,
     key::Secp256k1,
     secp256k1::SecretKey,
-    Address, CompressedPublicKey,
 };
 use std::str::FromStr;
 use xbits::XBits;
@@ -28,9 +28,9 @@ use xbits::XBits;
 /// # #[cfg(not(feature = "testnet"))]
 /// assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K4AAZnirHuLg8Bq1Q8ozezrJjhyYhF2ZJqDC5qbs1XMCggai5xFrgabXtyyERCAS4k6tiKbe42PRYPP32BN9xgxPP1rv7tSv".to_owned());
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!(master.bip85_pwd(Password::Distinct, 28, 50)?, "1bJc8dXiPh#&q$qHR$SBNiPxKBfU");
+/// assert_eq!(master.bip85_pwd(50, 28, Password::Distinct)?, "1bJc8dXiPh#&q$qHR$SBNiPxKBfU");
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!(master.bip85_pwd(Password::Emoji, 20, 100)?, "⏰🍟☕👍🎁🍉🔑👍💪🚗🎈🎄🎄🏆🍦👽🐵🍕🔒🍦");
+/// assert_eq!(master.bip85_pwd(100, 20, Password::Emoji)?, "⏰🍟☕👍🎁🍉🔑👍💪🚗🎈🎄🎄🏆🍦👽🐵🍕🔒🍦");
 ///
 /// # Ok::<(), artimonist::Error>(())
 /// ```
@@ -50,7 +50,7 @@ pub trait Bip85 {
     ///
     /// # Return
     ///   mnemonic words joined by ascii space
-    fn bip85_mnemonic(&self, lang: Language, count: u32, index: u32) -> Bip85Result;
+    fn bip85_mnemonic(&self, index: u32, count: u32, lang: Language) -> Bip85Result;
 
     /// HD-Seed WIF  
     // Path format is m/83696968'/2'/{index}'
@@ -63,7 +63,7 @@ pub trait Bip85 {
     /// PWD BASE64  
     // Path format is: m/83696968'/707764'/{pwd_len}'/{index}'
     /// 20 <= pwd_len <= 86
-    fn bip85_pwd(&self, pwd_type: Password, pwd_len: usize, index: u32) -> Bip85Result;
+    fn bip85_pwd(&self, index: u32, pwd_len: usize, pwd_type: Password) -> Bip85Result;
 }
 
 /// BIP85 Derivation
@@ -79,7 +79,7 @@ fn bip85_derive(root: &Xpriv, path: &str) -> Bip85Result<[u8; 64]> {
 }
 
 impl Bip85 for Xpriv {
-    fn bip85_mnemonic(&self, language: Language, count: u32, index: u32) -> Bip85Result {
+    fn bip85_mnemonic(&self, index: u32, count: u32, language: Language) -> Bip85Result {
         if !matches!(count, 12 | 15 | 18 | 21 | 24) {
             return Err(Bip85Error::InvalidParameter("count: 12, 15, 18, 21, 24"));
         }
@@ -118,7 +118,7 @@ impl Bip85 for Xpriv {
         Ok(xpriv.to_string())
     }
 
-    fn bip85_pwd(&self, password: Password, pwd_len: usize, index: u32) -> Bip85Result {
+    fn bip85_pwd(&self, index: u32, pwd_len: usize, password: Password) -> Bip85Result {
         if !matches!(pwd_len, 20..=86) {
             return Err(Bip85Error::InvalidParameter("20 <= pwd_len <= 86"));
         }
@@ -149,7 +149,7 @@ mod bip85_test {
             const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
             const DERIVED_MNEMONIC: &str = "near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token";
             let master = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-            let mnemonic = master.bip85_mnemonic(Language::English, 18, 0)?;
+            let mnemonic = master.bip85_mnemonic(0, 18, Default::default())?;
             assert_eq!(mnemonic, DERIVED_MNEMONIC);
         }
         Ok(())
@@ -185,7 +185,7 @@ mod bip85_test {
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         const DERIVED_PWD: &str = "dKLoepugzdVJvdL56ogNV";
         let root = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-        let pwd = root.bip85_pwd(Password::Legacy, 21, 0)?;
+        let pwd = root.bip85_pwd(0, 21, Password::Legacy)?;
         assert_eq!(pwd, DERIVED_PWD);
         Ok(())
     }
