@@ -14,14 +14,16 @@
 //!
 //! # Examples
 //! ```
-//! use artimonist::{SimpleDiagram, GenericDiagram, BIP85, Language, Password, Wif};
+//! use artimonist::{SimpleDiagram, GenericDiagram, BIP85, Password, Wif};
+//! let mut mx = [[None; 7]; 7];
+//! mx[1][1] = Some('🍔');
+//! mx[1][5] = Some('🍟');
+//! mx[3][3] = Some('🍩');
+//! mx[5][1] = Some('🍦');
+//! mx[5][5] = Some('🌭');
+//! let master = SimpleDiagram(mx).bip32_master("🚲🍀🌈".as_bytes())?;
 //!
-//! let values = vec!['🍔', '🍟', '🌭', '🍦', '🍩'];
-//! let indices = vec![(1, 1), (1, 5), (5, 5), (5, 1), (3, 3)];
-//! let diagram = SimpleDiagram::from_values(&values, &indices);
-//! let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
-//!
-//! let mnemonic = master.bip85_mnemonic(Language::English, 15, 0)?;
+//! let mnemonic = master.bip85_mnemonic(0, 15, Default::default())?;
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
 //!
 //! # #[cfg(not(feature = "testnet"))]
@@ -29,7 +31,7 @@
 //! # #[cfg(not(feature = "testnet"))]
 //! assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_pwd(Password::Emoji, 20, 0)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
+//! assert_eq!(master.bip85_pwd(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
 //!
 //! # Ok::<(), artimonist::Error>(())
 //! ```
