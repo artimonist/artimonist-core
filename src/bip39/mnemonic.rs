@@ -232,6 +232,7 @@ mod mnemonic_tests {
         Ok(())
     }
 
+    #[cfg(not(feature = "testnet"))]
     #[test]
     fn test_nfc_salt() -> Result<()> {
         use unicode_normalization::UnicodeNormalization;
