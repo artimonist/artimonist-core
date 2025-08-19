@@ -25,10 +25,8 @@
  *      1 bit at top left corner is version of complex diagram.
  *      others x bits indices string position in diagram.
 **/
-
+use super::{GenericDiagram, Result};
 use crate::macros::ImpDeref;
-
-use super::generic::{GenericDiagram, GenericResult};
 use bitcoin::hashes::{Hash, sha256};
 
 /// Complex Diagram
@@ -44,7 +42,7 @@ impl GenericDiagram<7, 7> for ComplexDiagram {
     type Item = String;
 
     /// Compatible with previous versions
-    fn to_bytes(&self) -> GenericResult<Vec<u8>> {
+    fn to_bytes(&self) -> Result<Vec<u8>> {
         let mut str_list: Vec<&str> = vec![];
         let mut str_lens: Vec<u8> = vec![];
         let mut indices: [u8; 7] = [0; 7];
@@ -75,11 +73,14 @@ impl ComplexDiagram {
     pub const CELL_CHARS_LIMIT: usize = 50;
 
     /// create complex diagram
+    #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
     pub fn new() -> Self {
         Self(core::array::from_fn(|_| core::array::from_fn(|_| None)))
     }
 
     /// create ComplexDiagram from items
+    #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
+    #[allow(deprecated)]
     pub fn from_values(items: &[&str], indices: &[(usize, usize)]) -> Self {
         let mut diagram = ComplexDiagram::new();
         indices.iter().zip(items).for_each(|(&(r, c), &s)| {
@@ -98,7 +99,8 @@ mod complex_diagram_test {
     use bitcoin::hex::DisplayHex;
 
     #[test]
-    fn test_complex_diagram() -> GenericResult {
+    #[allow(deprecated)]
+    fn test_complex_diagram() -> Result<()> {
         const STR_LIST: &[&str] = &["ABC", "123", "测试", "混A1", "A&*王😊"];
         const INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
         const SECRET_HEX: &str =
@@ -108,11 +110,17 @@ mod complex_diagram_test {
         assert_eq!(cdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
         assert_eq!(cdm[6][6], Some(STR_LIST[4].to_owned()));
 
+        #[cfg(not(feature = "testnet"))]
+        {
+            let master = "xprv9s21ZrQH143K3DUYRs4DRSY7JGsaL6FrXCAwuv1ZseQdHs6NJTX7wg99bUp7z3zgRUFwJTZfZp3Zhs9nrsfK6rFdkY78tbkAr1ovxALxUJu";
+            assert_eq!(cdm.bip32_master(&[])?.to_string(), master);
+        }
         Ok(())
     }
 
     #[test]
-    fn test_complex_entropy() -> GenericResult<()> {
+    #[allow(deprecated)]
+    fn test_complex_entropy() -> Result<()> {
         const STR_LIST: &[&str] = &["ABC", "混A1", "123", "测试", "A&*王😊"];
         const INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];
         const SECRET_HEX: &str =
@@ -132,6 +140,11 @@ mod complex_diagram_test {
         let salt_entropy = cdm.warp_entropy(SALT_STR.as_bytes())?;
         assert_eq!(salt_entropy.to_lower_hex_string(), SALT_ENTROPY);
 
+        #[cfg(not(feature = "testnet"))]
+        {
+            let master = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
+            assert_eq!(cdm.bip32_master(SALT_STR.as_bytes())?.to_string(), master);
+        }
         Ok(())
     }
 }

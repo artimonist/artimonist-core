@@ -1,8 +1,9 @@
-mod bip39_inner;
+#[allow(clippy::module_inception)]
+mod bip39;
 mod language;
 mod mnemonic;
 
-pub use bip39_inner::Bip39;
+pub use bip39::Bip39;
 pub use language::Language;
 pub use mnemonic::Mnemonic;
 

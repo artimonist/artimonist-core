@@ -34,8 +34,8 @@
  *      0b0xxx_xxxx
  *      x bits indices char position in diagram.
 **/
-use super::generic::{GenericDiagram, GenericResult};
-use bitcoin::hashes::{sha256, Hash};
+use super::{GenericDiagram, Result};
+use bitcoin::hashes::{Hash, sha256};
 
 /// Animate Diagram
 #[derive(Debug, Clone, PartialEq)]
@@ -44,7 +44,7 @@ pub struct AnimateDiagram(pub Vec<[[Option<char>; 7]; 7]>);
 impl GenericDiagram<7, 7> for AnimateDiagram {
     type Item = char;
 
-    fn to_bytes(&self) -> GenericResult<Vec<u8>> {
+    fn to_bytes(&self) -> Result<Vec<u8>> {
         let mut chars = Vec::new();
         let mut frames = Vec::new();
         self.0.iter().rev().for_each(|mx| {
@@ -75,7 +75,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_animate() -> GenericResult<()> {
+    fn test_animate() -> Result<()> {
         let mut cube = vec![[[None; 7]; 7], [[Some('X'); 7]; 7], [[None; 7]; 7]];
         cube[0][3][3] = Some('X');
         cube[2][6][6] = Some('X');

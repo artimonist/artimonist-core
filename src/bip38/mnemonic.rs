@@ -141,7 +141,7 @@ trait Derivation {
             let derive_path: DerivationPath = path.parse()?;
             let xpriv = root.derive_priv(&Secp256k1::default(), &derive_path)?;
             let pub_key = xpriv.to_priv().public_key(&Secp256k1::default());
-            Address::p2pkh(&pub_key, Network::Bitcoin).to_string()
+            Address::p2pkh(pub_key, Network::Bitcoin).to_string()
         };
         Ok(address)
     }
@@ -188,7 +188,7 @@ impl Encryption for MnemonicEx {
 
         let mnemonic = Mnemonic::new(entropy, self.language())?;
         let verify = {
-            let address = Self::derive_path_address(&self, DERIVE_PATH)?;
+            let address = Self::derive_path_address(self, DERIVE_PATH)?;
             let checksum: u16 = address.as_bytes().sha256_n(2)[0] as u16;
             let size_flag: u16 = 8 - (self.size() as u16 / 3); // 4 | 3 | 2 | 1 | 0
             assert!(size_flag < 5);
