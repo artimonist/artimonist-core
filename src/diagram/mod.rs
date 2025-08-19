@@ -1,5 +1,6 @@
 mod animate;
 mod complex;
+#[allow(clippy::module_inception)]
 mod diagram;
 mod generic;
 mod simple;
@@ -12,4 +13,4 @@ pub use simple::SimpleDiagram;
 
 pub mod matrix;
 
-type Result<T> = std::result::Result<T, crate::Error>;
+type Result<T = ()> = std::result::Result<T, crate::Error>;

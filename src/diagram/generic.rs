@@ -1,3 +1,4 @@
+use super::Result;
 use bitcoin::bip32::Xpriv;
 
 /// Generic Diagram  
@@ -12,7 +13,7 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
     type Item;
 
     /// serialize diagram to binary data
-    fn to_bytes(&self) -> GenericResult<Vec<u8>>;
+    fn to_bytes(&self) -> Result<Vec<u8>>;
 
     /// generate warp entropy
     ///
@@ -20,7 +21,7 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
     /// [warp wallet](https://keybase.io/warp),
     /// [go impl](https://github.com/ellisonch/warpwallet)
     ///
-    fn warp_entropy(&self, salt: &[u8]) -> GenericResult<[u8; 32]> {
+    fn warp_entropy(&self, salt: &[u8]) -> Result<[u8; 32]> {
         let secret = self.to_bytes()?;
         let mut s1 = {
             let secret = [&secret[..], &[1u8]].concat();
@@ -42,7 +43,7 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
     }
 
     /// generate extended private key
-    fn bip32_master(&self, salt: &[u8]) -> GenericResult<Xpriv> {
+    fn bip32_master(&self, salt: &[u8]) -> Result<Xpriv> {
         let seed = self.warp_entropy(salt)?;
         Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
     }
@@ -52,12 +53,13 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
 use xbits::FromBits;
 
 #[cfg(feature = "serde")]
+#[allow(deprecated)]
 impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
-    for super::Matrix<T, H, W>
+    for super::matrix::Matrix<T, H, W>
 {
     type Item = T;
 
-    fn to_bytes(&self) -> GenericResult<Vec<u8>> {
+    fn to_bytes(&self) -> Result<Vec<u8>> {
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
 
@@ -78,18 +80,16 @@ impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
     }
 }
 
-/// GenericResult
-pub type GenericResult<T = ()> = Result<T, crate::Error>;
-
 #[cfg(feature = "serde")]
 #[cfg(test)]
+#[allow(deprecated)]
 mod generic_test {
     use super::*;
     use crate::{Matrix, ToMatrix};
     use bitcoin::hex::DisplayHex;
 
     #[test]
-    fn test_generic() -> GenericResult {
+    fn test_generic() -> Result {
         const MATRIX: [[Option<u128>; 5]; 3] = [
             [Some(111222333444555666), None, None, None, Some(0)],
             [Some(555666777888999000), None, None, None, Some(0)],
@@ -141,7 +141,7 @@ mod generic_test {
     }
 
     #[test]
-    fn test_serialize() -> GenericResult {
+    fn test_serialize() -> Result {
         const MATRIX: [[Option<u8>; 5]; 3] = [
             [Some(123), None, None, None, Some(99)],
             [Some(222), None, None, None, Some(0)],

@@ -23,7 +23,7 @@
  *      0b0xxx_xxxx
  *      x bits indices string position in diagram.
 **/
-use super::generic::{GenericDiagram, GenericResult};
+use super::{GenericDiagram, Result};
 use crate::macros::ImpDeref;
 use bitcoin::hashes::{Hash, sha256};
 
@@ -53,7 +53,7 @@ impl GenericDiagram<7, 7> for SimpleDiagram {
     type Item = char;
 
     /// Compatible with previous versions
-    fn to_bytes(&self) -> GenericResult<Vec<u8>> {
+    fn to_bytes(&self) -> Result<Vec<u8>> {
         let mut chars = Vec::with_capacity(7 * 7);
         let mut indices = [0; 7];
         (0..7).rev().for_each(|col| {
@@ -100,7 +100,7 @@ mod simple_diagram_test {
 
     #[test]
     #[allow(deprecated)]
-    fn test_simple_diagram() -> GenericResult {
+    fn test_simple_diagram() -> Result<()> {
         const CHARS_STR: &str = "A&*王😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
         const SECRET_HEX: &str = "f09f988a412ae78e8b26012800001000012d";
@@ -137,7 +137,7 @@ mod simple_diagram_test {
 
     #[test]
     #[allow(deprecated)]
-    fn test_simple_diagram2() -> GenericResult<()> {
+    fn test_simple_diagram2() -> Result<()> {
         const CHARS_STR: &str = "A王&*😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];
         const SECRET_HEX: &str = "41262ae78e8bf09f988a012800001000406d";

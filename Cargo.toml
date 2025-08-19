@@ -1,6 +1,6 @@
 [package]
 name = "artimonist"
-version = "1.7.2"
+version = "1.7.3"
 edition = "2024"
 crate-type = ["lib"]
 
@@ -19,7 +19,7 @@ exclude = [
 [features]
 default = []
 testnet = [] # use testnet
-serde = ["dep:serde", "dep:rmp-serde"] # generic diagram
+serde = ["dep:serde", "dep:rmp-serde"] # generic diagram for any type
 extfmt = [] # ypriv, ypub, zpriv, zpub etc.
 
 [dependencies]

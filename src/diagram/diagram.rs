@@ -7,6 +7,7 @@ use unicode_normalization::UnicodeNormalization;
 pub trait Diagram {
     /// Simple diagram (7 * 7 unicode chars) generate master key
     fn art_simple_master(&self, salt: &str) -> Result<Xpriv>;
+
     /// Complex diagram (7 * 7 unicode strings) generate master key
     fn art_complex_master(&self, salt: &str) -> Result<Xpriv>;
 }
@@ -32,6 +33,7 @@ impl Diagram for [&str] {
 }
 
 #[cfg(test)]
+#[cfg(not(feature = "testnet"))]
 mod diagram_test {
     use super::{Diagram, Result};
 

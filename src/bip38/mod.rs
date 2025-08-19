@@ -1,7 +1,8 @@
-mod bip38_inner;
+#[allow(clippy::module_inception)]
+mod bip38;
 mod mnemonic;
 
-pub use bip38_inner::Bip38;
+pub use bip38::Bip38;
 pub use mnemonic::MnemonicEncryption;
 
 #[derive(thiserror::Error, Debug)]
