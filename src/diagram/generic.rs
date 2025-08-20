@@ -8,7 +8,7 @@ use bitcoin::bip32::Xpriv;
 ///   H: matrix height
 ///   W: matrix weight
 ///
-pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
+pub trait GenericDiagram {
     /// cell item type
     type Item;
 

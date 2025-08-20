@@ -38,7 +38,7 @@ use bitcoin::hashes::{Hash, sha256};
 pub struct ComplexDiagram(pub [[Option<String>; 7]; 7]);
 ImpDeref!(ComplexDiagram, [[Option<String>; 7]; 7]);
 
-impl GenericDiagram<7, 7> for ComplexDiagram {
+impl GenericDiagram for ComplexDiagram {
     type Item = String;
 
     /// Compatible with previous versions

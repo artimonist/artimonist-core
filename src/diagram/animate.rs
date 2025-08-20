@@ -41,7 +41,7 @@ use bitcoin::hashes::{Hash, sha256};
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimateDiagram(pub Vec<[[Option<char>; 7]; 7]>);
 
-impl GenericDiagram<7, 7> for AnimateDiagram {
+impl GenericDiagram for AnimateDiagram {
     type Item = char;
 
     fn to_bytes(&self) -> Result<Vec<u8>> {
