@@ -24,13 +24,13 @@ use xbits::XBits;
 ///
 /// let master = Xpriv::from_str("xprv9s21ZrQH143K2sW69WDMTge7PMoK1bfeMy3cpNJxfSkqpPsU7DeHZmth8Sw7DVV2AMbC4jR3fKKgDEPJNNvsqhgTfyZwmWj439MWXUW5U5K")?;
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!(master.bip85_wif(3)?.pk, "L43Bwws5GvHAtct3RqBg5A3JbJmoLrLGohLWDyizaXwh7ucSH6xd");
+/// assert_eq!(master.bip85_wallet(3)?.pk, "L43Bwws5GvHAtct3RqBg5A3JbJmoLrLGohLWDyizaXwh7ucSH6xd");
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K4AAZnirHuLg8Bq1Q8ozezrJjhyYhF2ZJqDC5qbs1XMCggai5xFrgabXtyyERCAS4k6tiKbe42PRYPP32BN9xgxPP1rv7tSv".to_owned());
+/// assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K4AAZnirHuLg8Bq1Q8ozezrJjhyYhF2ZJqDC5qbs1XMCggai5xFrgabXtyyERCAS4k6tiKbe42PRYPP32BN9xgxPP1rv7tSv".to_owned());
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!(master.bip85_pwd(50, 28, Password::Distinct)?, "1bJc8dXiPh#&q$qHR$SBNiPxKBfU");
+/// assert_eq!(master.bip85_password(50, 28, Password::Distinct)?, "1bJc8dXiPh#&q$qHR$SBNiPxKBfU");
 /// # #[cfg(not(feature = "testnet"))]
-/// assert_eq!(master.bip85_pwd(100, 20, Password::Emoji)?, "⏰🍟☕👍🎁🍉🔑👍💪🚗🎈🎄🎄🏆🍦👽🐵🍕🔒🍦");
+/// assert_eq!(master.bip85_password(100, 20, Password::Emoji)?, "⏰🍟☕👍🎁🍉🔑👍💪🚗🎈🎄🎄🏆🍦👽🐵🍕🔒🍦");
 ///
 /// # Ok::<(), artimonist::Error>(())
 /// ```
@@ -54,16 +54,16 @@ pub trait Bip85 {
 
     /// HD-Seed WIF  
     // Path format is m/83696968'/2'/{index}'
-    fn bip85_wif(&self, index: u32) -> Bip85Result<Wif>;
+    fn bip85_wallet(&self, index: u32) -> Bip85Result<Wif>;
 
     /// XPRV  
     // Path format is m/83696968'/32'/{index}'
-    fn bip85_xpriv(&self, index: u32) -> Bip85Result;
+    fn bip85_master(&self, index: u32) -> Bip85Result;
 
     /// PWD BASE64  
     // Path format is: m/83696968'/707764'/{pwd_len}'/{index}'
     /// 20 <= pwd_len <= 86
-    fn bip85_pwd(&self, index: u32, pwd_len: usize, pwd_type: Password) -> Bip85Result;
+    fn bip85_password(&self, index: u32, pwd_len: usize, pwd_type: Password) -> Bip85Result;
 }
 
 /// BIP85 Derivation
@@ -90,7 +90,7 @@ impl Bip85 for Xpriv {
         Ok(mnemonic.to_string())
     }
 
-    fn bip85_wif(&self, index: u32) -> Bip85Result<Wif> {
+    fn bip85_wallet(&self, index: u32) -> Bip85Result<Wif> {
         let path = format!("m/83696968'/2'/{index}'");
         let entropy = bip85_derive(self, &path)?;
         let priv_key = bitcoin::PrivateKey::from_slice(&entropy[..32], crate::NETWORK)?;
@@ -102,7 +102,7 @@ impl Bip85 for Xpriv {
         })
     }
 
-    fn bip85_xpriv(&self, index: u32) -> Bip85Result {
+    fn bip85_master(&self, index: u32) -> Bip85Result {
         let path = format!("m/83696968'/32'/{index}'");
         let entropy = bip85_derive(self, &path)?;
         let chain_code = ChainCode::from_hex(&entropy[..32].to_lower_hex_string())?;
@@ -117,7 +117,7 @@ impl Bip85 for Xpriv {
         Ok(xpriv.to_string())
     }
 
-    fn bip85_pwd(&self, index: u32, pwd_len: usize, password: Password) -> Bip85Result {
+    fn bip85_password(&self, index: u32, pwd_len: usize, password: Password) -> Bip85Result {
         if !matches!(pwd_len, 20..=86) {
             return Err(Bip85Error::InvalidParameter("20 <= pwd_len <= 86"));
         }
@@ -156,35 +156,35 @@ mod bip85_test {
 
     #[cfg(not(feature = "testnet"))]
     #[test]
-    fn test_bip85_wif() -> Bip85Result<()> {
+    fn test_bip85_wallet() -> Bip85Result<()> {
         // PATH: m/83696968'/2'/0';
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         const DERIVED_WIF: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
         let master = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-        let priv_key: String = master.bip85_wif(0)?.pk;
+        let priv_key: String = master.bip85_wallet(0)?.pk;
         assert_eq!(priv_key, DERIVED_WIF);
         Ok(())
     }
 
     #[cfg(not(feature = "testnet"))]
     #[test]
-    fn test_bip85_xpriv() -> Bip85Result<()> {
+    fn test_bip85_master() -> Bip85Result<()> {
         // PATH: m/83696968'/32'/0'
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         const DERIVED_XPRV: &str = "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX";
         let master = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-        let xpriv = master.bip85_xpriv(0)?;
+        let xpriv = master.bip85_master(0)?;
         assert_eq!(xpriv, DERIVED_XPRV);
         Ok(())
     }
 
     #[test]
-    fn test_bip85_pwd() -> Bip85Result<()> {
+    fn test_bip85_password() -> Bip85Result<()> {
         // PATH: m/83696968'/707764'/21'/0'
         const MASTER_KEY: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         const DERIVED_PWD: &str = "dKLoepugzdVJvdL56ogNV";
         let root = bitcoin::bip32::Xpriv::from_str(MASTER_KEY)?;
-        let pwd = root.bip85_pwd(0, 21, Password::Legacy)?;
+        let pwd = root.bip85_password(0, 21, Password::Legacy)?;
         assert_eq!(pwd, DERIVED_PWD);
         Ok(())
     }

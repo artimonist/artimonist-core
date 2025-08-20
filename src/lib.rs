@@ -27,11 +27,11 @@
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
 //!
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_wif(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! assert_eq!(master.bip85_wallet(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
+//! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_pwd(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
+//! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
 //!
 //! # Ok::<(), artimonist::Error>(())
 //! ```

@@ -28,7 +28,7 @@ fn bip85_define() -> Result<(), Error> {
         const WIF: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
         #[cfg(feature = "testnet")]
         const WIF: &str = "cRLuXpEtagka2NVmVtg6pcSdUFHp9pqkhCQSweYhQUWMwkdaaVsk";
-        assert_eq!(master.bip85_wif(0)?.pk, WIF);
+        assert_eq!(master.bip85_wallet(0)?.pk, WIF);
     }
     // xpriv
     {
@@ -36,11 +36,14 @@ fn bip85_define() -> Result<(), Error> {
         const XPRIV: &str = "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX";
         #[cfg(feature = "testnet")]
         const XPRIV: &str = "tprv8ZgxMBicQKsPdh5yFmJBEQgjf3oaE8YyyEgS7CnEHXyPe9eGtubocMTq2BdvXjP6E9smCHogUm5ywmbfWPPhpVS3tM2MZbTaCPoTB1Yq51L";
-        assert_eq!(master.bip85_xpriv(0)?, XPRIV);
+        assert_eq!(master.bip85_master(0)?, XPRIV);
     }
     // pwd
     const PWD: &str = "dKLoepugzdVJvdL56ogNV";
-    assert_eq!(master.bip85_pwd(0, 21, artimonist::Password::Legacy)?, PWD);
+    assert_eq!(
+        master.bip85_password(0, 21, artimonist::Password::Legacy)?,
+        PWD
+    );
     // rsa
     // todo!();
     // rsa gpg
@@ -61,11 +64,11 @@ fn bip85_derive() -> Result<(), Error> {
     }
     // wif
     for (i, &wif) in WIFS.into_iter().enumerate() {
-        assert_eq!(master.bip85_wif(i as u32)?.pk, wif);
+        assert_eq!(master.bip85_wallet(i as u32)?.pk, wif);
     }
     // xpriv
     for (i, &xpriv) in XPRIVS.into_iter().enumerate() {
-        assert_eq!(master.bip85_xpriv(i as u32)?, xpriv);
+        assert_eq!(master.bip85_master(i as u32)?, xpriv);
     }
     Ok(())
 }

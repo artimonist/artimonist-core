@@ -37,19 +37,19 @@
 
 #### Generate wallet
 ```
-  let priv_key = master.bip85_wif(0)?;
+  let priv_key = master.bip85_wallet(0)?;
 ```
 > `L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd`
 
 #### Generate master key
 ```
-  let xpriv = master.bip85_xpriv(0)?;
+  let xpriv = master.bip85_master(0)?;
 ```
 > `xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B`
 
 #### Generate password
 ```
-  let pwd = master.bip85_pwd(0, 20, Password::Emoji)?;
+  let pwd = master.bip85_password(0, 20, Password::Emoji)?;
 ```
 > `🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗`
   
