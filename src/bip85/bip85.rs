@@ -80,10 +80,9 @@ fn bip85_derive(root: &Xpriv, path: &str) -> Bip85Result<[u8; 64]> {
 
 impl Bip85 for Xpriv {
     fn bip85_mnemonic(&self, index: u32, count: u32, language: Language) -> Bip85Result {
-        if !matches!(count, 12 | 15 | 18 | 21 | 24) {
+        if !Mnemonic::VALID_SIZES.contains(&(count as usize)) {
             return Err(Bip85Error::InvalidParameter("count: 12, 15, 18, 21, 24"));
         }
-        // let (count, index) = (count as usize, index as usize);
 
         let path = format!("m/83696968'/39'/{}'/{count}'/{index}'", language as u32);
         let entropy = bip85_derive(self, &path)?[..(count as usize * 4 / 3)].to_vec();
