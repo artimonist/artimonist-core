@@ -65,7 +65,7 @@ impl<T: std::fmt::Debug + Default + PartialEq> ToMatrix<T> for Vec<Vec<T>> {
 
 #[cfg(test)]
 mod matrix_test {
-    use crate::ToMatrix;
+    use super::ToMatrix;
 
     #[test]
     fn test_vector() {

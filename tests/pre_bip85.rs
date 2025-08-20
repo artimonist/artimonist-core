@@ -20,12 +20,12 @@ mod pre_test_bip85 {
     use std::str::FromStr;
 
     use bitcoin::{
+        NetworkKind,
         base64::Engine,
         bip32::{ChildNumber, Xpriv},
-        hashes::{hmac, sha512, Hash, HashEngine},
+        hashes::{Hash, HashEngine, hmac, sha512},
         hex::DisplayHex,
         secp256k1::SecretKey,
-        NetworkKind,
     };
 
     const MASTER_KEY_STR: &str = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
@@ -95,7 +95,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn bip85_wif() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_wallet() -> Result<(), bitcoin::bip32::Error> {
         const WIF_PATH: &str = "m/83696968'/2'/0'";
         const PRIV_KEY: &str = "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp";
         let data = master_derive(WIF_PATH)?;
@@ -110,7 +110,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn bip85_xpriv() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_master() -> Result<(), bitcoin::bip32::Error> {
         const XPRIV_PATH: &str = "m/83696968'/32'/0'";
         const DERIVED_ENTROPY: &str =
             "ead0b33988a616cf6a497f1c169d9e92562604e38305ccd3fc96f2252c177682";
@@ -156,7 +156,7 @@ mod pre_test_bip85 {
     ///
     #[ignore = "pre test"]
     #[test]
-    fn bip85_pwd() -> Result<(), bitcoin::bip32::Error> {
+    fn bip85_password() -> Result<(), bitcoin::bip32::Error> {
         const PWD_LEN: usize = 21;
         let path = format!("m/83696968'/707764'/{PWD_LEN}'/0'");
         const DERIVED_ENTROPY: &str = "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9";

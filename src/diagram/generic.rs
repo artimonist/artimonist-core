@@ -3,12 +3,7 @@ use bitcoin::bip32::Xpriv;
 
 /// Generic Diagram  
 ///   diagram implementation for any matrix
-///
-/// # Parameters
-///   H: matrix height
-///   W: matrix weight
-///
-pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
+pub trait GenericDiagram {
     /// cell item type
     type Item;
 
@@ -50,16 +45,15 @@ pub trait GenericDiagram<const H: usize = 7, const W: usize = 7> {
 }
 
 #[cfg(feature = "serde")]
-use xbits::FromBits;
-
-#[cfg(feature = "serde")]
 #[allow(deprecated)]
-impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
+impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram
     for super::matrix::Matrix<T, H, W>
 {
     type Item = T;
 
     fn to_bytes(&self) -> Result<Vec<u8>> {
+        use xbits::FromBits;
+
         let mut items = Vec::new();
         let mut indices = Vec::with_capacity(H * W);
 
@@ -81,11 +75,11 @@ impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram<H, W>
 }
 
 #[cfg(feature = "serde")]
-#[cfg(test)]
 #[allow(deprecated)]
+#[cfg(test)]
 mod generic_test {
     use super::*;
-    use crate::{Matrix, ToMatrix};
+    use crate::matrix::{Matrix, ToMatrix};
     use bitcoin::hex::DisplayHex;
 
     #[test]

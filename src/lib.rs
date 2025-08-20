@@ -27,11 +27,11 @@
 //! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
 //!
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_wif(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! assert_eq!(master.bip85_wallet(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_xpriv(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
+//! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_pwd(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
+//! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
 //!
 //! # Ok::<(), artimonist::Error>(())
 //! ```
@@ -54,6 +54,8 @@ mod derive;
 mod diagram;
 mod macros;
 
+pub use diagram::matrix;
+
 #[doc(no_inline)]
 pub use bitcoin::{self, bip32::Xpriv, bip32::Xpub};
 
@@ -62,9 +64,6 @@ pub use bip39::{Bip39 as BIP39, Language, Mnemonic};
 pub use bip85::{Bip85 as BIP85, Password, Wif};
 pub use derive::{Bip32 as BIP32, Bip44 as BIP44, Bip49 as BIP49, Bip84 as BIP84};
 pub use diagram::{AnimateDiagram, ComplexDiagram, Diagram, GenericDiagram, SimpleDiagram};
-
-#[allow(deprecated)]
-pub use diagram::matrix::{Matrix, ToMatrix};
 
 ///
 /// Global error definition

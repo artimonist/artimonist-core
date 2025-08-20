@@ -14,37 +14,31 @@ type Result<T> = std::result::Result<T, Bip39Error>;
 /// ```
 /// use artimonist::{BIP39, Xpriv};
 ///
-/// let xprv = Xpriv::from_mnemonic("lake album jump occur hedgehog fantasy drama sauce oyster velvet gadget control behave hamster begin", "🌱")?;
-/// # #[cfg(not(feature = "testnet"))]  
+/// let mnemonic = "lake album jump occur hedgehog fantasy drama sauce oyster velvet gadget control behave hamster begin";
+/// let xprv = mnemonic.mnemonic_to_master("🌱")?;
+/// # #[cfg(not(feature = "testnet"))]
 /// assert_eq!(xprv.to_string(), "xprv9s21ZrQH143K36NWXJp6dEYdnu27DM1GdQB7jxTtmXZDk4Bs65ZuHTV92tN5Dp42VPEnkAMknGM2FbStkEFUmH8g7AbPVi7jZNQgKMrAZYJ");
 ///
 /// # Ok::<(), artimonist::Error>(())
 /// ```
-// # Reference
-// [1] - [BIP39 spec](https://bips.dev/39/)
-// [2] - [Ref website](https://iancoleman.io/bip39/)
-//
+/// # Reference
+/// [1] - [BIP39 spec](https://bips.dev/39/)
+/// [2] - [Ref website](https://iancoleman.io/bip39/)
 pub trait Bip39 {
-    /// # Parameters
-    ///   mnemonic: mnemonic str.
-    #[deprecated(since = "1.8.0", note = "Use `Mnemonic::to_master()` instead")]
-    fn from_mnemonic(mnemonic: &str, salt: &str) -> Result<Xpriv> {
-        let mnemonic = Mnemonic::from_str(mnemonic)?.to_string();
-        let seed = {
-            use pbkdf2::pbkdf2_hmac;
-            let salt = format!("mnemonic{salt}").into_bytes();
-            let mut output: [u8; 64] = [0; 64];
-            pbkdf2_hmac::<sha2::Sha512>(mnemonic.as_bytes(), &salt, u32::pow(2, 11), &mut output);
-            output
-        };
-        let xpriv = Xpriv::new_master(crate::NETWORK, &seed)?;
-        Ok(xpriv)
+    /// Convert a mnemonic phrase to a master key.
+    fn mnemonic_to_master(&self, salt: &str) -> Result<Xpriv>;
+}
+
+impl<T> Bip39 for T
+where
+    T: AsRef<str>,
+{
+    #[inline]
+    fn mnemonic_to_master(&self, salt: &str) -> Result<Xpriv> {
+        Mnemonic::from_str(self.as_ref())?.to_master(salt)
     }
 }
 
-impl Bip39 for Xpriv {}
-
-#[allow(deprecated)]
 #[cfg(test)]
 mod bip39_test_english {
     use super::*;
@@ -63,14 +57,13 @@ mod bip39_test_english {
             "tprv8ZgxMBicQKsPdZJv4VweGpGJpe3reRgMMr7SmZ2LFDbpuDxrNddQ82fkHSpZjsqcWYnk9VHZmEGN8pFMwivVnDrVn1AvdRPqy3ripW55kfq",
         ]];
         for x in TEST_DATA {
-            let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
+            let xpriv = x[0].mnemonic_to_master(x[1])?;
             assert_eq!(xpriv.to_string(), x[2]);
         }
         Ok(())
     }
 }
 
-#[allow(deprecated)]
 #[cfg(not(feature = "testnet"))]
 #[cfg(test)]
 mod bip39_test_multilingual {
@@ -103,7 +96,7 @@ mod bip39_test_multilingual {
             ],
         ];
         for x in TEST_DATA {
-            let xpriv = Xpriv::from_mnemonic(x[0], x[1])?;
+            let xpriv = x[0].mnemonic_to_master(x[1])?;
             assert_eq!(xpriv.to_string(), x[2]);
         }
 
@@ -113,7 +106,7 @@ mod bip39_test_multilingual {
             "岗 跨 困 倒 考 邦 调 晒 慢 孟 畅 句 埋 黎 皮",
         ];
         for x in INVALID_CHECKSUM {
-            let r = Xpriv::from_mnemonic(*x, Default::default());
+            let r = x.mnemonic_to_master("");
             assert!(matches!(r, Err(Bip39Error::InvalidChecksum)));
         }
 
@@ -122,7 +115,7 @@ mod bip39_test_multilingual {
             "theme rain hollow sinal expire proud detect wife hotel taxi witness",
         ];
         for x in INVALID_LENGTH {
-            let r = Xpriv::from_mnemonic(*x, Default::default());
+            let r = x.mnemonic_to_master("");
             assert!(matches!(r, Err(Bip39Error::InvalidSize)));
         }
         Ok(())

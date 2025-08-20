@@ -49,7 +49,7 @@ use bitcoin::hashes::{Hash, sha256};
 pub struct SimpleDiagram(pub [[Option<char>; 7]; 7]);
 ImpDeref!(SimpleDiagram, [[Option<char>; 7]; 7]);
 
-impl GenericDiagram<7, 7> for SimpleDiagram {
+impl GenericDiagram for SimpleDiagram {
     type Item = char;
 
     /// Compatible with previous versions
