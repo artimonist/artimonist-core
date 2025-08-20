@@ -77,6 +77,9 @@ pub mod error {
         /// Invalid parameter
         #[error("invalid parameter: {0}")]
         InvalidParameter(&'static str),
+        /// String too long
+        #[error("string too long: {0}")]
+        StringTooLong(String),
         /// Bip32 Error
         #[error("bip32 error: {0}")]
         Bip32Error(#[from] bitcoin::bip32::Error),

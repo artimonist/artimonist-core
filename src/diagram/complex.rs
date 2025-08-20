@@ -47,18 +47,21 @@ impl GenericDiagram for ComplexDiagram {
         let mut str_lens: Vec<u8> = vec![];
         let mut indices: [u8; 7] = [0; 7];
 
-        (0..7).rev().for_each(|col| {
-            (0..7).rev().for_each(|row| {
+        (0..7).rev().try_for_each(|col| {
+            (0..7).rev().try_for_each(|row| {
                 if let Some(s) = &self[row][col]
                     && !s.is_empty()
-                    && s.len() < u8::MAX as usize
                 {
+                    if s.len() > u8::MAX as usize {
+                        return Err(crate::Error::StringTooLong(s.to_string()));
+                    }
                     str_list.push(s);
                     str_lens.push(s.len() as u8);
                     indices[row] |= 1 << (6 - col);
                 }
-            });
-        });
+                Ok(())
+            })
+        })?;
 
         indices[0] |= 1 << 7; // version number of complex diagram
         let mut secret = [str_list.join("").as_bytes(), &str_lens[..], &indices[..]].concat();
