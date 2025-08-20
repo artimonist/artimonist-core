@@ -14,8 +14,9 @@ type Result<T> = std::result::Result<T, Bip39Error>;
 /// ```
 /// use artimonist::{BIP39, Xpriv};
 ///
-/// let xprv = Xpriv::from_mnemonic("lake album jump occur hedgehog fantasy drama sauce oyster velvet gadget control behave hamster begin", "🌱")?;
-/// # #[cfg(not(feature = "testnet"))]  
+/// let mnemonic = "lake album jump occur hedgehog fantasy drama sauce oyster velvet gadget control behave hamster begin";
+/// let xprv = mnemonic.mnemonic_to_master("🌱")?;
+/// # #[cfg(not(feature = "testnet"))]
 /// assert_eq!(xprv.to_string(), "xprv9s21ZrQH143K36NWXJp6dEYdnu27DM1GdQB7jxTtmXZDk4Bs65ZuHTV92tN5Dp42VPEnkAMknGM2FbStkEFUmH8g7AbPVi7jZNQgKMrAZYJ");
 ///
 /// # Ok::<(), artimonist::Error>(())
