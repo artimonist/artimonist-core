@@ -37,7 +37,7 @@ where
         let mut mx = std::array::from_fn(|_| std::array::from_fn(|_| None));
         self.clone().take(7 * 7).enumerate().for_each(|(i, s)| {
             let s: String = s.as_ref().chars().take(Self::CELL_CHARS_LIMIT).collect();
-            mx[i / 7][i % 7] = s.is_empty().not().then(|| s);
+            mx[i / 7][i % 7] = s.is_empty().not().then_some(s);
         });
         Ok(ComplexDiagram(mx))
     }
