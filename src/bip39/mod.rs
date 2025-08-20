@@ -15,8 +15,8 @@ pub enum Bip39Error {
     #[error("invalid BIP39 language")]
     LanguageError,
 
-    #[error("invalid mnemonic length")]
-    InvalidLength,
+    #[error("invalid mnemonic size")]
+    InvalidSize,
 
     #[error("invalid mnemonic language")]
     InvalidLanguage,

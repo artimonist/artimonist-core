@@ -15,6 +15,9 @@ pub struct Mnemonic {
 
 #[allow(unused)]
 impl Mnemonic {
+    /// Validate mnemonic words count.
+    pub const VALID_SIZES: &[usize] = &[12, 15, 18, 21, 24];
+
     /// Create a new mnemonic from raw entropy and language.
     /// # Arguments
     /// * `entropy` - A byte slice representing the entropy.  
@@ -26,7 +29,7 @@ impl Mnemonic {
     pub fn new(entropy: &[u8], language: Language) -> Result<Self> {
         // verify length
         if !matches!(entropy.len(), 16 | 20 | 24 | 28 | 32) {
-            return Err(Bip39Error::InvalidLength);
+            return Err(Bip39Error::InvalidSize);
         }
 
         // calculate checksum
@@ -119,8 +122,8 @@ impl Mnemonic {
     /// Verify the checksum of a mnemonic phrase based on its indices.
     fn verify_checksum(indices: &[usize]) -> Result<()> {
         // verify length
-        if !matches!(indices.len(), 12 | 15 | 18 | 21 | 24) {
-            return Err(Bip39Error::InvalidLength);
+        if !Self::VALID_SIZES.contains(&indices.len()) {
+            return Err(Bip39Error::InvalidSize);
         }
 
         let mut entropy = Vec::from_bits_chunk(indices.iter().copied(), 11);
@@ -143,8 +146,8 @@ impl std::str::FromStr for Mnemonic {
         let words: Vec<&str> = s.split_whitespace().collect();
 
         // verify words count
-        if !matches!(words.len(), 12 | 15 | 18 | 21 | 24) {
-            return Err(Bip39Error::InvalidLength);
+        if !Self::VALID_SIZES.contains(&words.len()) {
+            return Err(Bip39Error::InvalidSize);
         }
 
         // detect languages

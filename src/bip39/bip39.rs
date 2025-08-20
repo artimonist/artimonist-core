@@ -123,7 +123,7 @@ mod bip39_test_multilingual {
         ];
         for x in INVALID_LENGTH {
             let r = Xpriv::from_mnemonic(*x, Default::default());
-            assert!(matches!(r, Err(Bip39Error::InvalidLength)));
+            assert!(matches!(r, Err(Bip39Error::InvalidSize)));
         }
         Ok(())
     }

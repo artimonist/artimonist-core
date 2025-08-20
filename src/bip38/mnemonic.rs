@@ -75,10 +75,12 @@ impl std::str::FromStr for MnemonicEx {
 
     fn from_str(s: &str) -> Result<Self> {
         let count = s.split_whitespace().count();
-        if matches!(count, 12 | 15 | 18 | 21 | 24) {
-            // none verify word
+
+        // none verify word
+        if Mnemonic::VALID_SIZES.contains(&count) {
             return Ok(s.parse::<Mnemonic>()?.into());
         }
+
         // has verify word or desired count
         let Some((mnemonic_str, verify_str)) = s.rsplit_once(' ') else {
             return Err(Bip38Error::InvalidKey);
@@ -91,7 +93,7 @@ impl std::str::FromStr for MnemonicEx {
             // valid verify word
             Verify::Word(i)
         } else if let Ok(n) = verify_str.parse::<u8>()
-            && matches!(n, 12 | 15 | 18 | 21 | 24)
+            && Mnemonic::VALID_SIZES.contains(&(n as usize))
         {
             // desired word count
             Verify::Count(n)
