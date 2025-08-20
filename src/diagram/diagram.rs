@@ -4,6 +4,15 @@ use std::ops::Not;
 
 /// Diagram
 pub trait Diagram {
+    /// ComplexDiagram cell chars limit
+    const CELL_CHARS_LIMIT: usize = 50;
+
+    /// Simple diagram (7 * 7 unicode chars)
+    fn art_simple_diagram(&self) -> Result<SimpleDiagram>;
+
+    /// Complex diagram (7 * 7 unicode strings)
+    fn art_complex_diagram(&self) -> Result<ComplexDiagram>;
+
     /// Simple diagram (7 * 7 unicode chars) generate master key
     fn art_simple_master(&self, salt: &str) -> Result<Xpriv>;
 
@@ -11,21 +20,61 @@ pub trait Diagram {
     fn art_complex_master(&self, salt: &str) -> Result<Xpriv>;
 }
 
-impl Diagram for [&str] {
-    fn art_simple_master(&self, salt: &str) -> Result<Xpriv> {
+impl<T, U> Diagram for U
+where
+    U: Iterator<Item = T> + Clone,
+    T: AsRef<str>,
+{
+    fn art_simple_diagram(&self) -> Result<SimpleDiagram> {
         let mut mx = [[None; 7]; 7];
-        self.iter().take(7 * 7).enumerate().for_each(|(i, &s)| {
-            mx[i / 7][i % 7] = s.chars().next();
+        self.clone().take(7 * 7).enumerate().for_each(|(i, s)| {
+            mx[i / 7][i % 7] = s.as_ref().chars().next();
         });
-        SimpleDiagram(mx).bip32_master(salt.as_bytes())
+        Ok(SimpleDiagram(mx))
     }
 
-    fn art_complex_master(&self, salt: &str) -> Result<Xpriv> {
+    fn art_complex_diagram(&self) -> Result<ComplexDiagram> {
         let mut mx = std::array::from_fn(|_| std::array::from_fn(|_| None));
-        self.iter().take(7 * 7).enumerate().for_each(|(i, &s)| {
-            mx[i / 7][i % 7] = s.is_empty().not().then_some(s.to_string());
+        self.clone().take(7 * 7).enumerate().for_each(|(i, s)| {
+            let s: String = s.as_ref().chars().take(Self::CELL_CHARS_LIMIT).collect();
+            mx[i / 7][i % 7] = s.is_empty().not().then_some(s);
         });
-        ComplexDiagram(mx).bip32_master(salt.as_bytes())
+        Ok(ComplexDiagram(mx))
+    }
+
+    #[inline]
+    fn art_simple_master(&self, salt: &str) -> Result<Xpriv> {
+        self.art_simple_diagram()?.bip32_master(salt.as_bytes())
+    }
+
+    #[inline]
+    fn art_complex_master(&self, salt: &str) -> Result<Xpriv> {
+        self.art_complex_diagram()?.bip32_master(salt.as_bytes())
+    }
+}
+
+impl<T> Diagram for [T]
+where
+    T: AsRef<str>,
+{
+    #[inline(always)]
+    fn art_simple_diagram(&self) -> Result<SimpleDiagram> {
+        self.iter().art_simple_diagram()
+    }
+
+    #[inline(always)]
+    fn art_complex_diagram(&self) -> Result<ComplexDiagram> {
+        self.iter().art_complex_diagram()
+    }
+
+    #[inline(always)]
+    fn art_simple_master(&self, salt: &str) -> Result<Xpriv> {
+        self.iter().art_simple_master(salt)
+    }
+
+    #[inline(always)]
+    fn art_complex_master(&self, salt: &str) -> Result<Xpriv> {
+        self.iter().art_complex_master(salt)
     }
 }
 
