@@ -7,6 +7,9 @@ type Result<T> = std::result::Result<T, Bip39Error>;
 
 /// A BIP39 mnemonic phrase, which is a sequence of words
 /// used to represent a seed for cryptographic purposes.
+/// # Reference
+/// [1] - [BIP39 spec](https://bips.dev/39/)
+/// [2] - [Ref website](https://iancoleman.io/bip39/)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mnemonic {
     words: Vec<String>,
