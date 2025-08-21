@@ -5,6 +5,8 @@ mod mnemonic;
 pub use bip38::Bip38;
 pub use mnemonic::MnemonicEncryption;
 
+type Result<T = ()> = std::result::Result<T, Bip38Error>;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Bip38Error {
     #[error("Invalid encrypted key")]

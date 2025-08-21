@@ -44,12 +44,12 @@ where
 
     #[inline]
     fn art_simple_master(&self, salt: &str) -> Result<Xpriv> {
-        self.art_simple_diagram()?.bip32_master(salt.as_bytes())
+        self.art_simple_diagram()?.to_master(salt.as_bytes())
     }
 
     #[inline]
     fn art_complex_master(&self, salt: &str) -> Result<Xpriv> {
-        self.art_complex_diagram()?.bip32_master(salt.as_bytes())
+        self.art_complex_diagram()?.to_master(salt.as_bytes())
     }
 }
 

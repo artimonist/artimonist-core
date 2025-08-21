@@ -8,9 +8,7 @@ pub use language::Language;
 pub use mnemonic::Mnemonic;
 
 /// BIP39 error types
-use thiserror::Error;
-
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Bip39Error {
     #[error("invalid BIP39 language")]
     LanguageError,

@@ -92,7 +92,7 @@ mod tests {
             ]
         );
 
-        let master = diagram.bip32_master("123456".as_bytes())?;
+        let master = diagram.to_master("123456".as_bytes())?;
         #[cfg(not(feature = "testnet"))]
         const MASTER: &str = "xprv9s21ZrQH143K3LZCYpVpieDdNgMkymbiawMFUAPysrTJJrkrVCpaFtEUXBpr32nVVeHjPtqRCqih7ptuiu5A34VHPPPZMZfqisJyV6jhCwU";
         #[cfg(feature = "testnet")]

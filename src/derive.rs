@@ -6,6 +6,8 @@ use bitcoin::{
 };
 use std::str::FromStr;
 
+type DeriveResult = Result<(String, String), crate::Error>;
+
 pub trait DeriveInner {
     fn derive(&self, path: &str) -> Result<(Xpub, Xpriv), crate::Error>;
     fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, crate::Error>;
@@ -57,8 +59,6 @@ impl DeriveInner for Xpriv {
         Ok(script)
     }
 }
-
-type DeriveResult = Result<(String, String), crate::Error>;
 
 #[cfg(not(feature = "testnet"))]
 const COIN: u8 = 0;
