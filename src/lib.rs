@@ -21,17 +21,17 @@
 //! mx[3][3] = Some('🍩');
 //! mx[5][1] = Some('🍦');
 //! mx[5][5] = Some('🌭');
-//! let master = SimpleDiagram(mx).bip32_master("🚲🍀🌈".as_bytes())?;
+//! let master = SimpleDiagram(mx).to_master("🚲🍀🌈".as_bytes())?;
 //!
 //! let mnemonic = master.bip85_mnemonic(0, 15, Default::default())?;
-//! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
+//! assert_eq!(&mnemonic, "nice dumb debris type pair until convince pet depend dragon seed exchange rebel belt alcohol");
 //!
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_wallet(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! assert_eq!(master.bip85_wallet(0)?.pk, "L3X74sTsPBpoJx7MNWt36qnsGE1ubdf2BQVTczU7i14D94BhNdmc");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
+//! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K3Dm1EavEpwYyfZD7su3245k5CES8qnt6VVxznxnPqMnUx5cFLJDao9mcyELm9UVNbBTMYodNabKmvcj3WazUaRNqpz4qd7A");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
+//! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🐬🔑🍎🐔🔒🚗🐸💧🌷✋🐍🚲💀💪💀🍄✈🍀🍉⚡");
 //!
 //! # Ok::<(), artimonist::Error>(())
 //! ```
@@ -70,46 +70,32 @@ pub use diagram::{Matrix, ToMatrix};
 /// Global error definition
 ///
 pub mod error {
-    use crate::{bip38, bip39};
-
     /// Artimonist Error
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
-        /// Invalid parameter
-        #[error("invalid parameter: {0}")]
-        InvalidParameter(&'static str),
-        /// String too long
-        #[error("string too long: {0}")]
-        StringTooLong(String),
+        /// Diagram error
+        #[error("Diagram: {0}")]
+        DiagramError(#[from] crate::diagram::Error),
+
+        /// Bip38 Error
+        #[error("BIP38: {0}")]
+        Bip38Error(#[from] crate::bip38::Bip38Error),
+
+        /// Bip39 Error
+        #[error("BIP39: {0}")]
+        Bip39Error(#[from] crate::bip39::Bip39Error),
+
+        /// Bip85 Error
+        #[error("BIP85: {0}")]
+        Bip85Error(#[from] crate::bip85::Error),
+
+        /// Derive Error
+        #[error("Derive: {0}")]
+        DeriveError(#[from] crate::derive::DeriveError),
+
         /// Bip32 Error
         #[error("bip32 error: {0}")]
         Bip32Error(#[from] bitcoin::bip32::Error),
-        /// Bip38 Error
-        #[error("bip38 error: {0}")]
-        Bip38Error(#[from] bip38::Bip38Error),
-        /// Bip39 Error
-        #[error("bip39 error: {0}")]
-        Bip39Error(#[from] bip39::Bip39Error),
-        /// Secp error
-        #[error("runtime error")]
-        SecpError(#[from] bitcoin::secp256k1::Error),
-        /// Hex parse error
-        #[error("hex error")]
-        HexError(#[from] bitcoin::hex::HexToArrayError),
-        /// Address error
-        #[error("address error")]
-        AddressError(#[from] bitcoin::key::UncompressedPublicKeyError),
-        /// P2sh error
-        #[error("p2sh error")]
-        P2shError(#[from] bitcoin::address::P2shError),
-        #[cfg(feature = "serde")]
-        /// serialize error
-        #[error("serialize error")]
-        Serialize(#[from] rmp_serde::encode::Error),
-        #[cfg(feature = "serde")]
-        /// deserialize eror
-        #[error("deserialize error")]
-        Deserialize(#[from] rmp_serde::decode::Error),
     }
 }
 pub use error::Error;

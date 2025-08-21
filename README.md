@@ -30,7 +30,7 @@
 
 #### Generate mnemonic
 ```
-  let master = diagram.bip32_master("🚲🍀🌈".as_bytes())?;
+  let master = diagram.to_master("🚲🍀🌈".as_bytes())?;
   let mnemonic = master.bip85_mnemonic(0, 15, Default::default())?;
 ```
 > `"lady announce wife please settle connect april hour caution split festival genuine logic digital dignity"`

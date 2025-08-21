@@ -25,7 +25,7 @@
  *      1 bit at top left corner is version of complex diagram.
  *      others x bits indices string position in diagram.
 **/
-use super::{GenericDiagram, Result};
+use super::{Error, GenericDiagram, Result};
 use crate::macros::ImpDeref;
 use bitcoin::hashes::{Hash, sha256};
 
@@ -53,7 +53,7 @@ impl GenericDiagram for ComplexDiagram {
                     && !s.is_empty()
                 {
                     if s.len() > u8::MAX as usize {
-                        return Err(crate::Error::StringTooLong(s.to_string()));
+                        return Err(Error::StringTooLong(s.to_string()));
                     }
                     str_list.push(s);
                     str_lens.push(s.len() as u8);
@@ -114,8 +114,11 @@ mod complex_diagram_test {
 
         #[cfg(not(feature = "testnet"))]
         {
-            let master = "xprv9s21ZrQH143K3DUYRs4DRSY7JGsaL6FrXCAwuv1ZseQdHs6NJTX7wg99bUp7z3zgRUFwJTZfZp3Zhs9nrsfK6rFdkY78tbkAr1ovxALxUJu";
-            assert_eq!(cdm.bip32_master(&[])?.to_string(), master);
+            let master = "xprv9s21ZrQH143K2CKVamMeHC5bmLWCDx4dLohvk3cVABv8NCFpyBpzeRi3uiZT5gmGz9rgpHZTBWCDXqCD5PaG93yE69qoRotCNqX6F4qwU7P";
+            assert_eq!(cdm.to_master(&[])?.to_string(), master);
+
+            let master_v1 = "xprv9s21ZrQH143K3DUYRs4DRSY7JGsaL6FrXCAwuv1ZseQdHs6NJTX7wg99bUp7z3zgRUFwJTZfZp3Zhs9nrsfK6rFdkY78tbkAr1ovxALxUJu";
+            assert_eq!(cdm.to_master_v1(&[])?.to_string(), master_v1);
         }
         Ok(())
     }
@@ -127,24 +130,30 @@ mod complex_diagram_test {
         const SECRET_HEX: &str =
             "414243313233e6b58be8af95e6b7b7413141262ae78e8bf09f988a030306050a8128000010004052";
         const RAW_ENTROPY: &str =
-            "f273657eb2394dbe4874571abf8d6f78b149bd86d1eec6c666509371e93004d3";
+            "58affc63a2c628806721390ece8f446b0e7f133962e018a3a32e3d888b391791";
         const SALT_STR: &str = "123abc";
         const SALT_ENTROPY: &str =
-            "3ff854b9f188d428068e3a9b7655d37795f1aaf1e6461b757f12935dee796bbf";
+            "4f76acb612ba64c5f7612778666ce4055a5c465544653affad99f206daa836a5";
 
         let cdm = ComplexDiagram::from_values(STR_LIST, INDICES);
         assert_eq!(cdm.to_bytes()?.to_lower_hex_string(), SECRET_HEX);
 
-        let entropy = cdm.warp_entropy(Default::default())?;
+        let entropy = cdm.to_entropy(Default::default())?;
         assert_eq!(entropy.to_lower_hex_string(), RAW_ENTROPY);
 
-        let salt_entropy = cdm.warp_entropy(SALT_STR.as_bytes())?;
+        let salt_entropy = cdm.to_entropy(SALT_STR.as_bytes())?;
         assert_eq!(salt_entropy.to_lower_hex_string(), SALT_ENTROPY);
 
         #[cfg(not(feature = "testnet"))]
         {
-            let master = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
-            assert_eq!(cdm.bip32_master(SALT_STR.as_bytes())?.to_string(), master);
+            let master = "xprv9s21ZrQH143K2xfe53kNiHqjGC6Jv8zMfjAVhPQZw1nur4CnM79LqpSKZpURNEvyC4xjpPGj37efmviNjkpK6mv9LgRyJBSB8rSK18w6yaY";
+            assert_eq!(cdm.to_master(SALT_STR.as_bytes())?.to_string(), master);
+
+            let master_v1 = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
+            assert_eq!(
+                cdm.to_master_v1(SALT_STR.as_bytes())?.to_string(),
+                master_v1
+            );
         }
         Ok(())
     }

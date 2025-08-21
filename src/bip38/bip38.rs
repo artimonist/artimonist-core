@@ -1,11 +1,9 @@
-use super::Bip38Error;
+use super::{Bip38Error, Result};
 use aes::cipher::{BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArray};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{Address, Network, NetworkKind, PrivateKey, PublicKey, base58};
 use rand::RngCore;
 use unicode_normalization::UnicodeNormalization;
-
-type Result<T = ()> = std::result::Result<T, Bip38Error>;
 
 /// Prefix of all non ec encrypted keys.
 const PRE_NON_EC: [u8; 2] = [0x01, 0x42];
@@ -361,6 +359,7 @@ impl ByteOperation for [u8] {
             segments.push(part1);
             rest = part2;
         }
+        // Confirmed segments length equals N
         segments.try_into().unwrap()
     }
 }

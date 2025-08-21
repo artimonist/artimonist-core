@@ -11,6 +11,9 @@ use bitcoin::{
 use std::str::FromStr;
 use xbits::XBits;
 
+type Bip85Error = super::Error;
+type Bip85Result<T = String> = Result<T, super::Error>;
+
 /// BIP85 Derivation for Xpriv
 ///
 /// Deterministic Entropy From BIP32 Keychains.
@@ -132,9 +135,6 @@ impl Bip85 for Xpriv {
             .collect::<String>())
     }
 }
-
-pub type Bip85Error = crate::Error;
-pub type Bip85Result<T = String> = Result<T, crate::Error>;
 
 #[cfg(test)]
 mod bip85_test {

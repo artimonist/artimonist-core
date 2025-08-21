@@ -1,6 +1,8 @@
 use super::Result;
 use bitcoin::bip32::Xpriv;
 
+const DEFAULT_SALT: &[u8] = b"Thanks Satoshi!";
+
 /// Generic Diagram  
 ///   diagram implementation for any matrix
 pub trait GenericDiagram {
@@ -15,15 +17,42 @@ pub trait GenericDiagram {
     /// see:
     /// [warp wallet](https://keybase.io/warp),
     /// [go impl](https://github.com/ellisonch/warpwallet)
-    ///
-    fn warp_entropy(&self, salt: &[u8]) -> Result<[u8; 32]> {
+    fn to_entropy(&self, salt: &[u8]) -> Result<[u8; 32]> {
+        let secret = self.to_bytes()?;
+        let mut s1 = {
+            let secret = [&secret[..], &[1u8]].concat();
+            let salt = [DEFAULT_SALT, salt, &[1u8]].concat();
+            let mut output: [u8; 32] = [0; 32];
+            let param = scrypt::Params::new(20, 8, 1, 32)?;
+            scrypt::scrypt(&secret, &salt, &param, &mut output)?;
+            output
+        };
+        let s2 = {
+            let secret = [&secret[..], &[2u8]].concat();
+            let salt = [DEFAULT_SALT, salt, &[2u8]].concat();
+            let mut output: [u8; 32] = [0; 32];
+            argon2::Argon2::default().hash_password_into(&secret, &salt, &mut output)?;
+            output
+        };
+        s1.iter_mut().zip(s2.iter()).for_each(|(a, b)| *a ^= b);
+        Ok(s1)
+    }
+
+    /// generate extended private key
+    fn to_master(&self, salt: &[u8]) -> Result<Xpriv> {
+        let seed = self.to_entropy(salt)?;
+        Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
+    }
+
+    /// generate extended private key
+    fn to_master_v1(&self, salt: &[u8]) -> Result<Xpriv> {
         let secret = self.to_bytes()?;
         let mut s1 = {
             let secret = [&secret[..], &[1u8]].concat();
             let salt = [salt, &[1u8]].concat();
             let mut output: [u8; 32] = [0; 32];
-            let param = scrypt::Params::new(18, 8, 1, 32).unwrap();
-            scrypt::scrypt(&secret, &salt, &param, &mut output).unwrap();
+            let param = scrypt::Params::new(18, 8, 1, 32)?;
+            scrypt::scrypt(&secret, &salt, &param, &mut output)?;
             output
         };
         let s2 = {
@@ -34,12 +63,8 @@ pub trait GenericDiagram {
             output
         };
         s1.iter_mut().zip(s2.iter()).for_each(|(a, b)| *a ^= b);
-        Ok(s1)
-    }
 
-    /// generate extended private key
-    fn bip32_master(&self, salt: &[u8]) -> Result<Xpriv> {
-        let seed = self.warp_entropy(salt)?;
+        let seed = s1;
         Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
     }
 }
@@ -116,23 +141,35 @@ mod generic_test {
             None,
             Some(0),
         ];
-        const ENTROPY: &str = "726ea65196a104c64f845d93792fba3a149aaa8b1af323e3d474394bf7c204b2";
+        const ENTROPY: &str = "832ad08e52ac5ef61ca43fb03741d8a8126f57b71f308c48cfbd2ab79095b11f";
         #[cfg(not(feature = "testnet"))]
-        const XPRIV: &str = "xprv9s21ZrQH143K26wqw5cyn4qGD2CsyVH2Lpma622cgETpFvNfnPAGpmkFisKjr3G3SUKoCXXkctNssYpAXuVeZBw2HmihXxnwYUxicZM2Spt";
+        mod wif {
+            pub const MASTER_V1: &str = "xprv9s21ZrQH143K26wqw5cyn4qGD2CsyVH2Lpma622cgETpFvNfnPAGpmkFisKjr3G3SUKoCXXkctNssYpAXuVeZBw2HmihXxnwYUxicZM2Spt";
+            pub const MASTER: &str = "xprv9s21ZrQH143K2dxnQzW6fR8yUaoUiRtXH9hjS1j78gazBwCDQHSLKSDw3QvvE3HfY9zAM4qJ6cLQhghuRm71rkM1XZhvVRNkHsq5ftcfiLL";
+        }
         #[cfg(feature = "testnet")]
-        const XPRIV: &str = "tprv8ZgxMBicQKsPcvBNbeUUwiTFX9d6D1K2gNggxST5ACxJ3X7kmkW2LX7he3VPrQeMouraCd9WnExgLQMuf7qbNFCcpQw1CKWzTai94JYzs9K";
+        mod wif {
+            pub const MASTER_V1: &str = "tprv8ZgxMBicQKsPcvBNbeUUwiTFX9d6D1K2gNggxST5ACxJ3X7kmkW2LX7he3VPrQeMouraCd9WnExgLQMuf7qbNFCcpQw1CKWzTai94JYzs9K";
+            pub const MASTER: &str = "tprv8ZgxMBicQKsPdTCK5ZMbq4kxniDgwwvXchcrJS9Zcf5TyXwJPen5qBbNxb6aEQfyubWwMAT4FxvDAYFeYySxfocc4CvE9n6oCyaW7g2dWq8";
+        }
         {
             // MATRIX easy to use
-            let entropy = MATRIX.warp_entropy("test".as_bytes())?;
-            let master = MATRIX.bip32_master("test".as_bytes())?;
+            let entropy = MATRIX.to_entropy("test".as_bytes())?;
             assert_eq!(entropy.to_lower_hex_string(), ENTROPY);
-            assert_eq!(master.to_string(), XPRIV);
+            let master = MATRIX.to_master("test".as_bytes())?;
+            assert_eq!(master.to_string(), wif::MASTER);
+
+            let master_v1 = MATRIX.to_master_v1("test".as_bytes())?;
+            assert_eq!(master_v1.to_string(), wif::MASTER_V1);
         }
         {
             // VECTOR equal to MATRIX
             let matrix: Matrix<u128, 3, 5> = VECTOR.to_vec().to_matrix::<3, 5>();
-            let master = matrix.bip32_master("test".as_bytes())?;
-            assert_eq!(master.to_string(), XPRIV);
+            let master = matrix.to_master("test".as_bytes())?;
+            assert_eq!(master.to_string(), wif::MASTER);
+
+            let master_v1 = matrix.to_master_v1("test".as_bytes())?;
+            assert_eq!(master_v1.to_string(), wif::MASTER_V1);
         }
         {
             // verify vector to matrix sequence

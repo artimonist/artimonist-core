@@ -130,12 +130,12 @@ impl Mnemonic {
         }
 
         let mut entropy = Vec::from_bits_chunk(indices.iter().copied(), 11);
-        let tail = entropy.pop().unwrap();
+        let tail = entropy.pop();
         let check_mask = 0xff << (8 - indices.len() / 3);
         let checksum = Sha256::digest(&entropy)[0] & check_mask;
 
         // verify checksum
-        if checksum != tail {
+        if Some(checksum) != tail {
             return Err(Bip39Error::InvalidChecksum);
         }
         Ok(())

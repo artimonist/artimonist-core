@@ -54,7 +54,7 @@ impl Language {
     }
 
     /// Language's words list
-    pub fn wordlist(&self) -> impl Iterator<Item = &str> {
+    pub fn wordlist(&self) -> impl Iterator<Item = &'static str> {
         match self {
             Self::ChineseSimplified => CHINESE_SIMPLIFIED.split_whitespace(),
             Self::ChineseTraditional => CHINESE_TRADITIONAL.split_whitespace(),
@@ -71,12 +71,8 @@ impl Language {
 
     /// Get mnemonic word at index  
     #[inline]
-    pub fn word_at(&self, index: usize) -> Option<&str> {
-        if index < 2048 {
-            Some(self.wordlist().nth(index).unwrap())
-        } else {
-            None
-        }
+    pub fn word_at(&self, index: usize) -> Option<&'static str> {
+        self.wordlist().nth(index)
     }
 
     /// Get mnemonic word index  

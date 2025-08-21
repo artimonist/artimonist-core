@@ -1,4 +1,4 @@
-use super::Bip38Error;
+use super::{Bip38Error, Result};
 use crate::bip39::Mnemonic;
 use aes::cipher::{BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArray};
 use rand::RngCore;
@@ -6,8 +6,6 @@ use unicode_normalization::UnicodeNormalization;
 
 const DEFAULT_SALT: &str = "Thanks Satoshi!";
 const DERIVE_PATH: &str = "m/0'/0'";
-
-type Result<T> = std::result::Result<T, Bip38Error>;
 
 #[derive(Debug)]
 struct MnemonicEx {
@@ -306,38 +304,41 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_mnemonic_encrypt() {
+    fn test_mnemonic_encrypt() -> Result {
         const TEST_DATA: &[&str] = &[
             "派 贤 博 如 恐 臂 诺 职 畜 给 压 钱 牲 案 隔",
             "坏 火 发 恐 晒 为 陕 伪 镜 锻 略 越 力 秦 音; 胞",
         ];
         for data in TEST_DATA.chunks(2) {
-            assert_eq!(data[0].mnemonic_encrypt("123456").unwrap(), data[1]);
-            assert_eq!(data[1].mnemonic_decrypt("123456").unwrap(), data[0]);
+            assert_eq!(data[0].mnemonic_encrypt("123456")?, data[1]);
+            assert_eq!(data[1].mnemonic_decrypt("123456")?, data[0]);
 
             let mnemonic = data[1].rsplit_once(';').unwrap().0;
-            assert_eq!(mnemonic.mnemonic_decrypt("123456").unwrap(), data[0]);
+            assert_eq!(mnemonic.mnemonic_decrypt("123456")?, data[0]);
             let mnemonic = data[1].replace(';', "");
-            assert_eq!(mnemonic.mnemonic_decrypt("123456").unwrap(), data[0]);
+            assert_eq!(mnemonic.mnemonic_decrypt("123456")?, data[0]);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_mnemonic_extend() {
+    fn test_mnemonic_extend() -> Result {
         let data = "派 贤 博 如 恐 臂 诺 职 畜 给 压 钱 牲 案 隔";
-        let encrypted = format!("{data}; 24").mnemonic_encrypt("123456").unwrap();
-        assert_eq!(encrypted.mnemonic_decrypt("123456").unwrap(), data);
+        let encrypted = format!("{data}; 24").mnemonic_encrypt("123456")?;
+        assert_eq!(encrypted.mnemonic_decrypt("123456")?, data);
 
         let mnemonic = format!("{}; 15", encrypted.rsplit_once(';').unwrap().0);
-        assert_eq!(mnemonic.mnemonic_decrypt("123456").unwrap(), data);
+        assert_eq!(mnemonic.mnemonic_decrypt("123456")?, data);
         println!("Encrypted: {encrypted}");
+        Ok(())
     }
 
     #[test]
-    fn test_mnemonic_full() {
+    fn test_mnemonic_full() -> Result {
         let original = "生 别 斑 票 纤 费 普 描 比 销 柯 委 敲 普 伍 慰 思 人 曲 燥 恢 校 由 因";
-        let encrypted = original.mnemonic_encrypt("123456").unwrap();
-        assert_eq!(encrypted.mnemonic_decrypt("123456").unwrap(), original);
+        let encrypted = original.mnemonic_encrypt("123456")?;
+        assert_eq!(encrypted.mnemonic_decrypt("123456")?, original);
         println!("Encrypted: {encrypted}");
+        Ok(())
     }
 }
