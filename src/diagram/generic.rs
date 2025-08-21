@@ -45,10 +45,7 @@ pub trait GenericDiagram {
 }
 
 #[cfg(feature = "serde")]
-#[allow(deprecated)]
-impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram
-    for super::matrix::Matrix<T, H, W>
-{
+impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram for Matrix<T, H, W> {
     type Item = T;
 
     fn to_bytes(&self) -> Result<Vec<u8>> {
@@ -74,12 +71,30 @@ impl<T: serde::Serialize, const H: usize, const W: usize> GenericDiagram
     }
 }
 
+/// Matrix type for generic diagram
 #[cfg(feature = "serde")]
-#[allow(deprecated)]
+pub type Matrix<T, const H: usize = 7, const W: usize = 7> = [[Option<T>; W]; H];
+
+/// Transform to generic diagram
+#[cfg(feature = "serde")]
+pub trait ToMatrix<T> {
+    /// transform to matrix
+    fn to_matrix<const H: usize, const W: usize>(self) -> Matrix<T, H, W>;
+}
+
+#[cfg(feature = "serde")]
+impl<T> ToMatrix<T> for Vec<Option<T>> {
+    fn to_matrix<const H: usize, const W: usize>(mut self) -> Matrix<T, H, W> {
+        self.resize_with(H * W, || None);
+        self.reverse();
+        core::array::from_fn(|_| core::array::from_fn(|_| self.pop().unwrap()))
+    }
+}
+
+#[cfg(feature = "serde")]
 #[cfg(test)]
 mod generic_test {
     use super::*;
-    use crate::matrix::{Matrix, ToMatrix};
     use bitcoin::hex::DisplayHex;
 
     #[test]

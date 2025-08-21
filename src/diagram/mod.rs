@@ -11,7 +11,7 @@ pub use diagram::Diagram;
 pub use generic::GenericDiagram;
 pub use simple::SimpleDiagram;
 
-/// Matrix converter
-pub mod matrix;
+#[cfg(feature = "serde")]
+pub use generic::{Matrix, ToMatrix};
 
 type Result<T = ()> = std::result::Result<T, crate::Error>;
