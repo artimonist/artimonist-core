@@ -96,10 +96,10 @@ mod diagram_test {
         ]
         .concat();
 
-        let master = "xprv9s21ZrQH143K2r6v9GGWezApYmVuaGiZYoCpsQFVe9Vwh47yZ2CCgqXJY6g2Kk8Ajrz2PbVNnY5HLw4dPkshmcqX8YBEhcwj4wWQ8UgY5m7";
+        let master = "xprv9s21ZrQH143K38UmyXgTiRxiPAbzzfbvAM1VDkBWKbsRQsmJLxtwLn5DZ5vfhjTumysk6vQHcYje6hcc5h8fa6csha7vRn57oUW1iiJF4wC";
         assert_eq!(vs.art_simple_master("")?.to_string(), master);
 
-        let master = "xprv9s21ZrQH143K24YcrGNZP2JuYQF4k6M84y2ujCZNF6A227MiXsW5aw3gaY34wn4jA9X8mg39N3WLqF66fxLnUTed42kTGq1dKy41GWQ5QgG";
+        let master = "xprv9s21ZrQH143K3LvvHjFDhRKi4wbNZArr16eEommMwGpnQ1sCgRXJdABhhXDbxptEaALWLQLMzKa5qsBr3Q1LVUqHKwprxGUDihyL72WSt2R";
         assert_eq!(vs.art_simple_master("Thanks Satoshi!")?.to_string(), master);
 
         Ok(())
@@ -118,10 +118,10 @@ mod diagram_test {
         ]
         .concat();
 
-        let master = "xprv9s21ZrQH143K317qvL2ScVgHuhJenVLEmA7af5mTWDXjsDbUDSxFxZc5QYkCbaqmbycAhnHhtqJXNwLGt4eeC6VuiDfSUEgrJijAuLJks8X";
+        let master = "xprv9s21ZrQH143K2ztRR2MREiT4aNYQ6GmhoKaCocZkSEqX1edh7TwxDAjddsoAJfgQdtuvCRRGLxpznbSymTiL3umPwefhh1aR5ZQQQRC97TV";
         assert_eq!(vs.art_complex_master("")?.to_string(), master);
 
-        let master = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
+        let master = "xprv9s21ZrQH143K2xfe53kNiHqjGC6Jv8zMfjAVhPQZw1nur4CnM79LqpSKZpURNEvyC4xjpPGj37efmviNjkpK6mv9LgRyJBSB8rSK18w6yaY";
         assert_eq!(vs.art_complex_master("123abc")?.to_string(), master);
 
         Ok(())

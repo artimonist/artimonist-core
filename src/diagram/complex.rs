@@ -114,8 +114,11 @@ mod complex_diagram_test {
 
         #[cfg(not(feature = "testnet"))]
         {
-            let master = "xprv9s21ZrQH143K3DUYRs4DRSY7JGsaL6FrXCAwuv1ZseQdHs6NJTX7wg99bUp7z3zgRUFwJTZfZp3Zhs9nrsfK6rFdkY78tbkAr1ovxALxUJu";
+            let master = "xprv9s21ZrQH143K2CKVamMeHC5bmLWCDx4dLohvk3cVABv8NCFpyBpzeRi3uiZT5gmGz9rgpHZTBWCDXqCD5PaG93yE69qoRotCNqX6F4qwU7P";
             assert_eq!(cdm.to_master(&[])?.to_string(), master);
+
+            let master_v1 = "xprv9s21ZrQH143K3DUYRs4DRSY7JGsaL6FrXCAwuv1ZseQdHs6NJTX7wg99bUp7z3zgRUFwJTZfZp3Zhs9nrsfK6rFdkY78tbkAr1ovxALxUJu";
+            assert_eq!(cdm.to_master_v1(&[])?.to_string(), master_v1);
         }
         Ok(())
     }
@@ -143,8 +146,14 @@ mod complex_diagram_test {
 
         #[cfg(not(feature = "testnet"))]
         {
-            let master = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
+            let master = "xprv9s21ZrQH143K2xfe53kNiHqjGC6Jv8zMfjAVhPQZw1nur4CnM79LqpSKZpURNEvyC4xjpPGj37efmviNjkpK6mv9LgRyJBSB8rSK18w6yaY";
             assert_eq!(cdm.to_master(SALT_STR.as_bytes())?.to_string(), master);
+
+            let master_v1 = "xprv9s21ZrQH143K32BBNz2hduzSS7p8q18MtvDzyGvHFKvMfLRKaS7Bk27BhbMb47X5qeBpEmSiFtsbRv9Zw6QoMDbTEyNo1BU5Qka1PQvAZ4u";
+            assert_eq!(
+                cdm.to_master_v1(SALT_STR.as_bytes())?.to_string(),
+                master_v1
+            );
         }
         Ok(())
     }

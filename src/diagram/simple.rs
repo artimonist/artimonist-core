@@ -41,7 +41,8 @@ use bitcoin::hashes::{Hash, sha256};
 /// diagram[3][6] = Some('☕');
 ///
 /// let master = diagram.to_master("🎄🎈🔑".as_bytes())?;
-/// assert_eq!(master.to_string(), "xprv9s21ZrQH143K3o9C2fFRhwbQnyF3m5XVUqua79ks9magua9UN4MWcd68qtDqEM3hdQ71ZFXFV1ddTkLJH4rmyKMm2L9doPKvEkFMtSfTZ86");
+/// # #[cfg(not(feature = "testnet"))]
+/// assert_eq!(master.to_string(), "xprv9s21ZrQH143K2JL1fkvSKPa1rPv2KL2eomcgzAsZrCjkWwbYZPWyPsnkjqxk22WMciFc7UzinbX1dsQch99beVJiqoP4x3XVTqXU4ohMefs");
 /// # Ok::<(), artimonist::Error>(())
 /// ```
 ///
@@ -106,17 +107,25 @@ mod simple_diagram_test {
         const SECRET_HEX: &str = "f09f988a412ae78e8b26012800001000012d";
         const WARP_ENTROPY: &str =
             "ad1a1825c929a7381cc74e29583796ee0a00be0913b78e03a5d2ca1ae00236b6";
-        #[cfg(not(feature = "testnet"))]
-        const MASTER_WIF: &str = "xprv9s21ZrQH143K2r6v9GGWezApYmVuaGiZYoCpsQFVe9Vwh47yZ2CCgqXJY6g2Kk8Ajrz2PbVNnY5HLw4dPkshmcqX8YBEhcwj4wWQ8UgY5m7";
-        #[cfg(feature = "testnet")]
-        const MASTER_WIF: &str = "tprv8ZgxMBicQKsPdfLSoq81pdnortv7onkZtM7wjpfx87zRUes4YPXxCatkTGqgL7WV7JWoPh78wtf5oncNWyDeag77fBPYMyfmz3FpaCED928";
+
         const SALT_STR: &str = "123abc";
         const SALT_ENTROPY: &str =
             "916e697f2fd6b1d1f29d85eace1793bd80a7ab1bd595892f5567a5f20d6fc2e0";
+
         #[cfg(not(feature = "testnet"))]
-        const SALT_MASTER: &str = "xprv9s21ZrQH143K3m9k6SE8k9kYgPUS2YiuWyV2LZN43xMPSWe8w1vriyFgPh4BnFGevHto27pmDCcnpJRAWLybqaaZeucx9fmJHFd2CWFMwkw";
+        mod wif {
+            pub const MASTER_WIF_V1: &str = "xprv9s21ZrQH143K2r6v9GGWezApYmVuaGiZYoCpsQFVe9Vwh47yZ2CCgqXJY6g2Kk8Ajrz2PbVNnY5HLw4dPkshmcqX8YBEhcwj4wWQ8UgY5m7";
+            pub const SALT_MASTER_V1: &str = "xprv9s21ZrQH143K3m9k6SE8k9kYgPUS2YiuWyV2LZN43xMPSWe8w1vriyFgPh4BnFGevHto27pmDCcnpJRAWLybqaaZeucx9fmJHFd2CWFMwkw";
+            pub const MASTER_WIF: &str = "xprv9s21ZrQH143K38UmyXgTiRxiPAbzzfbvAM1VDkBWKbsRQsmJLxtwLn5DZ5vfhjTumysk6vQHcYje6hcc5h8fa6csha7vRn57oUW1iiJF4wC";
+            pub const SALT_MASTER: &str = "xprv9s21ZrQH143K2yXvw7czAjfgb5omTUH8JB5JzUSzd8akT49vGeQwK6MbN6rkzrFFMw9ZhqCLNACAuD265pRJTAY6qPQdB1GvAbgoN2ifKpa";
+        }
         #[cfg(feature = "testnet")]
-        const SALT_MASTER: &str = "tprv8ZgxMBicQKsPeaPGm15duoNXzWteG4kurXQ9CynWXvqsE7PDvPGcEid8JsDqnceyHjRa2DSXNZCbH9xudZKYedrABYqFp2VMCMNSeBkeo4Y";
+        mod wif {
+            pub const MASTER_WIF_V1: &str = "tprv8ZgxMBicQKsPdfLSoq81pdnortv7onkZtM7wjpfx87zRUes4YPXxCatkTGqgL7WV7JWoPh78wtf5oncNWyDeag77fBPYMyfmz3FpaCED928";
+            pub const SALT_MASTER_V1: &str = "tprv8ZgxMBicQKsPeaPGm15duoNXzWteG4kurXQ9CynWXvqsE7PDvPGcEid8JsDqnceyHjRa2DSXNZCbH9xudZKYedrABYqFp2VMCMNSeBkeo4Y";
+            pub const MASTER_WIF: &str = "tprv8ZgxMBicQKsPdwiJe6Xxt5ahhJ2DEBdvVtvc6AbxoaMuCUWPLLEgrXSfUG6Ki6rE9RQX7223muKSZZAMCuUcP9tUEDLE68oAiaFSAS4KtVH";
+            pub const SALT_MASTER: &str = "tprv8ZgxMBicQKsPdnmTbgUVLPHfuDDygzK8dizRrtsT775EEeu1G1kgpqj3HH2R1DdZjNgLhvp6XWmyN4ZqD2mFGDohN2cvqMzy5hSDoiX6FTt";
+        }
 
         let items: Vec<char> = CHARS_STR.chars().collect();
         let sdm = SimpleDiagram::from_values(&items, CHARS_INDICES);
@@ -125,12 +134,16 @@ mod simple_diagram_test {
 
         let entropy = sdm.to_entropy(Default::default())?;
         assert_eq!(entropy.to_lower_hex_string(), WARP_ENTROPY);
-        assert_eq!(sdm.to_master(&vec![])?.to_string(), MASTER_WIF);
+        assert_eq!(sdm.to_master(&[])?.to_string(), wif::MASTER_WIF);
+        assert_eq!(sdm.to_master_v1(&[])?.to_string(), wif::MASTER_WIF_V1);
 
         let entropy = sdm.to_entropy(SALT_STR.as_bytes())?;
         assert_eq!(entropy.to_lower_hex_string(), SALT_ENTROPY);
         let master = sdm.to_master(SALT_STR.as_bytes())?;
-        assert_eq!(master.to_string(), SALT_MASTER);
+        assert_eq!(master.to_string(), wif::SALT_MASTER);
+
+        let master_v1 = sdm.to_master_v1(SALT_STR.as_bytes())?;
+        assert_eq!(master_v1.to_string(), wif::SALT_MASTER_V1);
 
         Ok(())
     }

@@ -17,7 +17,6 @@ pub trait GenericDiagram {
     /// see:
     /// [warp wallet](https://keybase.io/warp),
     /// [go impl](https://github.com/ellisonch/warpwallet)
-    ///
     fn to_entropy(&self, salt: &[u8]) -> Result<[u8; 32]> {
         let secret = self.to_bytes()?;
         let mut s1 = {
@@ -40,13 +39,13 @@ pub trait GenericDiagram {
     }
 
     /// generate extended private key
-    fn to_master_v2(&self, salt: &[u8]) -> Result<Xpriv> {
+    fn to_master(&self, salt: &[u8]) -> Result<Xpriv> {
         let seed = self.to_entropy(salt)?;
         Ok(Xpriv::new_master(crate::NETWORK, &seed)?)
     }
 
     /// generate extended private key
-    fn to_master(&self, salt: &[u8]) -> Result<Xpriv> {
+    fn to_master_v1(&self, salt: &[u8]) -> Result<Xpriv> {
         let secret = self.to_bytes()?;
         let mut s1 = {
             let secret = [&secret[..], &[1u8]].concat();
@@ -144,21 +143,33 @@ mod generic_test {
         ];
         const ENTROPY: &str = "832ad08e52ac5ef61ca43fb03741d8a8126f57b71f308c48cfbd2ab79095b11f";
         #[cfg(not(feature = "testnet"))]
-        const XPRIV: &str = "xprv9s21ZrQH143K26wqw5cyn4qGD2CsyVH2Lpma622cgETpFvNfnPAGpmkFisKjr3G3SUKoCXXkctNssYpAXuVeZBw2HmihXxnwYUxicZM2Spt";
+        mod wif {
+            pub const MASTER_V1: &str = "xprv9s21ZrQH143K26wqw5cyn4qGD2CsyVH2Lpma622cgETpFvNfnPAGpmkFisKjr3G3SUKoCXXkctNssYpAXuVeZBw2HmihXxnwYUxicZM2Spt";
+            pub const MASTER: &str = "xprv9s21ZrQH143K2dxnQzW6fR8yUaoUiRtXH9hjS1j78gazBwCDQHSLKSDw3QvvE3HfY9zAM4qJ6cLQhghuRm71rkM1XZhvVRNkHsq5ftcfiLL";
+        }
         #[cfg(feature = "testnet")]
-        const XPRIV: &str = "tprv8ZgxMBicQKsPcvBNbeUUwiTFX9d6D1K2gNggxST5ACxJ3X7kmkW2LX7he3VPrQeMouraCd9WnExgLQMuf7qbNFCcpQw1CKWzTai94JYzs9K";
+        mod wif {
+            pub const MASTER_V1: &str = "tprv8ZgxMBicQKsPcvBNbeUUwiTFX9d6D1K2gNggxST5ACxJ3X7kmkW2LX7he3VPrQeMouraCd9WnExgLQMuf7qbNFCcpQw1CKWzTai94JYzs9K";
+            pub const MASTER: &str = "tprv8ZgxMBicQKsPdTCK5ZMbq4kxniDgwwvXchcrJS9Zcf5TyXwJPen5qBbNxb6aEQfyubWwMAT4FxvDAYFeYySxfocc4CvE9n6oCyaW7g2dWq8";
+        }
         {
             // MATRIX easy to use
             let entropy = MATRIX.to_entropy("test".as_bytes())?;
-            let master = MATRIX.to_master("test".as_bytes())?;
             assert_eq!(entropy.to_lower_hex_string(), ENTROPY);
-            assert_eq!(master.to_string(), XPRIV);
+            let master = MATRIX.to_master("test".as_bytes())?;
+            assert_eq!(master.to_string(), wif::MASTER);
+
+            let master_v1 = MATRIX.to_master_v1("test".as_bytes())?;
+            assert_eq!(master_v1.to_string(), wif::MASTER_V1);
         }
         {
             // VECTOR equal to MATRIX
             let matrix: Matrix<u128, 3, 5> = VECTOR.to_vec().to_matrix::<3, 5>();
             let master = matrix.to_master("test".as_bytes())?;
-            assert_eq!(master.to_string(), XPRIV);
+            assert_eq!(master.to_string(), wif::MASTER);
+
+            let master_v1 = matrix.to_master_v1("test".as_bytes())?;
+            assert_eq!(master_v1.to_string(), wif::MASTER_V1);
         }
         {
             // verify vector to matrix sequence

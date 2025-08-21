@@ -24,14 +24,14 @@
 //! let master = SimpleDiagram(mx).to_master("🚲🍀🌈".as_bytes())?;
 //!
 //! let mnemonic = master.bip85_mnemonic(0, 15, Default::default())?;
-//! assert_eq!(&mnemonic, "lady announce wife please settle connect april hour caution split festival genuine logic digital dignity");
+//! assert_eq!(&mnemonic, "nice dumb debris type pair until convince pet depend dragon seed exchange rebel belt alcohol");
 //!
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_wallet(0)?.pk, "L25LxS22MwRpEnnFs81XitJyrkimpZGLjgKHRAikLxJoxWMkVuHd");
+//! assert_eq!(master.bip85_wallet(0)?.pk, "L3X74sTsPBpoJx7MNWt36qnsGE1ubdf2BQVTczU7i14D94BhNdmc");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K47Cxw6R8QnGdAru5BaK7kT5awzC9VvmpXnpCQPdEmPyJeR9w3FeJ3hmEBRCRLGhMNpnkcM9q2w3J3T55bSSqMLRDpJLZU4B");
+//! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K3Dm1EavEpwYyfZD7su3245k5CES8qnt6VVxznxnPqMnUx5cFLJDao9mcyELm9UVNbBTMYodNabKmvcj3WazUaRNqpz4qd7A");
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🙏✋🍕🌻🎄🙏👍🔔🔔🍺💊🍄🍺⚡✋👌😍🚗🍎🚗");
+//! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🐬🔑🍎🐔🔒🚗🐸💧🌷✋🐍🚲💀💪💀🍄✈🍀🍉⚡");
 //!
 //! # Ok::<(), artimonist::Error>(())
 //! ```
