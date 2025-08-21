@@ -248,7 +248,7 @@ mod test_data_35 {
         "yprvAJkFyfgi47FAjCs9nRhs5NFJQutDT43j67SqgUCNpWBxiiYF3FUbQYpXVt9KrQpdcEuRH7RAfKP9Zn6PvRGgh5Z7Ec29tSbvXG21LPP76Fa",
         "yprvAJkFyfgi47FAnrmh7NjqoKXE9D2YGBvhUTgYCHHieSPaPenarACXM4NVWNGvRLW9HHbm1ffQheXdcw4t5XEbWkDSHyJvg7bKvg6fgXLEZKA",
         "yprvAJkFyfgi47FAq1163Dp5wfRhSkfZ7mwKmkTVauGiyDomevhivJGLk2sgQVbF5h5gZunz8DxzyAPgAXNPnMJzoQs3dK7f6ypXHS2BjedQhFr",
-        ];
+    ];
     #[cfg(not(feature = "extfmt"))]
     pub const ACCOUNT_XPRVS: [&str; 5] = [
         "xprv9yuzg11nuRhgo8xACYRykuTXbgABwFMjEqJZmjVJQuhxoNY2H8CG7a1maik78JBimAEAwnDERpzo5ygPFSKjwHBESEpPfTdrTYjZSQ9QoEq",

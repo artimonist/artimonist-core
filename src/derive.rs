@@ -6,17 +6,17 @@ use bitcoin::{
 };
 use std::str::FromStr;
 
-type DeriveResult = Result<(String, String), crate::Error>;
+type DeriveResult = Result<(String, String), DeriveError>;
 
 pub trait DeriveInner {
-    fn derive(&self, path: &str) -> Result<(Xpub, Xpriv), crate::Error>;
-    fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, crate::Error>;
+    fn derive(&self, path: &str) -> Result<(Xpub, Xpriv), DeriveError>;
+    fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, DeriveError>;
 }
 
 impl DeriveInner for Xpriv {
     /// Derive a key pair from derivation path
     #[inline]
-    fn derive(&self, path_str: &str) -> Result<(Xpub, Xpriv), crate::Error> {
+    fn derive(&self, path_str: &str) -> Result<(Xpub, Xpriv), DeriveError> {
         let secp = Secp256k1::default();
         let path = DerivationPath::from_str(path_str)?;
         let xpriv = self.derive_priv(&secp, &path)?;
@@ -31,7 +31,7 @@ impl DeriveInner for Xpriv {
     ///  - `paths`: Derivation paths
     /// # Returns
     ///  - multisig script
-    fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, crate::Error> {
+    fn multisig<const M: u8>(&self, paths: &[String]) -> Result<ScriptBuf, DeriveError> {
         assert!(
             M <= paths.len() as u8 && paths.len() <= 15,
             "[artimonist] Overflow: M <= paths.len() <= 15"
@@ -45,7 +45,7 @@ impl DeriveInner for Xpriv {
                 let priv_key = self.derive_priv(&secp, &path)?.to_priv();
                 Ok(PublicKey::from_private_key(&secp, &priv_key))
             })
-            .collect::<Result<Vec<_>, crate::Error>>()?;
+            .collect::<Result<Vec<_>, DeriveError>>()?;
         pub_keys.sort();
         // create multisig script
         let script = pub_keys
@@ -428,4 +428,14 @@ impl std::fmt::Display for Zpub {
 fn encode_fmt<const PRE: u32>(f: &mut std::fmt::Formatter<'_>, data: &[u8]) -> std::fmt::Result {
     let new_data = [&PRE.to_be_bytes(), &data[4..]].concat();
     write!(f, "{}", bitcoin::base58::encode_check(&new_data))
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DeriveError {
+    /// P2sh error
+    #[error("p2sh error")]
+    P2shError(#[from] bitcoin::address::P2shError),
+    /// Bip32 Error
+    #[error("bip32 error: {0}")]
+    Bip32Error(#[from] bitcoin::bip32::Error),
 }

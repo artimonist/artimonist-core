@@ -74,24 +74,25 @@ pub mod error {
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
         /// Diagram error
-        #[error("diagram error: {0}")]
+        #[error("Diagram: {0}")]
         DiagramError(#[from] crate::diagram::Error),
 
         /// Bip38 Error
-        #[error("bip38 error: {0}")]
+        #[error("BIP38: {0}")]
         Bip38Error(#[from] crate::bip38::Bip38Error),
 
         /// Bip39 Error
-        #[error("bip39 error: {0}")]
+        #[error("BIP39: {0}")]
         Bip39Error(#[from] crate::bip39::Bip39Error),
 
         /// Bip85 Error
-        #[error("bip85 error: {0}")]
+        #[error("BIP85: {0}")]
         Bip85Error(#[from] crate::bip85::Error),
 
-        /// P2sh error
-        #[error("p2sh error")]
-        P2shError(#[from] bitcoin::address::P2shError),
+        /// Derive Error
+        #[error("Derive: {0}")]
+        DeriveError(#[from] crate::derive::DeriveError),
+
         /// Bip32 Error
         #[error("bip32 error: {0}")]
         Bip32Error(#[from] bitcoin::bip32::Error),
