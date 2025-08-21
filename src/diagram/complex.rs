@@ -83,9 +83,8 @@ impl ComplexDiagram {
 
     /// create ComplexDiagram from items
     #[deprecated(since = "1.7.2", note = "Use `Diagram` instead")]
-    #[allow(deprecated)]
     pub fn from_values(items: &[&str], indices: &[(usize, usize)]) -> Self {
-        let mut diagram = ComplexDiagram::new();
+        let mut diagram = Self(core::array::from_fn(|_| core::array::from_fn(|_| None)));
         indices.iter().zip(items).for_each(|(&(r, c), &s)| {
             diagram[r][c] = match s.is_empty() {
                 false => Some(s.to_owned()),
@@ -97,12 +96,12 @@ impl ComplexDiagram {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod complex_diagram_test {
     use super::*;
     use bitcoin::hex::DisplayHex;
 
     #[test]
-    #[allow(deprecated)]
     fn test_complex_diagram() -> Result<()> {
         const STR_LIST: &[&str] = &["ABC", "123", "测试", "混A1", "A&*王😊"];
         const INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
@@ -122,7 +121,6 @@ mod complex_diagram_test {
     }
 
     #[test]
-    #[allow(deprecated)]
     fn test_complex_entropy() -> Result<()> {
         const STR_LIST: &[&str] = &["ABC", "混A1", "123", "测试", "A&*王😊"];
         const INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];

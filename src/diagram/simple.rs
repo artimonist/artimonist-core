@@ -94,12 +94,12 @@ impl SimpleDiagram {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod simple_diagram_test {
     use super::*;
     use bitcoin::hex::DisplayHex;
 
     #[test]
-    #[allow(deprecated)]
     fn test_simple_diagram() -> Result<()> {
         const CHARS_STR: &str = "A&*王😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 6)];
@@ -136,7 +136,6 @@ mod simple_diagram_test {
     }
 
     #[test]
-    #[allow(deprecated)]
     fn test_simple_diagram2() -> Result<()> {
         const CHARS_STR: &str = "A王&*😊";
         const CHARS_INDICES: &[(usize, usize)] = &[(0, 6), (1, 1), (1, 3), (4, 2), (6, 0)];
