@@ -13,25 +13,25 @@ pub enum Error {
 
     /// Bip39 error
     #[error("bip39 error: {0}")]
-    Bip39Error(#[from] crate::bip39::Bip39Error),
+    Bip39Err(#[from] crate::bip39::Bip39Error),
 
     /// Address error
     #[error("address error")]
-    AddressError(#[from] bitcoin::key::UncompressedPublicKeyError),
+    AddressErr(#[from] bitcoin::key::UncompressedPublicKeyError),
 
     /// P2sh error
     #[error("p2sh error")]
-    P2shError(#[from] bitcoin::address::P2shError),
+    P2shErr(#[from] bitcoin::address::P2shError),
 
     /// Bip32 Error
     #[error("bip32 error: {0}")]
-    Bip32Error(#[from] bitcoin::bip32::Error),
+    Bip32Err(#[from] bitcoin::bip32::Error),
 
     /// Secp error
     #[error("runtime error")]
-    SecpError(#[from] bitcoin::secp256k1::Error),
+    SecpErr(#[from] bitcoin::secp256k1::Error),
 
     /// Hex parse error
     #[error("hex error")]
-    HexError(#[from] bitcoin::hex::HexToArrayError),
+    HexErr(#[from] bitcoin::hex::HexToArrayError),
 }

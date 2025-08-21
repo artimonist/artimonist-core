@@ -23,14 +23,14 @@ pub enum Error {
     StringTooLong(String),
     /// Bip32 error
     #[error("Derive error: {0}")]
-    Bip32Error(#[from] bitcoin::bip32::Error),
+    Bip32Err(#[from] bitcoin::bip32::Error),
     /// Argon2 error
     #[error("Encrypt error: {0}")]
-    EncryptError(String),
+    EncryptErr(String),
     /// Decode error
     #[cfg(feature = "serde")]
     #[error("Serde error: {0}")]
-    SerdeError(String),
+    SerdeErr(String),
 }
 
 macro_rules! derive_error {
@@ -43,10 +43,10 @@ macro_rules! derive_error {
     };
 }
 
-derive_error!(Error::EncryptError, scrypt::errors::InvalidParams);
-derive_error!(Error::EncryptError, scrypt::errors::InvalidOutputLen);
-derive_error!(Error::EncryptError, argon2::Error);
+derive_error!(Error::EncryptErr, scrypt::errors::InvalidParams);
+derive_error!(Error::EncryptErr, scrypt::errors::InvalidOutputLen);
+derive_error!(Error::EncryptErr, argon2::Error);
 #[cfg(feature = "serde")]
-derive_error!(Error::SerdeError, rmp_serde::encode::Error);
+derive_error!(Error::SerdeErr, rmp_serde::encode::Error);
 #[cfg(feature = "serde")]
-derive_error!(Error::SerdeError, rmp_serde::decode::Error);
+derive_error!(Error::SerdeErr, rmp_serde::decode::Error);
