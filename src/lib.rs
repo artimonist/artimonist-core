@@ -27,12 +27,11 @@
 //! assert_eq!(&mnemonic, "nice dumb debris type pair until convince pet depend dragon seed exchange rebel belt alcohol");
 //!
 //! # #[cfg(not(feature = "testnet"))]
-//! assert_eq!(master.bip85_wallet(0)?.pk, "L3X74sTsPBpoJx7MNWt36qnsGE1ubdf2BQVTczU7i14D94BhNdmc");
-//! # #[cfg(not(feature = "testnet"))]
+//! # {
+//! assert_eq!(master.bip85_wallet(0)?.pk, "L3X74sTsPBpoJx7MNWt36qnsGE1ubdf2BQVTczU7i14D94BhNdmc");  
 //! assert_eq!(master.bip85_master(0)?, "xprv9s21ZrQH143K3Dm1EavEpwYyfZD7su3245k5CES8qnt6VVxznxnPqMnUx5cFLJDao9mcyELm9UVNbBTMYodNabKmvcj3WazUaRNqpz4qd7A");
-//! # #[cfg(not(feature = "testnet"))]
 //! assert_eq!(master.bip85_password(0, 20, Password::Emoji)?, "🐬🔑🍎🐔🔒🚗🐸💧🌷✋🐍🚲💀💪💀🍄✈🍀🍉⚡");
-//!
+//! # }
 //! # Ok::<(), artimonist::Error>(())
 //! ```
 //! The simple diagram looks like this:
